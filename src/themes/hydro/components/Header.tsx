@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 interface HeaderProps {
   name: string;
@@ -40,41 +40,6 @@ const Header: React.FC<HeaderProps> = ({ name, title, darkMode = false }) => {
     margin: '1rem auto',
     position: 'relative'
   };
-
-  useEffect(() => {
-    try {
-      const styleSheet = document.styleSheets[0];
-      const keyframes = `
-        @keyframes ekg {
-          0% {
-            opacity: 0;
-            stroke-dashoffset: 1000;
-          }
-          10% {
-            opacity: 0.7;
-          }
-          90% {
-            opacity: 0.7;
-          }
-          100% {
-            opacity: 0;
-            stroke-dashoffset: -1000;
-          }
-        }
-      `;
-
-      // Check if animation already exists
-      const exists = Array.from(styleSheet.cssRules).some(
-        rule => rule.type === CSSRule.KEYFRAMES_RULE && (rule as CSSKeyframesRule).name === 'ekg'
-      );
-
-      if (!exists) {
-        styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
-      }
-    } catch (error) {
-      console.warn('Failed to insert keyframe animation:', error);
-    }
-  }, []);
 
   return (
     <header style={headerStyle}>

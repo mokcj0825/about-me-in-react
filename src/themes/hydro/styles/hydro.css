@@ -1,5 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Parisienne&display=swap');
 
+@keyframes ekg {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 1000;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  90% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -1000;
+  }
+}
+
 :root {
   --hydro-primary: #00a8cc;
   --hydro-secondary: #142850;
