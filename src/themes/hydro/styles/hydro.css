@@ -1,0 +1,220 @@
+@import url('https://fonts.googleapis.com/css2?family=Parisienne&display=swap');
+
+:root {
+  --hydro-primary: #00a8cc;
+  --hydro-secondary: #142850;
+  --hydro-accent: #27496d;
+  --hydro-text: #0c7b93;
+  --hydro-light: #e8f9fd;
+}
+
+.hydro-container {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background 0.3s ease;
+  scrollbar-width: thin;
+  scrollbar-color: var(--hydro-primary) rgba(0, 168, 204, 0.1);
+  font-family: 'Parisienne', cursive;
+}
+
+.hydro-content {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.hydro-grid {
+  width: 100%;
+  max-width: 1400px;
+  height: 80vh;
+  margin: 0 auto;
+  position: relative;
+  padding: 2rem;
+}
+
+/* Position bubbles absolutely for more freedom */
+.hydro-grid > *:nth-child(1) { /* About */
+  position: absolute;
+  left: 25%;
+  top: 20%;
+  transform: translate(-50%, -50%);
+}
+
+.hydro-grid > *:nth-child(2) { /* Skills */
+  position: absolute;
+  left: 65%;
+  top: 30%;
+  transform: translate(-50%, -50%);
+}
+
+.hydro-grid > *:nth-child(3) { /* Projects */
+  position: absolute;
+  left: 40%;
+  top: 60%;
+  transform: translate(-50%, -50%);
+}
+
+.hydro-grid > *:nth-child(4) { /* Languages */
+  position: absolute;
+  left: 75%;
+  top: 65%;
+  transform: translate(-50%, -50%);
+}
+
+.hydro-grid > *:nth-child(5) { /* Contact */
+  position: absolute;
+  left: 15%;
+  top: 70%;
+  transform: translate(-50%, -50%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .hydro-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .hydro-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hydro-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark mode */
+.hydro-container.dark {
+  background: var(--hydro-secondary);
+  color: var(--hydro-light);
+  scrollbar-color: var(--hydro-accent) rgba(39, 73, 109, 0.2);
+}
+
+/* Ensure content stays above the animation */
+.hydro-container > *:not(.water-animation) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Basic section styling */
+.hydro-container section {
+  margin: 4rem 0;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+
+/* Placeholder styles */
+.hydro-container div {
+  text-align: center;
+  font-style: italic;
+  color: var(--hydro-text);
+}
+
+/* Webkit scrollbar styling */
+.hydro-container::-webkit-scrollbar {
+  width: 12px;
+  background: transparent;
+}
+
+.hydro-container::-webkit-scrollbar-track {
+  background: rgba(0, 168, 204, 0.1);
+  border-radius: 8px;
+  margin: 4px;
+}
+
+.hydro-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    45deg,
+    var(--hydro-primary),
+    rgba(0, 168, 204, 0.8)
+  );
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 0 0 10px rgba(0, 168, 204, 0.2);
+}
+
+/* Dark mode scrollbar */
+.hydro-container.dark {
+  scrollbar-color: var(--hydro-accent) rgba(39, 73, 109, 0.2);
+}
+
+.hydro-container.dark::-webkit-scrollbar-track {
+  background: rgba(39, 73, 109, 0.2);
+}
+
+.hydro-container.dark::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    45deg,
+    var(--hydro-accent),
+    rgba(39, 73, 109, 0.8)
+  );
+  box-shadow: 0 0 10px rgba(39, 73, 109, 0.3);
+}
+
+/* Hover effects */
+.hydro-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    45deg,
+    var(--hydro-text),
+    var(--hydro-primary)
+  );
+}
+
+.hydro-container.dark::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    45deg,
+    var(--hydro-text),
+    var(--hydro-accent)
+  );
+}
+
+.hydro-space {
+  position: relative;
+  width: 100%;
+  height: 80vh;
+  overflow: hidden;
+}
+
+.bubble-about {
+  position: absolute;
+  left: 5%;
+  top: 0;
+}
+
+.bubble-skills {
+  position: absolute;
+  left: 25%;
+  top: 15%;
+}
+
+.bubble-projects {
+  position: absolute;
+  left: 45%;
+  top: 7%;
+}
+
+.bubble-languages {
+  position: absolute;
+  right: 25%;
+  bottom: 20%;
+}
+
+.bubble-contact {
+  position: absolute;
+  right: 5%;
+  bottom: 45%;
+}

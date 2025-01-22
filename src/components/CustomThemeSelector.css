@@ -1,0 +1,321 @@
+.custom-theme-selector {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  width: 200px;
+  user-select: none;
+}
+
+.selected-theme {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-options {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  margin-top: 4px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.theme-options.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.theme-option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.theme-option-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-icon {
+  margin-right: 8px;
+  font-size: 1.2em;
+}
+
+.arrow {
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.arrow.up {
+  transform: rotate(180deg);
+}
+
+/* Classic Theme Styles */
+.classic-theme .selected-theme {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.classic-theme .theme-options {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.classic-theme .theme-option:hover {
+  background: #f5f5f5;
+}
+
+.classic-theme .theme-option.active {
+  background: #e9e9e9;
+}
+
+/* Hydro Theme Styles */
+.hydro-theme .selected-theme {
+  background: rgba(255, 255, 255, 0.9);
+  will-change: transform;
+  position: relative;
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 15px rgba(0, 168, 204, 0.2),
+    inset 0 -2px 4px rgba(0, 168, 204, 0.1);
+  color: #00a8cc;
+}
+
+.hydro-theme .selected-theme::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(10px);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.hydro-theme .theme-options {
+  background: rgba(255, 255, 255, 0.95);
+  will-change: transform;
+  position: relative;
+  border-radius: 12px;
+  box-shadow: 
+    0 6px 20px rgba(0, 168, 204, 0.2),
+    inset 0 -2px 4px rgba(0, 168, 204, 0.1);
+}
+
+.hydro-theme .theme-options::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(10px);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+.hydro-theme .theme-option {
+  color: #00a8cc;
+}
+
+.hydro-theme .theme-option:hover {
+  background: rgba(0, 168, 204, 0.1);
+}
+
+.hydro-theme .theme-option.active {
+  background: rgba(0, 168, 204, 0.15);
+}
+
+/* Animation for dropdown */
+@keyframes dropdownAppear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Add these to your existing CSS */
+
+.theme-option.focused {
+  outline: 2px solid var(--accent-color, #00a8cc);
+  outline-offset: -2px;
+}
+
+/* Classic Theme Focus */
+.classic-theme .theme-option.focused {
+  background: #e9e9e9;
+  outline-color: #007bff;
+}
+
+/* Hydro Theme Focus */
+.hydro-theme .theme-option.focused {
+  background: rgba(0, 168, 204, 0.15);
+  outline-color: #00a8cc;
+}
+
+/* Improve accessibility */
+.selected-theme:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent-color, #00a8cc);
+}
+
+.theme-preview {
+  width: 100%;
+  height: 80px;
+  background: var(--preview-bg);
+  border-radius: 6px;
+  overflow: hidden;
+  padding: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.preview-header {
+  height: 20%;
+  background: var(--preview-accent);
+  opacity: 0.8;
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.preview-bar {
+  height: 6px;
+  background: var(--preview-accent);
+  opacity: 0.3;
+  border-radius: 2px;
+  width: 80%;
+}
+
+.preview-box {
+  height: 20px;
+  background: var(--preview-accent);
+  opacity: 0.2;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+/* Theme-specific preview styles */
+.classic-theme .theme-preview {
+  border: 1px solid #eee;
+}
+
+.hydro-theme .theme-preview {
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Hover effects for preview */
+.theme-option:hover .theme-preview {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Active theme preview */
+.theme-option.active .theme-preview {
+  box-shadow: 0 0 0 2px var(--preview-accent);
+}
+
+/* Add new floating preview styles */
+.theme-preview-floating {
+  position: fixed;
+  width: 200px;
+  height: 150px;
+  background: var(--preview-bg);
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  pointer-events: none;
+  animation: previewFadeIn 0.2s ease;
+  z-index: 1100;
+}
+
+.preview-header {
+  height: 20%;
+  background: var(--preview-accent);
+  opacity: 0.8;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.preview-bar {
+  height: 8px;
+  background: var(--preview-accent);
+  opacity: 0.3;
+  border-radius: 4px;
+  width: 80%;
+}
+
+.preview-box {
+  height: 30px;
+  background: var(--preview-accent);
+  opacity: 0.2;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+/* Theme-specific preview styles */
+.classic-theme .theme-preview-floating {
+  border: 1px solid #eee;
+}
+
+.hydro-theme .theme-preview-floating {
+  will-change: transform;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.hydro-theme .theme-preview-floating::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  backdrop-filter: blur(10px);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+@keyframes previewFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Add this to ensure dropdown closes properly */
+.theme-options:not(.show) {
+  display: none;
+}
+
+.theme-options.show {
+  display: block;
+} 
