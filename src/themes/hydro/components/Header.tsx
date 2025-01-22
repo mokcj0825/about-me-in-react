@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 interface HeaderProps {
   name: string;
@@ -41,30 +41,40 @@ const Header: React.FC<HeaderProps> = ({ name, title, darkMode = false }) => {
     position: 'relative'
   };
 
-  // Create and inject the keyframe animation
-  const styleSheet = document.styleSheets[0];
-  const keyframes = `
-    @keyframes ekg {
-      0% {
-        opacity: 0;
-        stroke-dashoffset: 1000;
+  useEffect(() => {
+    try {
+      const styleSheet = document.styleSheets[0];
+      const keyframes = `
+        @keyframes ekg {
+          0% {
+            opacity: 0;
+            stroke-dashoffset: 1000;
+          }
+          10% {
+            opacity: 0.7;
+          }
+          90% {
+            opacity: 0.7;
+          }
+          100% {
+            opacity: 0;
+            stroke-dashoffset: -1000;
+          }
+        }
+      `;
+
+      // Check if animation already exists
+      const exists = Array.from(styleSheet.cssRules).some(
+        rule => rule.type === CSSRule.KEYFRAMES_RULE && (rule as CSSKeyframesRule).name === 'ekg'
+      );
+
+      if (!exists) {
+        styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
       }
-      10% {
-        opacity: 0.7;
-      }
-      90% {
-        opacity: 0.7;
-      }
-      100% {
-        opacity: 0;
-        stroke-dashoffset: -1000;
-      }
+    } catch (error) {
+      console.warn('Failed to insert keyframe animation:', error);
     }
-  `;
-  
-  if (!styleSheet.cssRules[0]?.cssText.includes('ekg')) {
-    styleSheet.insertRule(keyframes, 0);
-  }
+  }, []);
 
   return (
     <header style={headerStyle}>
