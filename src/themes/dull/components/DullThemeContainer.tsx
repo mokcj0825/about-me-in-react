@@ -4,7 +4,10 @@ import { DULL_THEMES } from '../colors';
 import { DULL_FONTS } from '../fonts';
 import DullThemeSelector from './DullThemeSelector';
 import DullDarkModeToggle from './DullDarkModeToggle';
-import {ThemeType} from "../../ThemeType";
+import DullHeader from './Header';
+import { ThemeType } from '../../ThemeType';
+import DullWorkingSkills from './WorkingSkills';
+import DullLanguageProficiency from './LanguageProficiency';
 
 interface DullThemeContainerProps extends Omit<BaseThemeContainerProps, 'theme'> {
   onDarkModeToggle: (isDark: boolean) => void;
@@ -15,8 +18,7 @@ const DullThemeContainer: React.FC<DullThemeContainerProps> = ({
   darkMode, 
   onDarkModeToggle,
   onThemeChange,
-  children,
-  ...props 
+  children 
 }) => {
   const currentTheme = darkMode ? DULL_THEMES.DARK : DULL_THEMES.LIGHT;
 
@@ -27,9 +29,14 @@ const DullThemeContainer: React.FC<DullThemeContainerProps> = ({
       borderColor: currentTheme.border,
       fontFamily: DULL_FONTS.family,
       fontSize: DULL_FONTS.size.normal,
-      minHeight: '100vh',
+      height: '100vh',
+      overflow: 'hidden' as const,
       transition: 'all 0.2s ease',
-      padding: '20px'
+    },
+    content: {
+      height: '100%',
+      overflowY: 'auto' as const,
+      overflowX: 'hidden' as const,
     }
   };
 
@@ -37,12 +44,17 @@ const DullThemeContainer: React.FC<DullThemeContainerProps> = ({
     <BaseThemeContainer
       theme="dull"
       darkMode={darkMode}
-      style={{ ...styles.container, ...props.style }}
-      {...props}
+      style={styles.container}
     >
-      <DullThemeSelector currentTheme={darkMode ? 'dark' : 'light'} onThemeChange={onThemeChange} />
-      <DullDarkModeToggle darkMode={darkMode} onToggle={onDarkModeToggle} />
-      {children}
+      <div style={styles.content}>
+        <DullHeader darkMode={darkMode} />
+        <DullWorkingSkills darkMode={darkMode} />
+        <DullLanguageProficiency darkMode={darkMode} />
+
+        <DullThemeSelector currentTheme={darkMode ? 'dark' : 'light'} onThemeChange={onThemeChange} />
+        <DullDarkModeToggle darkMode={darkMode} onToggle={onDarkModeToggle} />
+        {children}
+      </div>
     </BaseThemeContainer>
   );
 };

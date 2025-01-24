@@ -1,0 +1,26 @@
+[
+  {
+    "language": "Mandarin",
+    "description": "母语，你说呢？"
+  },
+  {
+    "language": "English",
+    "description": "Wrking proficiency, stronger in comprehension than production"
+  },
+  {
+    "language": "Malay",
+    "description": "Kemahiran kerja terhad, boleh berkomunikasi dalam situasi asas"
+  },
+  {
+    "language": "Korean",
+    "description": "기본적인 읽기 가능, 초보 수준"
+  },
+  {
+    "language": "Japanese",
+    "description": "基本的な読解力、初心者レベル"
+  },
+  {
+    "language": "French",
+    "description": "Compréhension basique de la lecture, niveau débutant"
+  }
+]

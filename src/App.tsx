@@ -1,26 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Canvas from './canvas/Canvas';
-import ThemeContainer from "./themes/ThemeContainer";
-import { ThemeType } from './themes/ThemeType';
 
 
 const App: React.FC = () => {
-  const [currentTheme, setCurrentTheme] = useState<ThemeType>('dull');
-  const [darkMode, setDarkMode] = useState(false);
-
-  const handleThemeChange = (theme: ThemeType) => {
-    setCurrentTheme(theme);
-  };
-
   return (
-    <Canvas>
-      <ThemeContainer 
-        currentTheme={currentTheme}
-        darkMode={darkMode}
-        onDarkModeToggle={setDarkMode}
-        onThemeChange={handleThemeChange}
-      />
-    </Canvas>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Canvas />} />
+        <Route path="/canvas" element={<Canvas />} />
+        <Route path="/stash" element={<div>Still under construction</div>} />
+        <Route path="/labs" element={<div>Still under construction</div>} />
+      </Routes>
+    </Router>
   );
 };
 

@@ -94,7 +94,7 @@ const DullThemeSelector: React.FC<ThemeSelectorProps> = (props) => {
     setIsSelectionOpen(!isSelectionOpen);
   };
 
-  const handleThemeSelect = (theme: string) => {
+  const handleThemeSelect = (theme: ThemeType) => {
     props.onThemeChange(theme);
     setIsSelectionOpen(false);
   };
