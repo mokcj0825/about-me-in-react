@@ -26,7 +26,7 @@ const DullLanguageProficiency: React.FC<DullLanguageProficiencyProps> = ({ darkM
     },
     languageGrid: {
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
       gap: '20px',
       padding: '0 20px',
     },

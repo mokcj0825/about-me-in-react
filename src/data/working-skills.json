@@ -1,14 +1,58 @@
 [
-  "TypeScript",
-  "JavaScript",
-  "React",
-  "Angular",
-  "CSS",
-  "AWS",
-  "Firebase",
-  "GitHub Actions",
-  "C#",
-  "Kotlin",
-  "Python",
-  "GPT-assisted programming"
+  {
+    "skills": "TypeScript",
+    "description": "Is that possible to code in React or Angular without TypeScript? How you tolerate those typeless code?"
+  },
+  {
+    "skills": "JavaScript",
+    "description": "Is that possible to know TypeScript without JavaScript?"
+  },
+  {
+    "skills": "React",
+    "description": "Let us guess, what this page is made of?"
+  },
+  {
+    "skills": "Angular",
+    "description": "Ah...I love this framework, at least got OOP in it."
+  },
+  {
+    "skills": "CSS",
+    "description": "I can't imagine the internet without CSS."
+  },
+  {
+    "skills": "SASS",
+    "description": "Inheritance is great, either wealth or style."
+  },
+  {
+    "skills": "AWS",
+    "description": "Lambda, Cognito, dynamoDB, Cloudwatch, EventBridge, S3...What else?"
+  },
+  {
+    "skills": "Firebase",
+    "description": "Let us guess, how this page presents to you?"
+  },
+  {
+    "skills": "GitHub Actions",
+    "description": "Let us guess, how I can deploy this page?"
+  },
+  {
+    "skills": "C#",
+    "description": "Ah...I'm working on a fan-game project using this language. Just for unity, and for fun."
+  },
+  {
+    "skills": "Kotlin",
+    "description": "Actually, the concepts for Kotlin is similar to React. You will feel familiar when you try it."
+  },
+  {
+    "skills": "Python",
+    "description": "I have no idea about Scipy, Pandas, or Pytorch. Really."
+  },
+  {
+    "skills": "Expressjs",
+    "description": "Do you know you can add something in your Request by express.d.ts?"
+  },
+  {
+    "skills": "GPT-assisted programming",
+    "description": "Haha... Are you expecting I can memorize all the code?"
+  }
 ]
