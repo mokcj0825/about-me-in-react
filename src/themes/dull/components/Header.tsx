@@ -31,7 +31,7 @@ const DullHeader: React.FC<DullHeaderProps> = ({ darkMode }) => {
     title: {
       fontSize: '24px',
       fontFamily: DULL_FONTS.family,
-      color: currentTheme.secondary,
+      color: darkMode ? '#E0E0E0' : currentTheme.secondary,
       marginBottom: '24px',
       fontWeight: DULL_FONTS.weight.normal,
     },
