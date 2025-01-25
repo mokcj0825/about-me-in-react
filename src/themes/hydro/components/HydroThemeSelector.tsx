@@ -88,7 +88,7 @@ const HydroThemeSelector: React.FC<ThemeSelectorProps> = (props) => {
             style={styles.themeOption}
             onClick={() => handleThemeSelect(theme)}
           >
-            {theme.charAt(0).toUpperCase() + theme.slice(1)} Theme
+            {theme.charAt(0).toUpperCase() + theme.slice(1)}
           </div>
         ))}
         <button 

@@ -45,14 +45,14 @@ const DullThemeSelector: React.FC<ThemeSelectorProps> = (props) => {
       padding: '16px',
       boxShadow: `0 2px 10px ${props.currentTheme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)'}`,
       display: isSelectionOpen ? 'block' : 'none',
-      minWidth: '200px',
+      maxWidth: '200px',
       '@media (maxWidth: 768px)': {
         position: 'fixed' as const,
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
         width: '90%',
-        maxWidth: '300px',
+        maxWidth: '200px',
         minWidth: 'auto',
       }
     },
@@ -112,7 +112,7 @@ const DullThemeSelector: React.FC<ThemeSelectorProps> = (props) => {
             style={styles.themeOption}
             onClick={() => handleThemeSelect(theme)}
           >
-            {theme.charAt(0).toUpperCase() + theme.slice(1)} Theme
+            {theme.charAt(0).toUpperCase() + theme.slice(1)}
           </div>
         ))}
         <button 

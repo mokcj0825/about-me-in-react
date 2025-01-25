@@ -14,7 +14,7 @@ const DullHeader: React.FC<DullHeaderProps> = ({ darkMode }) => {
 
   const styles = {
     header: {
-      padding: '60px 20px',
+      padding: '45px 20px',
       textAlign: 'center' as const,
       background: currentTheme.background,
       color: currentTheme.text,
