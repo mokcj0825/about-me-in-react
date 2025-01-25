@@ -8,6 +8,7 @@ import DullHeader from './Header';
 import { ThemeType } from '../../ThemeType';
 import DullWorkingSkills from './WorkingSkills';
 import DullLanguageProficiency from './LanguageProficiency';
+import DullRedirection from './Redirections';
 
 interface DullThemeContainerProps extends Omit<BaseThemeContainerProps, 'theme'> {
   onDarkModeToggle: (isDark: boolean) => void;
@@ -50,6 +51,7 @@ const DullThemeContainer: React.FC<DullThemeContainerProps> = ({
         <DullHeader darkMode={darkMode} />
         <DullWorkingSkills darkMode={darkMode} />
         <DullLanguageProficiency darkMode={darkMode} />
+        <DullRedirection darkMode={darkMode} />
 
         <DullThemeSelector currentTheme={darkMode ? 'dark' : 'light'} onThemeChange={onThemeChange} />
         <DullDarkModeToggle darkMode={darkMode} onToggle={onDarkModeToggle} />
