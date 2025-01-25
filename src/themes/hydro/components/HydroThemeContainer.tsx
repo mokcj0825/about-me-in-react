@@ -5,6 +5,7 @@ import { HYDRO_FONTS } from '../fonts';
 import HydroThemeSelector from './HydroThemeSelector';
 import HydroDarkModeToggle from './HydroDarkModeToggle';
 import {ThemeType} from "../../ThemeType";
+import HydroRippleEffect from './HydroRippleEffect';
 
 interface HydroThemeContainerProps extends Omit<BaseThemeContainerProps, 'theme'> {
   onDarkModeToggle: (isDark: boolean) => void;
@@ -29,7 +30,9 @@ const HydroThemeContainer: React.FC<HydroThemeContainerProps> = ({
       fontSize: HYDRO_FONTS.size.normal,
       minHeight: '100vh',
       transition: 'all 0.2s ease',
-      padding: '20px'
+      padding: '20px',
+      position: 'relative' as const,
+      overflow: 'hidden'
     }
   };
 
@@ -40,6 +43,9 @@ const HydroThemeContainer: React.FC<HydroThemeContainerProps> = ({
       style={{ ...styles.container, ...props.style }}
       {...props}
     >
+      <HydroRippleEffect 
+        color={darkMode ? 'rgba(128, 128, 192, 0.2)' : 'rgba(0, 0, 255, 0.1)'}
+      />
       <HydroThemeSelector currentTheme={darkMode ? 'dark' : 'light'} onThemeChange={onThemeChange} />
       <HydroDarkModeToggle darkMode={darkMode} onToggle={onDarkModeToggle} />
       {children}
