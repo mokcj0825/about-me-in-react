@@ -31,7 +31,7 @@ const iconMap: { [key: string]: string } = {
   'css.svg': CSSIcon,
   'sass.svg': SASSIcon,
   'AWS.svg': AWSIcon,
-  'firebase.svg': FirebaseIcon,
+  'Firebase.svg': FirebaseIcon,
   'githubaction.svg': GitHubIcon,
   'csharp.svg': CSharpIcon,
   'kotlin.svg': KotlinIcon,
