@@ -6,7 +6,7 @@ import AngularIcon from '../../../../assets/angular.svg';
 import CSSIcon from '../../../../assets/css.svg';
 import SASSIcon from '../../../../assets/sass.svg';
 import AWSIcon from '../../../../assets/AWS.svg';
-import FirebaseIcon from '../../../../assets/firebase.svg';
+import FirebaseIcon from '../../../../assets/Firebase.svg';
 import GitHubIcon from '../../../../assets/githubaction.svg';
 import CSharpIcon from '../../../../assets/csharp.svg';
 import KotlinIcon from '../../../../assets/kotlin.svg';
