@@ -30,6 +30,40 @@ const HydroRippleEffect: React.FC<RippleProps> = ({
     return null;
   }
 
+  const createRipple = useMemo(
+    () =>
+      throttle((x: number, y: number) => {
+        setRipples((prevRipples) => {
+          const newRipples = [...prevRipples, { x, y, id: Date.now() }];
+          return newRipples.slice(-maxRipples);
+        });
+      }, 50),
+    [maxRipples],
+  );
+
+  useEffect(() => {
+    const handleMouseDown = (e: MouseEvent) => {
+      // Get the actual element under the click
+      const elementAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+      
+      // Skip if clicking on ripple elements
+      if (elementAtPoint?.closest('[data-ripple-container="true"]') || 
+          elementAtPoint?.classList.contains('hydro-ripple')) {
+        return;
+      }
+      
+      // Create ripple without stopping propagation
+      createRipple(e.clientX, e.clientY);
+    };
+
+    // Use capture phase to handle event first, but don't stop propagation
+    window.addEventListener('mousedown', handleMouseDown, true);
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown, true);
+      createRipple.cancel();
+    };
+  }, [createRipple]);
+
   useEffect(() => {
     let mounted = true;
     const cleanupInterval = setInterval(() => {
@@ -55,43 +89,6 @@ const HydroRippleEffect: React.FC<RippleProps> = ({
       }) as React.CSSProperties,
     [color, duration, scale],
   );
-
-  const createRipple = useMemo(
-    () =>
-      throttle((e: React.MouseEvent | React.KeyboardEvent) => {
-        const target = e.currentTarget as HTMLDivElement;
-        let x, y;
-
-        if ("clientX" in e) {
-          const rect = target.getBoundingClientRect();
-          x = e.clientX - rect.left;
-          y = e.clientY - rect.top;
-        } else {
-          const rect = target.getBoundingClientRect();
-          x = rect.width / 2;
-          y = rect.height / 2;
-        }
-
-        setRipples((prevRipples) => {
-          const newRipples = [...prevRipples, { x, y, id: Date.now() }];
-          return newRipples.slice(-maxRipples);
-        });
-      }, 50),
-    [maxRipples],
-  );
-
-  useEffect(() => {
-    return () => {
-      createRipple.cancel();
-    };
-  }, [createRipple]);
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      createRipple(e);
-    }
-  };
 
   return (
     <>
@@ -195,11 +192,8 @@ const HydroRippleEffect: React.FC<RippleProps> = ({
         `}
       </style>
       <div
-        onClick={createRipple}
-        onKeyDown={handleKeyDown}
-        role="button"
-        tabIndex={0}
-        aria-label="Interactive ripple effect"
+        data-ripple-container="true"
+        role="presentation"
         style={{
           position: "fixed",
           top: 0,
@@ -207,8 +201,8 @@ const HydroRippleEffect: React.FC<RippleProps> = ({
           right: 0,
           bottom: 0,
           overflow,
-          zIndex: 1,
-          outline: "none",
+          zIndex: 1001,
+          pointerEvents: "none",
           ...rippleStyles,
         }}
       >
