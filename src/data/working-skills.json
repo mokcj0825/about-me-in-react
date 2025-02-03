@@ -12,7 +12,8 @@
   {
     "skills": "React",
     "description": "Let us guess, what this page is made of?",
-    "icon": "react.svg"
+    "icon": "react.svg",
+    "icon-night": "react-night.svg"
   },
   {
     "skills": "Angular",
@@ -62,11 +63,13 @@
   {
     "skills": "Express",
     "description": "Do you know you can add something in your Request?",
-    "icon": "expressjs.svg"
+    "icon": "expressjs.svg",
+    "icon-night": "expressjs-night.svg"
   },
   {
     "skills": "GPT",
     "description": "Haha... Are you expecting I can memorize all the code?",
-    "icon": "gpt.svg"
+    "icon": "gpt.svg",
+    "icon-night": "gpt.svg"
   }
 ]

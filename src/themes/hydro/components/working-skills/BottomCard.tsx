@@ -13,20 +13,27 @@ import KotlinIcon from '../../../../assets/kotlin.svg';
 import PythonIcon from '../../../../assets/python.svg';
 import ExpressIcon from '../../../../assets/expressjs.svg';
 import GPTIcon from '../../../../assets/gpt.svg';
+import ExpressNightIcon from '../../../../assets/expressjs-night.svg';
+import ReactNightIcon from '../../../../assets/react-night.svg';
+interface Skill {
+  skills: string;
+  description: string;
+  icon: string;
+  'icon-night'?: string;  // Add optional night mode icon
+}
 
 interface BottomCardProps {
   darkMode: boolean;
-  skill: {
-    skills: string;
-    description: string;
-    icon: string;
-  };
+  skill: Skill;
+  isSelected?: boolean;
+  onSelect: (skill: Skill) => void;
 }
 
 const iconMap: { [key: string]: string } = {
   'typescript.svg': TypeScriptIcon,
   'javascript.svg': JavaScriptIcon,
   'react.svg': ReactIcon,
+  'react-night.svg': ReactNightIcon,
   'angular.svg': AngularIcon,
   'css.svg': CSSIcon,
   'sass.svg': SASSIcon,
@@ -37,16 +44,23 @@ const iconMap: { [key: string]: string } = {
   'kotlin.svg': KotlinIcon,
   'python.svg': PythonIcon,
   'expressjs.svg': ExpressIcon,
+  'expressjs-night.svg': ExpressNightIcon,
   'gpt.svg': GPTIcon
 };
 
-const BottomCard: React.FC<BottomCardProps> = ({ darkMode, skill }) => {
+const BottomCard: React.FC<BottomCardProps> = ({ darkMode, skill, isSelected, onSelect }) => {
   const [isHovered, setIsHovered] = useState(false);
+
+  // Get the appropriate icon based on dark mode
+  const iconSrc = darkMode && skill['icon-night'] 
+    ? iconMap[skill['icon-night']] 
+    : iconMap[skill.icon];
 
   return (
     <div 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onSelect(skill)}
       style={{
         width: '110px',
         height: '150px',
@@ -56,11 +70,12 @@ const BottomCard: React.FC<BottomCardProps> = ({ darkMode, skill }) => {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center',
         gap: '8px',
         transition: 'all 0.3s ease',
         cursor: 'pointer',
-        opacity: isHovered ? 1 : 0.7,
-        border: isHovered ? '2px solid #00c3ff' : '2px solid transparent',
+        opacity: isHovered || isSelected ? 1 : 0.7,
+        border: isSelected ? '2px solid #00ff00' : isHovered ? '2px solid #00c3ff' : '2px solid transparent',
         transform: isHovered ? 'translateY(-5px)' : 'translateY(0)',
       }}
     >
@@ -70,10 +85,11 @@ const BottomCard: React.FC<BottomCardProps> = ({ darkMode, skill }) => {
         height: '60px',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        margin: 'auto'
       }}>
         <img 
-          src={iconMap[skill.icon]}
+          src={iconSrc}
           alt={skill.skills}
           style={{
             width: '100%',
