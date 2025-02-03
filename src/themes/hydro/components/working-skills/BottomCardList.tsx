@@ -1,16 +1,26 @@
 import React, { useRef, useCallback, useMemo } from 'react';
 import BottomCard from './BottomCard';
 
-interface BottomCardListProps {
-  darkMode: boolean;
-  skills: Array<{
-    skills: string;
-    description: string;
-    icon: string;
-  }>;
+interface Skill {
+  skills: string;
+  description: string;
+  icon: string;
+  'icon-night'?: string;
 }
 
-const BottomCardList: React.FC<BottomCardListProps> = ({ darkMode, skills }) => {
+interface BottomCardListProps {
+  darkMode: boolean;
+  skills: Skill[];
+  selectedSkill?: Skill | null;
+  onSkillSelect: (skill: Skill) => void;
+}
+
+const BottomCardList: React.FC<BottomCardListProps> = ({ 
+  darkMode, 
+  skills, 
+  selectedSkill,
+  onSkillSelect 
+}) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = useCallback((direction: 'left' | 'right') => {
@@ -87,6 +97,8 @@ const BottomCardList: React.FC<BottomCardListProps> = ({ darkMode, skills }) => 
               <BottomCard 
                 darkMode={darkMode}
                 skill={skill}
+                isSelected={selectedSkill?.skills === skill.skills}
+                onSelect={onSkillSelect}
               />
             </div>
           ))}
