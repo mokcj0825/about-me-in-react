@@ -2,33 +2,39 @@
   {
     "skills": "TypeScript",
     "description": "Type is important. That's why TypeScript",
-    "icon": "typescript.svg"
+    "icon": "typescript.svg",
+    "jokes": "Please, I'm phobic to any surprises."
   },
   {
     "skills": "JavaScript",
     "description": "Is that possible to know TypeScript without JavaScript?",
-    "icon": "javascript.svg"
+    "icon": "javascript.svg",
+    "jokes": "I love surprises, including anything."
   },
   {
     "skills": "React",
     "description": "Let us guess, what this page is made of?",
     "icon": "react.svg",
-    "icon-night": "react-night.svg"
+    "icon-night": "react-night.svg",
+    "jokes": "Stop coding when you fishing. You may messed up."
   },
   {
     "skills": "Angular",
     "description": "Ah...I love this framework, at least got OOP in it.",
-    "icon": "angular.svg"
+    "icon": "angular.svg",
+    "jokes": "I'm looking for omega, did you see that?"
   },
   {
     "skills": "CSS",
     "description": "I can't imagine the internet without CSS.",
-    "icon": "css.svg"
+    "icon": "css.svg",
+    "jokes": "I still not understand why auto-margin will center my item."
   },
   {
     "skills": "SASS",
     "description": "Inheritance is great, either wealth or style.",
-    "icon": "sass.svg"
+    "icon": "sass.svg",
+    "jokes": ""
   },
   {
     "skills": "AWS",
