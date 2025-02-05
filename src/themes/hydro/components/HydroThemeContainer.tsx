@@ -8,6 +8,8 @@ import {ThemeType} from "../../ThemeType";
 import HydroRippleEffect from './HydroRippleEffect';
 import Header from './Header';
 import WorkingSkills from './WorkingSkills';
+import LanguageProficiency from "./LanguageProficiency";
+import HydroRedirections from "./Redirections";
 
 interface HydroThemeContainerProps extends Omit<BaseThemeContainerProps, 'theme'> {
   onDarkModeToggle: (isDark: boolean) => void;
@@ -144,7 +146,7 @@ const HydroThemeContainer: React.FC<HydroThemeContainerProps> = ({
           scrollSnapAlign: 'start',
           scrollSnapStop: 'always'
         }}>
-          <div>Language Proficiency Section</div>
+          <LanguageProficiency darkMode={darkMode} />
         </div>
         <div id="section-3" style={{
           height: '100vh',
@@ -156,7 +158,7 @@ const HydroThemeContainer: React.FC<HydroThemeContainerProps> = ({
           scrollSnapAlign: 'start',
           scrollSnapStop: 'always'
         }}>
-          <div>Redirections Section</div>
+          <HydroRedirections darkMode={darkMode} />
         </div>
         <div id="section-4" style={{
           height: '100vh',

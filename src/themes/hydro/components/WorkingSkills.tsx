@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import workingSkills from '../../../data/working-skills.json';
 import BottomCardList from './working-skills/BottomCardList';
 
@@ -19,7 +19,30 @@ const containerStyles = {
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  padding: '40px'
+  padding: '40px',
+  position: 'relative',
+  overflow: 'hidden'
+} as const;
+
+const backgroundContainerStyles = {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0
+} as const;
+
+const backgroundImageStyles = {
+  position: 'absolute',
+  top: '50%',
+  left: '50%',
+  transform: 'translate(-50%, -50%)',
+  maxWidth: '100%',
+  maxHeight: '100%',
+  opacity: 0.1,
+  transition: 'opacity 1s ease-in-out',
+  userSelect: 'none',
+  pointerEvents: 'none'
 } as const;
 
 const headerStyles = {
@@ -29,7 +52,9 @@ const headerStyles = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: '20px',
-  marginBottom: '40px'
+  marginBottom: '40px',
+  position: 'relative',
+  zIndex: 1
 } as const;
 
 const titleStyles = {
@@ -49,19 +74,61 @@ const skillDetailsStyles = {
   maxWidth: '800px',
   textAlign: 'center',
   marginBottom: '40px',
-  minHeight: '100px', 
+  minHeight: '100px',
   height: '50vw',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  gap: '15px'
+  gap: '15px',
+  position: 'relative',
+  zIndex: 1
 } as const;
 
+const BACKGROUNDS = {
+  light: [
+    'https://storage.googleapis.com/cj-mok-stash/fontaine10-bl.png',
+    'https://storage.googleapis.com/cj-mok-stash/fontaine11-bl.png',
+    'https://storage.googleapis.com/cj-mok-stash/fontaine12-bl.png',
+    'https://storage.googleapis.com/cj-mok-stash/fontaine13-bl.png',
+    'https://storage.googleapis.com/cj-mok-stash/fontaine14-bl.png'
+  ],
+  dark: [
+    'https://storage.googleapis.com/cj-mok-stash/fontaine10-wl.png',
+    'https://storage.googleapis.com/cj-mok-stash/fontaine11-wl.png',
+    'https://storage.googleapis.com/cj-mok-stash/fontaine12-wl.png',
+    'https://storage.googleapis.com/cj-mok-stash/fontaine13-wl.png',
+    'https://storage.googleapis.com/cj-mok-stash/fontaine14-wl.png'
+  ]
+};
+
 const WorkingSkills: React.FC<WorkingSkillsProps> = ({ darkMode }) => {
-  const [selectedSkill, setSelectedSkill] = useState<Skill>(() => {
-    // Initialize with the first skill from workingSkills
-    return workingSkills[0];
-  });
+  const [selectedSkill, setSelectedSkill] = useState<Skill>(() => workingSkills[0]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Preload images
+  useEffect(() => {
+    const preloadImages = (urls: string[]) => {
+      urls.forEach(url => {
+        const img = new Image();
+        img.src = url;
+      });
+    };
+
+    preloadImages([...BACKGROUNDS.light, ...BACKGROUNDS.dark]);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % BACKGROUNDS.light.length);
+        setIsTransitioning(false);
+      }, 500);
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSkillSelect = (skill: Skill) => {
     setSelectedSkill(skill);
@@ -69,7 +136,18 @@ const WorkingSkills: React.FC<WorkingSkillsProps> = ({ darkMode }) => {
 
   return (
     <div style={containerStyles}>
-      {/* Upper Part - Title & Description */}
+      <div style={backgroundContainerStyles}>
+        <img 
+          src={darkMode ? BACKGROUNDS.dark[currentImageIndex] : BACKGROUNDS.light[currentImageIndex]}
+          alt=""
+          aria-hidden="true"
+          style={{
+            ...backgroundImageStyles,
+            opacity: isTransitioning ? 0 : 0.1
+          }}
+        />
+      </div>
+      
       <div style={headerStyles}>
         <h2 style={titleStyles}>
           Working Skills
@@ -79,7 +157,6 @@ const WorkingSkills: React.FC<WorkingSkillsProps> = ({ darkMode }) => {
         </p>
       </div>
 
-      {/* Skill Details Section */}
       <div style={skillDetailsStyles}>
         <h3 style={{ fontSize: '1.8em', margin: 0 }}>
           {selectedSkill.skills}
@@ -89,7 +166,6 @@ const WorkingSkills: React.FC<WorkingSkillsProps> = ({ darkMode }) => {
         </p>
       </div>
 
-      {/* Bottom Card List */}
       <BottomCardList 
         darkMode={darkMode}
         skills={workingSkills}
