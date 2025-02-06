@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Canvas from './canvas/Canvas';
+import Lab from "./lab/Lab";
+import Stash from "./stash/Stash";
 
 
 const App: React.FC = () => {
@@ -9,8 +11,8 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<Canvas />} />
         <Route path="/canvas" element={<Canvas />} />
-        <Route path="/stash" element={<div>Still under construction</div>} />
-        <Route path="/labs" element={<div>Still under construction</div>} />
+        <Route path="/stash" element={<Stash />} />
+        <Route path="/labs" element={<Lab />} />
       </Routes>
     </Router>
   );
