@@ -1,0 +1,16 @@
+{
+  "experimentSections": [
+    {
+      "title": "UI Components",
+      "experiments": [
+        {
+          "id": "exp-1",
+          "name": "Web GL Integration",
+          "description": "Testing Web GL integration",
+          "status": "completed",
+          "url": "/labs/web-gl-integration"
+        }
+      ]
+    }
+  ]
+} 
