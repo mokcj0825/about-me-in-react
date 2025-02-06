@@ -69,10 +69,6 @@ const Lab: React.FC = () => {
                   position: 'relative',
                   transition: 'transform 0.2s',
                   cursor: 'pointer',
-                  ':hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                  }
                 }}
               >
                 <div style={{
