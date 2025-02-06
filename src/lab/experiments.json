@@ -9,6 +9,13 @@
           "description": "Testing Web GL integration",
           "status": "completed",
           "url": "/labs/web-gl-integration"
+        },
+        {
+          "id": "exp-2",
+          "name": "Three Stereo - Not expected",
+          "description": "Testing implement of Stereo",
+          "status": "completed",
+          "url": "/labs/three-stereo"
         }
       ]
     }
