@@ -16,6 +16,13 @@
           "description": "Testing implement of Stereo",
           "status": "completed",
           "url": "/labs/three-stereo"
+        },
+        {
+          "id": "exp-3",
+          "name": "Game Dev - Hexa map",
+          "description": "Testing implement of Map",
+          "status": "completed",
+          "url": "/labs/hexa-grid"
         }
       ]
     }
