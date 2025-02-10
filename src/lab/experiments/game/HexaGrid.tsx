@@ -1,13 +1,13 @@
 import React from 'react';
-import SimpleMapUnit from './SimpleMapUnit';
+import ScrollableMapUnit from './ScrollableMapUnit';
 
 
 const HexaGrid: React.FC = () => {
   return (
     <div>
-      <SimpleMapUnit
-        mapWidth={5}
-        mapHeight={5}
+      <ScrollableMapUnit
+        mapWidth={40}
+        mapHeight={40}
         onUnitClick={() => console.log('clicked')}
       />
     </div>
