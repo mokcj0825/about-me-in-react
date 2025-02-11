@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useUnits, Fraction } from './UnitManager';
 
 interface AxialCoordinate {
   q: number;
@@ -27,15 +28,30 @@ const hexagonStyles = {
   position: 'relative',  // Ensure the hover layer is positioned correctly
 } as const;
 
+const getFractionColor = (fraction: Fraction) => {
+  switch (fraction) {
+    case Fraction.BLUE:
+      return 'blue';
+    case Fraction.RED:
+      return 'red';
+    case Fraction.GREEN:
+      return 'green';
+    case Fraction.NEUTRAL:
+      return 'gray';
+    default:
+      return 'blue';
+  }
+};
+
 const SimpleGridUnit: React.FC<SimpleGridUnitProps> = ({
   coordinate,
   terrainType,
-  isOccupied,
-  occupantId,
   onClick,
   onHover,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const { getUnitAt } = useUnits();
+  const unit = getUnitAt(coordinate.q, coordinate.r);
 
   const handleClick = () => {
     onClick(coordinate);
@@ -74,7 +90,19 @@ const SimpleGridUnit: React.FC<SimpleGridUnitProps> = ({
       <div>
         <p>{`(${coordinate.q}, ${coordinate.r})`}</p>
         <p>{terrainType}</p>
-        {isOccupied && <p>Occupied by: {occupantId}</p>}
+        {unit && (
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              backgroundColor: getFractionColor(unit.fraction),
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+            }}
+          />
+        )}
       </div>
     </div>
   );

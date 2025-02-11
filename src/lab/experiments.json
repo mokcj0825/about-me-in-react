@@ -23,6 +23,13 @@
           "description": "Testing implement of Map",
           "status": "completed",
           "url": "/labs/hexa-grid"
+        },
+        {
+          "id": "exp-4",
+          "name": "Game Dev - Add a unit on map",
+          "description": "Add a unit on map",
+          "status": "completed",
+          "url": "/labs/add-a-unit"
         }
       ]
     }
