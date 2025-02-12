@@ -30,6 +30,13 @@
           "description": "Add a unit on map",
           "status": "completed",
           "url": "/labs/add-a-unit"
+        },
+        {
+          "id": "exp-5",
+          "name": "Game Dev - Setup managers",
+          "description": "Add a manager on map",
+          "status": "completed",
+          "url": "/labs/game-theater"
         }
       ]
     }
