@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
-import AxialCoordinate from "../game/AxialCoordinate";
 import { eventBus } from "./EventBus";
+import { HexCoordinate, createHexCoordinate, getNeighbors } from "./types/HexCoordinate";
+import { UnitData, initialUnits } from "./types/UnitData";
 
 // Types
 interface GameRendererProps {
@@ -9,34 +10,48 @@ interface GameRendererProps {
 }
 
 interface HexCellProps {
-  coordinate: AxialCoordinate;
+  coordinate: HexCoordinate;
+  unit?: UnitData;
+  isMoveable?: boolean;
+  onHover: (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => void;
 }
 
 // Grid constants
 const GRID = {
-  WIDTH: 100,  // Exact width of hexagon
-  ROW_OFFSET: 50  // Fixed offset for even rows
+  WIDTH: 100,
+  ROW_OFFSET: 50
 };
 
 // Hex Cell Component
-const HexCell: React.FC<HexCellProps> = ({ coordinate }) => {
+const HexCell: React.FC<HexCellProps> = ({ 
+  coordinate, 
+  unit, 
+  isMoveable,
+  onHover 
+}) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = () => {
     setIsHovered(true);
-    eventBus.emit('unit-hovered', { unitId: `${coordinate.r},${coordinate.q}` });
+    onHover(coordinate, true, !!unit);
   };
 
   const handleMouseLeave = () => {
     setIsHovered(false);
+    onHover(coordinate, false, !!unit);
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent default browser context menu
+    e.preventDefault();
     
-    if (e.button === 0) { // Left click
-      console.log(`Clicked coordinate: (${coordinate.r}, ${coordinate.q})`);
-    } else if (e.button === 2) { // Right click
+    if (e.button === 0) {
+      if (unit) {
+        console.log(`Selected unit at (${coordinate.x}, ${coordinate.y}, ${coordinate.z}) with movement ${unit.movement}`);
+        eventBus.emit('unit-selected', { unitId: unit.id, position: coordinate });
+      } else {
+        console.log(`Clicked coordinate: (${coordinate.x}, ${coordinate.y}, ${coordinate.z})`);
+      }
+    } else if (e.button === 2) {
       console.log('menu');
     }
   };
@@ -46,14 +61,16 @@ const HexCell: React.FC<HexCellProps> = ({ coordinate }) => {
       style={{
         width: `${GRID.WIDTH}px`,
         height: `${GRID.WIDTH}px`,
-        backgroundColor: isHovered ? '#4a90e2' : '#f0f0f0',
+        backgroundColor: isHovered ? '#4a90e2' : 
+                        isMoveable ? '#98fb98' :  // Light green for moveable cells
+                        unit ? '#ffeb3b' : '#f0f0f0',
         clipPath: 'polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         cursor: 'default',
         userSelect: 'none',
-        fontSize: '14px',
+        fontSize: '12px',
         margin: 0,
         padding: 0,
         boxSizing: 'border-box',
@@ -67,20 +84,43 @@ const HexCell: React.FC<HexCellProps> = ({ coordinate }) => {
       onClick={handleClick}
       onContextMenu={handleClick}
     >
-      ({coordinate.r}, {coordinate.q})
+      {unit ? 'U' : `(${coordinate.x},${coordinate.y},${coordinate.z})`}
     </div>
   );
 };
 
 // Main Renderer Component
 export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => {
+  const [units, setUnits] = useState<UnitData[]>(initialUnits);
+  const [moveableGrids, setMoveableGrids] = useState<HexCoordinate[]>([]);
   const mapRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<number | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
 
-  const SCROLL_THRESHOLD = 100; // pixels from edge
-  const SCROLL_SPEED = 15; // pixels per frame
-  const PADDING = 400; // Extra space on each side
+  const SCROLL_THRESHOLD = 100;
+  const SCROLL_SPEED = 15;
+  const PADDING = 400;
+
+  // Grid generation with cube coordinates
+  const generateGrid = () => {
+    const grid: HexCoordinate[][] = [];
+    for (let y = height - 1; y >= 0; y--) {
+      const row: HexCoordinate[] = [];
+      for (let x = 0; x < width; x++) {
+        row.push(createHexCoordinate(x, y));
+      }
+      grid.push(row);
+    }
+    return grid;
+  };
+
+  const findUnitAtPosition = (coord: HexCoordinate) => {
+    return units.find(unit => 
+      unit.position.x === coord.x && 
+      unit.position.y === coord.y && 
+      unit.position.z === coord.z
+    );
+  };
 
   // Mouse movement tracking
   useEffect(() => {
@@ -146,20 +186,57 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     }
   }, []);
 
-  // Grid generation
-  const generateGrid = () => {
-    const grid: AxialCoordinate[][] = [];
-    for (let r = height - 1; r >= 0; r--) {
-      const row: AxialCoordinate[] = [];
-      for (let q = 0; q < width; q++) {
-        row.push({ q: r, r: q });
+  const grid = generateGrid();
+
+  // Function to get all grids within movement range
+  const getMoveableGrids = (startCoord: HexCoordinate, movement: number): HexCoordinate[] => {
+    const result: HexCoordinate[] = [];
+    const visited = new Set<string>();
+    
+    const queue: [HexCoordinate, number][] = [[startCoord, 0]];
+    visited.add(`${startCoord.x},${startCoord.y}`);
+
+    while (queue.length > 0) {
+      const [current, distance] = queue.shift()!;
+      
+      if (distance <= movement) {
+        result.push(current);
+        
+        if (distance < movement) {
+          const neighbors = getNeighbors(current);
+          for (const neighbor of neighbors) {
+            const key = `${neighbor.x},${neighbor.y}`;
+            if (!visited.has(key)) {
+              visited.add(key);
+              queue.push([neighbor, distance + 1]);
+            }
+          }
+        }
       }
-      grid.push(row);
     }
-    return grid;
+
+    return result;
   };
 
-  const grid = generateGrid();
+  const handleCellHover = (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => {
+    if (isHovering && isUnit) {
+      const unit = findUnitAtPosition(coord);
+      if (unit) {
+        const moveableGrids = getMoveableGrids(coord, unit.movement);
+        setMoveableGrids(moveableGrids);
+      }
+    } else if (!isHovering) {
+      setMoveableGrids([]);
+    }
+  };
+
+  const isMoveableCell = (coord: HexCoordinate) => {
+    return moveableGrids.some(grid => 
+      grid.x === coord.x && 
+      grid.y === coord.y && 
+      grid.z === coord.z
+    );
+  };
 
   return (
     <div ref={mapRef} style={{
@@ -192,7 +269,13 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
             marginTop: index === 0 ? '0' : '-25px',
           }}>
             {row.map((coord) => (
-              <HexCell key={`${coord.q},${coord.r}`} coordinate={coord} />
+              <HexCell 
+                key={`${coord.x},${coord.y}`} 
+                coordinate={coord}
+                unit={findUnitAtPosition(coord)}
+                isMoveable={isMoveableCell(coord)}
+                onHover={handleCellHover}
+              />
             ))}
           </div>
         ))}

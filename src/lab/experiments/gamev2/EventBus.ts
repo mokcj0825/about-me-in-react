@@ -1,11 +1,21 @@
 import mitt from 'mitt';
+import { UnitSelectedEvent, UnitHoveredEvent } from './types/EventTypes';
 
 type Events = {
-  'unit-hovered': { unitId: string };
-  'unit-selected': { unitId: string };
-  'unit-moved': { unitId: string; from: { q: number; r: number }; to: { q: number; r: number } };
-  'turn-ended': { fraction: string };
-  'terrain-changed': { q: number; r: number; type: string };
+  'unit-selected': UnitSelectedEvent;
+  'unit-hovered': UnitHoveredEvent;
+  'unit-moved': { 
+    unitId: string; 
+    from: { x: number; y: number; z: number }; 
+    to: { x: number; y: number; z: number } 
+  };
+  'turn-ended': { 
+    fraction: string 
+  };
+  'terrain-changed': { 
+    position: { x: number; y: number; z: number }; 
+    type: string 
+  };
 };
 
 export const eventBus = mitt<Events>();
