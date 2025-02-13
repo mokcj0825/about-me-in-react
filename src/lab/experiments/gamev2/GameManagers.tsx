@@ -14,8 +14,8 @@ export const GameManagers: React.FC<GameManagersProps> = ({ children }) => (
   <>
     <UnitManager />
     <HoverManager />
-    <SelectionManager />
     <MovementManager />
+    <SelectionManager />
     <TerrainManager />
     <TurnManager />
     {children}

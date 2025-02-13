@@ -1,14 +1,15 @@
 import { useEffect } from 'react';
 import { eventBus } from "./EventBus";
+import { UnitSelectedEvent } from "./types/EventTypes";
 
 export const TerrainManager = () => {
   useEffect(() => {
-    eventBus.on('unit-selected', ({ unitId }) => {
-      // Check terrain effects
-      console.log(`Checking terrain effects for unit ${unitId}`);
-    });
+    const handleUnitSelected = ({ unitId, position }: UnitSelectedEvent) => {
+      console.log(`Checking terrain effects for unit ${unitId} at (${position.x}, ${position.y}, ${position.z})`);
+    };
 
-    return () => eventBus.off('unit-selected');
+    eventBus.on('unit-selected', handleUnitSelected);
+    return () => eventBus.off('unit-selected', handleUnitSelected);
   }, []);
 
   return null;
