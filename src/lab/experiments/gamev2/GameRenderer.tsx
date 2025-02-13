@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect } from "react";
-import { eventBus } from "./EventBus";
 import { HexCoordinate, createHexCoordinate, getNeighbors } from "./types/HexCoordinate";
 import { UnitData, initialUnits } from "./types/UnitData";
 import { HexCell } from "./components/HexCell";
@@ -165,6 +164,11 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     );
   };
 
+  // Get the position of our single unit
+  const getUnitPosition = () => {
+    return units[0]?.position;  // Since we only have one unit
+  };
+
   return (
     <div ref={mapRef} style={{
       width: '100%',
@@ -202,6 +206,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
                 unit={findUnitAtPosition(coord)}
                 isMoveable={isMoveableCell(coord)}
                 onHover={handleCellHover}
+                unitPosition={getUnitPosition()}
               />
             ))}
           </div>

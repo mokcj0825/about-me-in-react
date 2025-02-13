@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { HexCoordinate } from "../types/HexCoordinate";
+import { HexCoordinate, getDistance } from "../types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
 import { eventBus } from "../EventBus";
 
@@ -8,6 +8,7 @@ interface HexCellProps {
   unit?: UnitData;
   isMoveable?: boolean;
   onHover: (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => void;
+  unitPosition?: HexCoordinate;
 }
 
 const GRID = {
@@ -18,7 +19,8 @@ export const HexCell: React.FC<HexCellProps> = ({
   coordinate, 
   unit, 
   isMoveable,
-  onHover 
+  onHover,
+  unitPosition 
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -39,8 +41,9 @@ export const HexCell: React.FC<HexCellProps> = ({
       if (unit) {
         console.log(`Selected unit at (${coordinate.x}, ${coordinate.y}, ${coordinate.z}) with movement ${unit.movement}`);
         eventBus.emit('unit-selected', { unitId: unit.id, position: coordinate });
-      } else {
-        console.log(`Clicked coordinate: (${coordinate.x}, ${coordinate.y}, ${coordinate.z})`);
+      } else if (unitPosition) {
+        const distance = getDistance(coordinate, unitPosition);
+        alert(`Distance to unit: ${distance} hexes`);
       }
     } else if (e.button === 2) {
       console.log('menu');
