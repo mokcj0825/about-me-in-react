@@ -21,11 +21,5 @@ export const initialUnits: UnitData[] = [
     position: createHexCoordinate(4, 4),
     movement: 5,
     faction: 'enemy'
-  }, 
-  {
-    id: '3',
-    position: createHexCoordinate(3, 5),
-    movement: 5,
-    faction: 'enemy'
-  }
+  },
 ]; 
