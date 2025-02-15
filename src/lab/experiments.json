@@ -49,6 +49,13 @@
           "description": "Add a enemy unit on map, and apply ZOC",
           "status": "completed",
           "url": "/labs/game-theater-v3"
+        },
+        {
+          "id": "gamedev-5",
+          "name": "Game Dev - Add characteristic system",
+          "description": "Add characteristic system on unit",
+          "status": "completed",
+          "url": "/labs/game-theater-v4"
         }
       ]
     }
