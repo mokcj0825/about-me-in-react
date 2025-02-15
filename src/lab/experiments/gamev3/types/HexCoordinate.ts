@@ -32,30 +32,13 @@ export const getNeighbors = (hex: HexCoordinate): HexCoordinate[] => {
   };
 
 
-  export const getDistance = (a: HexCoordinate, b: HexCoordinate): number => {
-    if (a.x === b.x && a.y === b.y) return 0; // Edge case: same position
-  
-    const queue: [HexCoordinate, number][] = [[a, 0]];
-    const visited = new Set<string>(); // Use a Set for fast lookups
-    visited.add(`${a.x},${a.y}`);
-  
-    let index = 0; // Index-based queue traversal
-  
-    while (index < queue.length) {
-      const [current, distance] = queue[index++]; // O(1) pop operation
-  
-      for (const neighbor of getNeighbors(current)) {
-        const key = `${neighbor.x},${neighbor.y}`;
-        if (!visited.has(key)) {
-          if (neighbor.x === b.x && neighbor.y === b.y) return distance + 1; // Found target early
-          visited.add(key);
-          queue.push([neighbor, distance + 1]);
-        }
-      }
-    }
-  
-    return -1; // No path found
-  };
+export const getDistance = (a: HexCoordinate, b: HexCoordinate): number => {
+  return Math.max(
+    Math.abs(a.x - b.x),
+    Math.abs(a.y - b.y),
+    Math.abs(a.z - b.z)
+  );
+};
 
 // Helper function to verify distances
 export const debugDistance = (a: HexCoordinate, b: HexCoordinate): void => {
@@ -71,26 +54,23 @@ export const areCoordinatesEqual = (a: HexCoordinate, b: HexCoordinate): boolean
   return a.x === b.x && a.y === b.y && a.z === b.z;
 };
 
-export const getZoneOfControl = (unitPosition: HexCoordinate, zocRange: number = 1): HexCoordinate[] => {
-  const zocGrids: HexCoordinate[] = [];
-  const visited = new Set<string>();
-  const queue: [HexCoordinate, number][] = [[unitPosition, 0]];
-  
-  while (queue.length > 0) {
-    const [current, distance] = queue.shift()!;
-    const key = `${current.x},${current.y}`;
-    
-    if (distance <= zocRange && !visited.has(key)) {
-      visited.add(key);
-      zocGrids.push(current);
-      
-      if (distance < zocRange) {
-        getNeighbors(current).forEach(neighbor => {
-          queue.push([neighbor, distance + 1]);
-        });
-      }
-    }
-  }
-  
-  return zocGrids;
+export const getZoneOfControl = (unitPosition: HexCoordinate): HexCoordinate[] => {
+  const isYEven = unitPosition.y % 2 === 0;
+  return isYEven
+    ? [
+        createHexCoordinate(unitPosition.x + 1, unitPosition.y),     // right
+        createHexCoordinate(unitPosition.x - 1, unitPosition.y),     // left
+        createHexCoordinate(unitPosition.x, unitPosition.y + 1),     // top left
+        createHexCoordinate(unitPosition.x + 1, unitPosition.y + 1), // top right
+        createHexCoordinate(unitPosition.x, unitPosition.y - 1),     // bottom left
+        createHexCoordinate(unitPosition.x + 1, unitPosition.y - 1), // bottom right
+      ]
+    : [
+        createHexCoordinate(unitPosition.x + 1, unitPosition.y),     // right
+        createHexCoordinate(unitPosition.x - 1, unitPosition.y),     // left
+        createHexCoordinate(unitPosition.x - 1, unitPosition.y + 1), // top left
+        createHexCoordinate(unitPosition.x, unitPosition.y + 1),     // top right
+        createHexCoordinate(unitPosition.x - 1, unitPosition.y - 1), // bottom left
+        createHexCoordinate(unitPosition.x, unitPosition.y - 1),     // bottom right
+      ];
 }; 

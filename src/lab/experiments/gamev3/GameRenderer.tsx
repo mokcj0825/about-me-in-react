@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl } from "./types/HexCoordinate";
+import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl, getDistance } from "./types/HexCoordinate";
 import { UnitData, initialUnits } from "./types/UnitData";
 import { HexCell } from "./components/HexCell";
 
@@ -120,15 +120,12 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   // Function to get all grids within movement range
   const getMoveableGrids = (startCoord: HexCoordinate, movement: number): HexCoordinate[] => {
-    const result: HexCoordinate[] = [];
-    const visited = new Set<string>();
-    const movementCosts = new Map<string, number>();
+    const result = new Set<string>();
+    const visited = new Map<string, number>();
     
-    // Get the unit at start position to determine faction
     const movingUnit = findUnitAtPosition(startCoord);
     if (!movingUnit) return [];
 
-    // Get ZOC based on opposing factions
     const opposingZOC = units
       .filter(u => {
         if (movingUnit.faction === 'enemy') {
@@ -139,55 +136,49 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       })
       .flatMap(u => getZoneOfControl(u.position));
     
-    // Priority queue for A* pathfinding
-    const queue: [HexCoordinate, number][] = [[startCoord, 0]];
-    visited.add(`${startCoord.x},${startCoord.y}`);
-    movementCosts.set(`${startCoord.x},${startCoord.y}`, 0);
-
+    // Queue stores [position, remainingMovement, path]
+    const queue: [HexCoordinate, number, HexCoordinate[]][] = [
+      [startCoord, movement, [startCoord]]
+    ];
+    
+    visited.set(`${startCoord.x},${startCoord.y}`, movement);
+    
     while (queue.length > 0) {
-      const [current, cost] = queue.shift()!;
+      const [current, remainingMove, path] = queue.shift()!;
+      const currentKey = `${current.x},${current.y}`;
       
-      if (cost <= movement) {
-        result.push(current);
+      if (remainingMove >= 0) {
+        result.add(currentKey);
         
         const neighbors = getNeighbors(current);
         for (const neighbor of neighbors) {
-          const key = `${neighbor.x},${neighbor.y}`;
-          
-          // Check if neighbor is in opposing ZOC
-          const isInOpposingZOC = opposingZOC.some(zoc => 
+          const neighborKey = `${neighbor.x},${neighbor.y}`;
+          const neighborInZOC = opposingZOC.some(zoc => 
             zoc.x === neighbor.x && zoc.y === neighbor.y
           );
           
-          // If we're already in ZOC, allow movement to non-ZOC tiles
-          const currentInZOC = opposingZOC.some(zoc => 
-            zoc.x === current.x && zoc.y === current.y
-          );
+          const moveCost = 1;
+          const newRemainingMove = neighborInZOC ? 0 : remainingMove - moveCost;
           
-          // Calculate movement cost
-          let movementCost = cost + 1;
-          if (isInOpposingZOC && !currentInZOC) {
-            // Only pay extra cost when entering ZOC
-            movementCost += 1;
-          }
-          
-          const existingCost = movementCosts.get(key);
-          if (movementCost <= movement && (!existingCost || movementCost < existingCost)) {
-            visited.add(key);
-            movementCosts.set(key, movementCost);
-            
-            const insertIndex = queue.findIndex(([_, c]) => c > movementCost);
-            if (insertIndex === -1) {
-              queue.push([neighbor, movementCost]);
-            } else {
-              queue.splice(insertIndex, 0, [neighbor, movementCost]);
+          // Check if we have enough movement to enter this tile
+          if (remainingMove >= moveCost) {
+            const existingMove = visited.get(neighborKey);
+            // Only visit if we haven't been here or we have more movement points now
+            if (existingMove === undefined || newRemainingMove > existingMove) {
+              const newPath = [...path, neighbor];
+              
+              visited.set(neighborKey, newRemainingMove);
+              queue.push([neighbor, newRemainingMove, newPath]);
             }
           }
         }
       }
     }
 
-    return result;
+    return Array.from(result).map(key => {
+      const [x, y] = key.split(',').map(Number);
+      return createHexCoordinate(x, y);
+    });
   };
 
   const handleCellHover = (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => {
