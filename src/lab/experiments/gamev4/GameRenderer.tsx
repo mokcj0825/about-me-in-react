@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
-import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl, getDistance } from "./types/HexCoordinate";
+import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl } from "./types/HexCoordinate";
 import { UnitData, initialUnits } from "./types/UnitData";
 import { HexCell } from "./components/HexCell";
-import { hasCharacteristic, CHARACTERISTICS } from './types/Characteristics';
+import { hasCharacteristic } from './types/Characteristics';
 
 // Types
 interface GameRendererProps {
@@ -125,13 +125,6 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     const movingUnit = findUnitAtPosition(startCoord);
     if (!movingUnit) return [];
 
-    // Debug logs
-    console.log('Moving unit:', movingUnit);
-    console.log('Unit characteristics:', movingUnit.characteristics);
-    console.log('CHARACTERISTICS:', CHARACTERISTICS);
-    console.log('Checking characteristic 00001:', CHARACTERISTICS['00001']);
-    console.log('Has ignore-zoc tag:', hasCharacteristic(movingUnit.characteristics, movingUnit.buffs, 'ignore-zoc'));
-
     const ignoresZOC = hasCharacteristic(
       movingUnit.characteristics,
       movingUnit.buffs,
@@ -149,11 +142,9 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       })
       .flatMap(u => getZoneOfControl(u.position));
     
-    const queue: [HexCoordinate, number, HexCoordinate[]][] = [
-      [startCoord, movement, [startCoord]]
+    const queue: [HexCoordinate, number, string][] = [
+      [startCoord, movement, `(${startCoord.x}, ${startCoord.y}, ${movement})`]
     ];
-    
-    visited.set(`${startCoord.x},${startCoord.y}`, movement);
     
     while (queue.length > 0) {
       const [current, remainingMove, path] = queue.shift()!;
@@ -162,25 +153,41 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       if (remainingMove >= 0) {
         result.add(currentKey);
         
-        if (remainingMove > 0) {  // Only continue if we have movement points left
+        if (remainingMove > 0) {
           const neighbors = getNeighbors(current);
+          
           for (const neighbor of neighbors) {
-            const neighborKey = `${neighbor.x},${neighbor.y}`;
-            const neighborInZOC = opposingZOC.some(zoc => 
-              zoc.x === neighbor.x && zoc.y === neighbor.y
+            const unitAtPosition = findUnitAtPosition(neighbor);
+            const isHostile = unitAtPosition && (
+              (movingUnit.faction === 'enemy' && (unitAtPosition.faction === 'player' || unitAtPosition.faction === 'ally')) ||
+              ((movingUnit.faction === 'player' || movingUnit.faction === 'ally') && unitAtPosition.faction === 'enemy')
             );
             
-            const moveCost = 1;
-            // If unit ignores ZOC, always use normal movement cost
-            const newRemainingMove = ignoresZOC 
-              ? remainingMove - moveCost 
-              : (neighborInZOC ? 0 : remainingMove - moveCost);
+            if (isHostile) continue;
             
-            if (remainingMove >= moveCost) {
+            const moveCost = 1;
+            let newRemainingMove = remainingMove - moveCost;
+
+            if (!ignoresZOC) {
+              const currentInZOC = opposingZOC.some(zoc => 
+                zoc.x === current.x && zoc.y === current.y
+              );
+              const neighborInZOC = opposingZOC.some(zoc => 
+                zoc.x === neighbor.x && zoc.y === neighbor.y
+              );
+              
+              if (currentInZOC && neighborInZOC) {
+                newRemainingMove = 0;
+              }
+            }
+            
+            if (newRemainingMove >= 0) {
+              const neighborKey = `${neighbor.x},${neighbor.y}`;
               const existingMove = visited.get(neighborKey);
+              
               if (existingMove === undefined || newRemainingMove > existingMove) {
                 visited.set(neighborKey, newRemainingMove);
-                queue.push([neighbor, newRemainingMove, path.concat(neighbor)]);
+                queue.push([neighbor, newRemainingMove, path]);
               }
             }
           }
