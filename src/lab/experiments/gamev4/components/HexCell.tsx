@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { HexCoordinate, getDistance } from "../types/HexCoordinate";
 import { UnitData, Faction } from "../types/UnitData";
 import { eventBus } from "../EventBus";
+import { HexCellOverlay } from "./HexCellOverlay";
+import { HexCellContent } from "./HexCellContent";
 
 interface HexCellProps {
   coordinate: HexCoordinate;
@@ -69,7 +71,6 @@ export const HexCell: React.FC<HexCellProps> = ({
     
     if (e.button === 0) {
       if (unit) {
-        console.log(`Selected unit at (${coordinate.x}, ${coordinate.y}, ${coordinate.z}) with movement ${unit.movement}`);
         eventBus.emit('unit-selected', { unitId: unit.id, position: coordinate });
       } else if (unitPosition) {
         const distance = getDistance(coordinate, unitPosition);
@@ -96,7 +97,6 @@ export const HexCell: React.FC<HexCellProps> = ({
       style={{
         width: `${GRID.WIDTH}px`,
         height: `${GRID.WIDTH}px`,
-        backgroundColor: getBackgroundColor(),
         clipPath: 'polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)',
         display: 'flex',
         alignItems: 'center',
@@ -117,7 +117,8 @@ export const HexCell: React.FC<HexCellProps> = ({
       onClick={handleClick}
       onContextMenu={handleClick}
     >
-      {unit ? (unit.faction === 'player' ? 'P' : unit.faction === 'ally' ? 'A' : 'E') : `(${coordinate.x},${coordinate.y},${coordinate.z})`}
+      <HexCellOverlay color={getBackgroundColor()} />
+      <HexCellContent coordinate={coordinate} unit={unit} />
     </div>
   );
 }; 

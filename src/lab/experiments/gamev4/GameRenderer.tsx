@@ -3,6 +3,10 @@ import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl } fr
 import { UnitData, initialUnits } from "./types/UnitData";
 import { HexCell } from "./components/HexCell";
 import { hasCharacteristic } from './types/Characteristics';
+import { MovementCalculator } from "./movement/MovementCalculator";
+import { GroundMovement } from "./movement/rules/GroundMovement";
+import { StandardZOC } from "./zoc/rules/StandardZOC";
+
 
 // Types
 interface GameRendererProps {
@@ -31,6 +35,11 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   const SCROLL_THRESHOLD = 100;
   const SCROLL_SPEED = 15;
   const PADDING = 400;
+
+  const movementCalculator = new MovementCalculator(
+    new GroundMovement(),
+    [new StandardZOC()]
+  );
 
   // Grid generation with cube coordinates
   const generateGrid = () => {
@@ -117,88 +126,52 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   const grid = generateGrid();
 
-  // Function to get all grids within movement range
-  const getMoveableGrids = (startCoord: HexCoordinate, movement: number): HexCoordinate[] => {
-    const result = new Set<string>();
-    const visited = new Map<string, number>();
-    
-    const movingUnit = findUnitAtPosition(startCoord);
-    if (!movingUnit) return [];
+  // Helper functions
+  const isHostileUnit = (movingUnit: UnitData, targetUnit: UnitData): boolean => {
+    if (movingUnit.faction === 'enemy') {
+      return targetUnit.faction === 'player' || targetUnit.faction === 'ally';
+    }
+    if (movingUnit.faction === 'player' || movingUnit.faction === 'ally') {
+      return targetUnit.faction === 'enemy';
+    }
+    return false;
+  };
 
-    const ignoresZOC = hasCharacteristic(
-      movingUnit.characteristics,
-      movingUnit.buffs,
-      'ignore-zoc'
-    );
-
-    const opposingZOC = units
-      .filter(u => {
-        if (movingUnit.faction === 'enemy') {
-          return u.faction === 'player' || u.faction === 'ally';
-        } else if (movingUnit.faction === 'player' || movingUnit.faction === 'ally') {
-          return u.faction === 'enemy';
-        }
-        return false;
-      })
+  const getOpposingZOC = (movingUnit: UnitData, units: UnitData[]): HexCoordinate[] => {
+    return units
+      .filter(u => isHostileUnit(movingUnit, u))
       .flatMap(u => getZoneOfControl(u.position));
-    
-    const queue: [HexCoordinate, number, string][] = [
-      [startCoord, movement, `(${startCoord.x}, ${startCoord.y}, ${movement})`]
-    ];
-    
-    while (queue.length > 0) {
-      const [current, remainingMove, path] = queue.shift()!;
-      const currentKey = `${current.x},${current.y}`;
-      
-      if (remainingMove >= 0) {
-        result.add(currentKey);
-        
-        if (remainingMove > 0) {
-          const neighbors = getNeighbors(current);
-          
-          for (const neighbor of neighbors) {
-            const unitAtPosition = findUnitAtPosition(neighbor);
-            const isHostile = unitAtPosition && (
-              (movingUnit.faction === 'enemy' && (unitAtPosition.faction === 'player' || unitAtPosition.faction === 'ally')) ||
-              ((movingUnit.faction === 'player' || movingUnit.faction === 'ally') && unitAtPosition.faction === 'enemy')
-            );
-            
-            if (isHostile) continue;
-            
-            const moveCost = 1;
-            let newRemainingMove = remainingMove - moveCost;
+  };
 
-            if (!ignoresZOC) {
-              const currentInZOC = opposingZOC.some(zoc => 
-                zoc.x === current.x && zoc.y === current.y
-              );
-              const neighborInZOC = opposingZOC.some(zoc => 
-                zoc.x === neighbor.x && zoc.y === neighbor.y
-              );
-              
-              if (currentInZOC && neighborInZOC) {
-                newRemainingMove = 0;
-              }
-            }
-            
-            if (newRemainingMove >= 0) {
-              const neighborKey = `${neighbor.x},${neighbor.y}`;
-              const existingMove = visited.get(neighborKey);
-              
-              if (existingMove === undefined || newRemainingMove > existingMove) {
-                visited.set(neighborKey, newRemainingMove);
-                queue.push([neighbor, newRemainingMove, path]);
-              }
-            }
-          }
-        }
+  const calculateNewRemainingMove = (
+    current: HexCoordinate,
+    neighbor: HexCoordinate,
+    remainingMove: number,
+    ignoresZOC: boolean,
+    opposingZOC: HexCoordinate[]
+  ): number => {
+    const moveCost = 1;
+    let newRemainingMove = remainingMove - moveCost;
+
+    if (!ignoresZOC) {
+      const currentInZOC = opposingZOC.some(zoc => 
+        zoc.x === current.x && zoc.y === current.y
+      );
+      const neighborInZOC = opposingZOC.some(zoc => 
+        zoc.x === neighbor.x && zoc.y === neighbor.y
+      );
+      
+      if (currentInZOC && neighborInZOC) {
+        newRemainingMove = 0;
       }
     }
 
-    return Array.from(result).map(key => {
-      const [x, y] = key.split(',').map(Number);
-      return createHexCoordinate(x, y);
-    });
+    return newRemainingMove;
+  };
+
+  // Main function
+  const getMoveableGrids = (startCoord: HexCoordinate, movement: number): HexCoordinate[] => {
+    return movementCalculator.getMoveableGrids(startCoord, movement, units);
   };
 
   const handleCellHover = (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => {
