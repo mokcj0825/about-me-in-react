@@ -1,15 +1,8 @@
 import React from 'react';
 
-interface HexCellOverlayProps {
-  color: string;
-  opacity?: number;
-}
-
-export const HexCellOverlay: React.FC<HexCellOverlayProps> = ({ 
-  color, 
-  opacity = 0.5
-}) => (
+export const HexCellOverlay: React.FC = () => (
   <>
+    {/* Content fill */}
     <div 
       style={{
         position: 'absolute',
@@ -17,25 +10,33 @@ export const HexCellOverlay: React.FC<HexCellOverlayProps> = ({
         left: 0,
         width: '100%',
         height: '100%',
-        background: '#8B4513',
-        opacity,
+        backgroundColor: '#FFFFFF',
+        opacity: 0.2,
         pointerEvents: 'none',
-        clipPath: 'polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)',
         zIndex: 1,
       }}
     />
-    <div 
+    {/* SVG hexagon grid lines */}
+    <svg
       style={{
         position: 'absolute',
-        top: '2%',
-        left: '2%',
-        width: '96%',
-        height: '96%',
-        background: color,
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
         pointerEvents: 'none',
-        clipPath: 'polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)',
         zIndex: 2,
       }}
-    />
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <path
+        d="M0 25 L0 75 L50 100 L100 75 L100 25 L50 0 Z"
+        fill="none"
+        stroke="#8B4513"
+        strokeWidth="2"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
   </>
 ); 

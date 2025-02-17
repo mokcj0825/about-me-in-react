@@ -7,6 +7,19 @@ interface HexCellContentProps {
   unit?: UnitData;
 }
 
+const getUnitColor = (faction: string) => {
+  switch (faction) {
+    case 'player':
+      return '#ffeb3b';  // Yellow for player
+    case 'ally':
+      return '#4CAF50';  // Green for ally
+    case 'enemy':
+      return '#ff4444';  // Red for enemy
+    default:
+      return '#f0f0f0';
+  }
+};
+
 export const HexCellContent: React.FC<HexCellContentProps> = ({ 
   coordinate,
   unit
@@ -22,13 +35,14 @@ export const HexCellContent: React.FC<HexCellContentProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       pointerEvents: 'none',
-      zIndex: 3,
+      zIndex: 4,
+      backgroundColor: unit ? getUnitColor(unit.faction) : 'transparent',
     }}
   >
     {unit ? (
       unit.faction === 'player' ? 'P' : unit.faction === 'ally' ? 'A' : 'E'
     ) : (
-      `(${coordinate.x},${coordinate.y},${coordinate.z})`
+      ``
     )}
   </div>
 );

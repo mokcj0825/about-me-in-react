@@ -52,5 +52,13 @@ export const initialUnits: UnitData[] = [
     faction: 'player',
     characteristics: [],
     buffs: []
+  }, 
+  { 
+    id: '5', 
+    position: createHexCoordinate(2, 6),
+    movement: 5,
+    faction: 'enemy',
+    characteristics: [],
+    buffs: []
   }
 ]; 
