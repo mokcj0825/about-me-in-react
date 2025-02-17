@@ -44,18 +44,21 @@ export interface Buff {
 export const hasCharacteristic = (
   characteristics: CharacteristicId[], 
   buffs: Buff[], 
-  tag: string
+  tag: CharacteristicTag
 ): boolean => {
-  // Debug logs
-  console.log('Checking characteristics:', characteristics);
-  console.log('Looking for tag:', tag);
-  console.log('Found characteristic:', characteristics.map(id => CHARACTERISTICS[id]));
+  // Remove debug logs as they're no longer needed
   
-  // If the characteristic is the tag itself, return true
-  if (characteristics.includes(tag)) {
-    return true;
-  }
-  
-  return characteristics.some(id => CHARACTERISTICS[id]?.tag === tag) || 
-         buffs.some(buff => CHARACTERISTICS[buff.characteristicId]?.tag === tag);
+  // Check if any of the unit's characteristics match the tag
+  const hasDirectCharacteristic = characteristics.some(id => {
+    const characteristic = CHARACTERISTICS[id];
+    return characteristic?.tag === tag;
+  });
+
+  // Check if any of the unit's buffs provide the tag
+  const hasBuffCharacteristic = buffs.some(buff => {
+    const characteristic = CHARACTERISTICS[buff.characteristicId];
+    return characteristic?.tag === tag;
+  });
+
+  return hasDirectCharacteristic || hasBuffCharacteristic;
 };

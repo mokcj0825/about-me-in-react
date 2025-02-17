@@ -15,7 +15,7 @@ export interface UnitData {
 export const initialUnits: UnitData[] = [
   { 
     id: '1', 
-    position: createHexCoordinate(2, 3),
+    position: createHexCoordinate(4, 5),
     movement: 5,
     faction: 'player',
     characteristics: [],
@@ -43,6 +43,14 @@ export const initialUnits: UnitData[] = [
     movement: 5,
     faction: 'ally',
     characteristics: ['00001'],
+    buffs: []
+  },
+  { 
+    id: '5', 
+    position: createHexCoordinate(4, 6),
+    movement: 5,
+    faction: 'player',
+    characteristics: [],
     buffs: []
   }
 ]; 
