@@ -4,6 +4,7 @@ import { UnitData, Faction } from "../types/UnitData";
 import { eventBus } from "../EventBus";
 import { HexCellOverlay } from "./HexCellOverlay";
 import { HexCellContent } from "./HexCellContent";
+import { HexCellHighlight } from "./HexCellHighlight";
 
 interface HexCellProps {
   coordinate: HexCoordinate;
@@ -81,6 +82,21 @@ export const HexCell: React.FC<HexCellProps> = ({
     }
   };
 
+  const getHighlightType = () => {
+    if (isMoveable) return 'moveable';
+    if (isInZOC) return 'zoc';
+    if (isHovered && !unit) return 'hover';
+    return undefined;
+  };
+
+  const getHighlightFaction = () => {
+    if (isMoveable && unitPosition) {
+      const sourceUnit = findUnitAtPosition(unitPosition);
+      return sourceUnit?.faction;
+    }
+    return undefined;
+  };
+
   const getBackgroundColor = () => {
     if (unit) return getUnitColor(unit.faction);
     if (isMoveable && unitPosition) {
@@ -117,7 +133,11 @@ export const HexCell: React.FC<HexCellProps> = ({
       onClick={handleClick}
       onContextMenu={handleClick}
     >
-      <HexCellOverlay color={getBackgroundColor()} />
+      <HexCellOverlay />
+      <HexCellHighlight 
+        type={getHighlightType()} 
+        faction={getHighlightFaction()} 
+      />
       <HexCellContent coordinate={coordinate} unit={unit} />
     </div>
   );

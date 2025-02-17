@@ -256,7 +256,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
         height: '100vh',
         overflow: 'auto',
         position: 'relative',
-        backgroundColor: '#e0e0e0',
+        backgroundColor: '#FFE4C4', // Changed from #e0e0e0 to our background color
         cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none'
       }}
@@ -272,7 +272,8 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
         minHeight: `${height * GRID.WIDTH * 0.75 + (PADDING * 2)}px`,
         margin: 0,
         boxSizing: 'border-box',
-        backgroundColor: '#e0e0e0',
+        position: 'relative',
+        zIndex: 1,
       }}>
         {grid.map((row, index) => (
           <div key={index} style={{
