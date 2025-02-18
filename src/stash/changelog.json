@@ -51,6 +51,73 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.1.1",
+      "date": "2024-03-20",
+      "entries": [
+        {
+          "id": "unit-stats-system",
+          "date": "2024-03-20",
+          "title": "Enhanced Unit Statistics System",
+          "description": "Comprehensive overhaul of unit data structure with expanded statistics and combat mechanics",
+          "category": "feature",
+          "tags": ["unit-system", "combat", "stats", "game-mechanics", "rpg"],
+          "details": [
+            "Core Combat Statistics:",
+            "- Attack: Base offensive power for damage calculations",
+            "- Defense: Damage reduction and survivability stat",
+            "- Hitpoint: Unit's total health pool",
+            "- Agility: Affects action order and evasion mechanics",
+            "- Movement: Hex-based movement range (carried over from v1)",
+            
+            "Critical Hit System:",
+            "- Crit Rate: Percentage chance to critical hits",
+            "- Crit Damage: Multiplier for critical hit damage (e.g., 150% = 1.5x damage)",
+            
+            "Status Effect Framework:",
+            "- Break Effect: Effectiveness at breaking enemy guard/stance",
+            "- Effect Hit Rate: Base chance to apply status effects",
+            "- Effect Resist: Resistance against incoming status effects",
+            "- Debuff Resist: Damage reduction for damage over time effects",
+            
+            "Recovery Mechanics:",
+            "- Healing Boost: Multiplier for healing received",
+            
+            "Resource Management:",
+            "- Energy: Resource pool for special abilities",
+            "- Energy Regeneration: Rate of energy recovery",
+            
+            "Damage Modification System:",
+            "- Damage Resist: Percentage reduction of incoming damage",
+            "- Damage Boost: Percentage increase to outgoing damage",
+            "- Vulnerability: A list of damage types that are more effective against the unit",
+            "- Damage Mitigation: Flat reduction to incoming damage",
+            
+            "Combat Role Mechanics:",
+            "- Power: Overall combat effectiveness rating",
+            "- Aggro: Priority in enemy targeting system",
+            "- Damage Type: What type of damage is this unit does on attack",
+            "- Role: What role does this unit play in the battle",
+            
+            "Technical Implementation Plans:",
+            "- Create new UnitData interface with all stats",
+            "- Implement validation for stat ranges",
+            "- Add default values for new parameters",
+            "- Design combat calculation system utilizing new stats",
+            "- Develop effect application system",
+            "- Create energy management system",
+            "- Implement healing calculation system",
+            
+            "Future Considerations:",
+            "- Stat growth system for unit progression",
+            "- Equipment modification system",
+            "- Status effect interaction rules",
+            "- Balance testing framework",
+            "- AI targeting based on new stats"
+          ]
+        }
+      ]
     }
   ]
 }
