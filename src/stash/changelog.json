@@ -1,0 +1,56 @@
+{
+  "title": "Lab Experiments Changelog",
+  "sections": [
+    {
+      "version": "0.1.0",
+      "date": "2025-02-18",
+      "entries": [
+        {
+          "id": "hex-grid-v1",
+          "date": "2025-02-18",
+          "title": "Hexagonal Grid System V1",
+          "description": "Complete overhaul of hexagonal grid system with layered architecture and improved visuals",
+          "category": "feature",
+          "tags": ["grid", "ui", "architecture", "movement", "zoc", "svg", "react"],
+          "details": [
+            "Implemented layered component architecture:",
+            "- HexCellOverlay: Base grid structure with SVG borders (z-index: 1-2)",
+            "- HexCellHighlight: Interactive effects layer (z-index: 3)",
+            "- HexCellContent: Unit and information display (z-index: 4)",
+            
+            "SVG Grid System Improvements:",
+            "- Replaced CSS-based grid lines with SVG paths",
+            "- Implemented non-scaling stroke for consistent line width",
+            "- Added viewBox and preserveAspectRatio for proper scaling",
+            
+            "Enhanced Visual System:",
+            "- Transparent base layer for map background visibility",
+            "- Faction-based color coding (#ffeb3b for player, #4CAF50 for ally, #ff4444 for enemy)",
+            "- Highlight effects for different states (hover: #4a90e2, moveable: faction-based, zoc: rgba(255,0,0,0.1))",
+            
+            "Movement and Control Systems:",
+            "- Implemented Zone of Control (ZOC) visualization",
+            "- Added faction-aware movement rules",
+            "- Created utility functions for faction relationship checks",
+            
+            "Technical Architecture:",
+            "- Separated concerns into distinct components",
+            "- Implemented proper z-index layering for visual elements",
+            "- Created type-safe interfaces for all components",
+            "- Added support for dynamic state management",
+            
+            "Component Interaction:",
+            "- Event-based communication between components",
+            "- Centralized movement calculation system",
+            "- Unified faction management through FactionUtils",
+            
+            "Visual Customization:",
+            "- Support for custom background maps",
+            "- Configurable opacity levels for all layers",
+            "- Flexible highlight system for different game states"
+          ]
+        }
+      ]
+    }
+  ]
+}

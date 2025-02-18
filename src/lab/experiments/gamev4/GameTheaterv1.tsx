@@ -3,7 +3,7 @@ import { GameManagers } from "./GameManagers";
 import { GameRenderer } from "./GameRenderer";
 
 
-const GameTheater: React.FC = () => {
+const GameTheaterv1: React.FC = () => {
 
   const width = 15;
   const height = 15;
@@ -15,4 +15,4 @@ const GameTheater: React.FC = () => {
   );
 };
 
-export default GameTheater;
+export default GameTheaterv1;

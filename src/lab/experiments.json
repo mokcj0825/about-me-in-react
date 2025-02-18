@@ -24,38 +24,10 @@
       "experiments": [
         {
           "id": "gamedev-1",
-          "name": "Game Dev - Hexa map",
-          "description": "Testing implement of Map",
-          "status": "completed",
-          "url": "/labs/hexa-grid"
-        },
-        {
-          "id": "gamedev-2",
-          "name": "Game Dev - Add a unit on map",
-          "description": "Add a unit on map",
-          "status": "completed",
-          "url": "/labs/add-a-unit"
-        },
-        {
-          "id": "gamedev-3",
-          "name": "Game Dev - Setup managers",
-          "description": "Add a manager on map",
-          "status": "completed",
-          "url": "/labs/game-theater"
-        },
-        {
-          "id": "gamedev-4",
-          "name": "Game Dev - Setup enemy unit",
-          "description": "Add a enemy unit on map, and apply ZOC",
-          "status": "completed",
-          "url": "/labs/game-theater-v3"
-        },
-        {
-          "id": "gamedev-5",
           "name": "Game Dev - Add characteristic system",
           "description": "Add characteristic system on unit",
           "status": "completed",
-          "url": "/labs/game-theater-v4"
+          "url": "/labs/game-theater-v1"
         }
       ]
     }
