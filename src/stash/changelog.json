@@ -114,7 +114,15 @@
             "- Equipment modification system",
             "- Status effect interaction rules",
             "- Balance testing framework",
-            "- AI targeting based on new stats"
+            "- AI targeting based on new stats",
+
+            "Unit Information Panel:",
+            "- Dynamic positioning based on mouse location",
+            "- Fixed dimensions (300x500px)",
+            "- Displays unit name, class, description, faction, and position",
+            "- Clear text formatting and visibility",
+            "- Auto-switching sides based on cursor position",
+            "- Appears when hovering over units"
           ]
         }
       ]
