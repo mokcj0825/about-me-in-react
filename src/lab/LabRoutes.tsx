@@ -2,7 +2,7 @@ import React from "react";
 import { Route, Routes } from "react-router-dom";
 import WebGLIntegration from "./experiments/webgl/WebGLIntegration";
 import StereoLayer from "./experiments/webgl/StereoLayer";
-import GameTheaterv1 from "./experiments/gamev4/GameTheaterv1";
+import GameTheaterv1 from "./experiments/gamev1/GameTheaterv1";
 
 const LabRoutes = () => {
   return (
