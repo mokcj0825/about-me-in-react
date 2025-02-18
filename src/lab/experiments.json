@@ -28,6 +28,13 @@
           "description": "Add characteristic system on unit",
           "status": "completed",
           "url": "/labs/game-theater-v1"
+        },
+        {
+          "id": "gamedev-2",
+          "name": "Game V1.1 - Enhanced Unit Stats System",
+          "description": "Implementing comprehensive unit statistics system including combat stats, critical system, effect system, healing, energy, and damage modifiers",
+          "status": "in-progress",
+          "url": "/labs/game-theater-v1_1"
         }
       ]
     }
