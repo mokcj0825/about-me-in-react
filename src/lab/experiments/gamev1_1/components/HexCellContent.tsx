@@ -1,6 +1,7 @@
 import React from 'react';
 import { HexCoordinate } from '../types/HexCoordinate';
 import { UnitData } from '../types/UnitData';
+import { DirectionIndicator } from './DirectionIndicator';
 
 interface HexCellContentProps {
   coordinate: HexCoordinate;
@@ -39,10 +40,13 @@ export const HexCellContent: React.FC<HexCellContentProps> = ({
       backgroundColor: unit ? getUnitColor(unit.faction) : 'transparent',
     }}
   >
-    {unit ? (
-      unit.faction === 'player' ? 'P' : unit.faction === 'ally' ? 'A' : 'E'
-    ) : (
-      ``
+    {unit && (
+      <>
+        {unit.faction === 'player' ? 'P' : unit.faction === 'ally' ? 'A' : 'E'}
+        <DirectionIndicator 
+          direction={unit.direction}
+        />
+      </>
     )}
   </div>
 );

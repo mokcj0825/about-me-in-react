@@ -122,7 +122,19 @@
             "- Displays unit name, class, description, faction, and position",
             "- Clear text formatting and visibility",
             "- Auto-switching sides based on cursor position",
-            "- Appears when hovering over units"
+            "- Appears when hovering over units",
+            
+            "Direction System:",
+            "- Added facing direction property to units",
+            "- Implemented visual indicator for unit facing",
+            "- Support for 8 cardinal and intercardinal directions",
+            "- Clear visual feedback for current unit orientation",
+
+            "Hex-based Direction System:",
+            "- Implemented six-direction facing system for top-edge hexagonal grid",
+            "- Added direction types: top-left, top-right, right, bottom-right, bottom-left, left",
+            "- Integrated with existing unit data structure",
+            "- Prepared for visual indicator implementation"
           ]
         }
       ]
