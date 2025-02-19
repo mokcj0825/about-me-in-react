@@ -5,6 +5,7 @@ export type UnitFaction = 'player' | 'ally' | 'enemy';
 export type DamageType = 'physical' | 'magical' | 'true';
 export type UnitRole = 'tank' | 'dps' | 'support' | 'control';
 export type UnitClass = 'warrior' | 'mage' | 'rogue' | 'priest' | 'archer' | 'knight';
+export type UnitDirection = 'top-left' | 'top-right' | 'right' | 'bottom-right' | 'bottom-left' | 'left';
 
 export interface UnitData {
   // Basic Info
@@ -51,6 +52,9 @@ export interface UnitData {
   aggro: number;         // Target priority (0-100)
   damageType: DamageType;
   role: UnitRole;
+  
+  // Direction System
+  direction: UnitDirection;
   
   // Characteristics and Buffs
   characteristics: CharacteristicId[];
