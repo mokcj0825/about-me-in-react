@@ -134,7 +134,24 @@
             "- Implemented six-direction facing system for top-edge hexagonal grid",
             "- Added direction types: top-left, top-right, right, bottom-right, bottom-left, left",
             "- Integrated with existing unit data structure",
-            "- Prepared for visual indicator implementation"
+            "- Prepared for visual indicator implementation",
+
+            "Basic Terrain Types (Planning):",
+            "- Plains: Base movement cost (1 point)",
+            "- Forest: Increased movement cost (2 points)",
+            "- Mountains: High movement cost (3 points)",
+            "- Water: Impassable for most units",
+            
+            "Movement System:",
+            "- Movement points based on unit type",
+            "- Terrain-specific movement costs",
+            "- Path calculation considering terrain",
+            "- Movement range visualization",
+            
+            "Tactical Considerations:",
+            "- Defensive bonuses from terrain",
+            "- Line of sight modifications",
+            "- Strategic positioning options"
           ]
         }
       ]
