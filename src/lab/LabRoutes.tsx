@@ -4,7 +4,7 @@ import WebGLIntegration from "./experiments/webgl/WebGLIntegration";
 import StereoLayer from "./experiments/webgl/StereoLayer";
 import GameTheaterv1 from "./experiments/gamev1/GameTheaterv1";
 import GameTheaterv1_1 from "./experiments/gamev1_1/GameTheaterv1_1";
-import GameTheaterv1_2 from "./experiments/gamev1_2/GameTheaterv1_1";
+import GameTheaterv1_2 from "./experiments/gamev1_2/GameTheaterv1_2";
 
 const LabRoutes = () => {
   return (
