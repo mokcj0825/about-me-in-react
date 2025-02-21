@@ -147,6 +147,7 @@
             "- Terrain-specific movement costs",
             "- Path calculation considering terrain",
             "- Movement range visualization",
+            "- Movement system for units",
             
             "Tactical Considerations:",
             "- Defensive bonuses from terrain",
