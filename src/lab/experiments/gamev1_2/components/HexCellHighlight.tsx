@@ -3,6 +3,7 @@ import React from 'react';
 interface HexCellHighlightProps {
   type?: 'hover' | 'zoc' | 'moveable';
   faction?: 'player' | 'ally' | 'enemy';
+  style?: React.CSSProperties;
 }
 
 export const HexCellHighlight: React.FC<HexCellHighlightProps> = ({ 

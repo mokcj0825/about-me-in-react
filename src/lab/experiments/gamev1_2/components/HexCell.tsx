@@ -8,6 +8,7 @@ import { HexCellHighlight } from "./HexCellHighlight";
 import { UnitInfoDisplay } from './UnitInfoDisplay';
 import { getTerrainSvgPath } from '../utils/terrainLoader'
 import type { TerrainType } from '../movement/types'
+import { HexCellHoverIndicator } from './HexCellHoverIndicator';
 
 interface HexCellProps {
   coordinate: HexCoordinate;
@@ -18,6 +19,8 @@ interface HexCellProps {
   onHover: (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => void;
   unitPosition: HexCoordinate | null;
   findUnitAtPosition: (coord: HexCoordinate) => UnitData | undefined;
+  onClick: (coord: HexCoordinate, isRightClick: boolean) => void;
+  isSelected?: boolean;
 }
 
 const GRID = {
@@ -60,7 +63,9 @@ export const HexCell: React.FC<HexCellProps> = ({
   isInZOC,
   onHover,
   unitPosition,
-  findUnitAtPosition
+  findUnitAtPosition,
+  onClick,
+  isSelected,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -83,19 +88,7 @@ export const HexCell: React.FC<HexCellProps> = ({
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    
-    if (e.button === 0) {
-      if (unit) {
-        eventBus.emit('unit-selected', { unitId: unit.id, position: coordinate });
-      } else if (unitPosition) {
-        const distance = getDistance(coordinate, unitPosition);
-        if (DEBUG_MODE) {
-          alert(`Distance to unit: ${distance} hexes`);
-        }
-      }
-    } else if (e.button === 2) {
-      console.log('menu');
-    }
+    onClick(coordinate, e.button === 2);
   };
 
   const getHighlightType = () => {
@@ -153,19 +146,35 @@ export const HexCell: React.FC<HexCellProps> = ({
           flexGrow: 0,
           position: 'relative',
           transition: 'background-color 0.2s ease',
-          ...getBackgroundStyle()
+          ...getBackgroundStyle(),
+          outline: isSelected 
+            ? '2px solid yellow' 
+            : isHovered 
+              ? '2px solid rgba(255, 255, 255, 0.5)' 
+              : undefined,
+          zIndex: isHovered ? 3 : 1,
         }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
         onContextMenu={handleClick}
       >
-        <HexCellOverlay />
+        <HexCellOverlay style={{ zIndex: 1 }} />
         <HexCellHighlight 
           type={getHighlightType()} 
           faction={getHighlightFaction()} 
+          style={{ zIndex: 2 }}
         />
-        <HexCellContent coordinate={coordinate} unit={unit} />
+        <HexCellContent 
+          coordinate={coordinate} 
+          unit={unit} 
+          style={{ zIndex: 3 }}
+        />
+        <HexCellHoverIndicator 
+          isHovered={isHovered} 
+          isSelected={isSelected || false} 
+          style={{ zIndex: 5 }}
+        />
       </div>
       {showInfo && unit && (
         <UnitInfoDisplay unit={unit} mousePosition={mousePos} />

@@ -33,6 +33,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   const [isDragging, setIsDragging] = useState(false);
   const [startDrag, setStartDrag] = useState({ x: 0, y: 0 });
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
+  const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
 
   const SCROLL_THRESHOLD = 100;
   const SCROLL_SPEED = 15;
@@ -177,10 +178,14 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   };
 
   const handleCellHover = (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => {
+    if (selectedUnit) {
+      // Don't show hover effects if a unit is selected
+      return;
+    }
+
     if (isHovering && isUnit) {
       const unit = findUnitAtPosition(coord);
-      console.log("Unit", unit);
-      if (unit) {
+      if (unit) {  // Remove faction check to show all units' movement
         setSelectedUnitPosition(coord);
         const moveableGrids = getMoveableGrids(coord, unit.movement);
         setMoveableGrids(moveableGrids);
@@ -191,20 +196,45 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     }
   };
 
-  //const isMoveableCell = (coord: HexCoordinate) => {
-  //  return moveableGrids.some(grid => 
-  //    grid.x === coord.x && 
-  //    grid.y === coord.y && 
-  //    grid.z === coord.z
-  //  );
-  //};
+  const handleCellClick = (coord: HexCoordinate, isRightClick: boolean) => {
+    if (isRightClick) {
+      // Cancel selection
+      setSelectedUnit(null);
+      setSelectedUnitPosition(null);
+      setMoveableGrids([]);
+      return;
+    }
+
+    const unit = findUnitAtPosition(coord);
+    
+    if (selectedUnit && isMoveableCell(coord)) {
+      // Move the selected unit to the clicked cell
+      const updatedUnits = units.map(u => {
+        if (u.id === selectedUnit.id) {
+          return { ...u, position: coord };
+        }
+        return u;
+      });
+      setUnits(updatedUnits);
+      
+      // Clear selection after moving
+      setSelectedUnit(null);
+      setSelectedUnitPosition(null);
+      setMoveableGrids([]);
+    } else if (unit) {
+      // Select the unit
+      setSelectedUnit(unit);
+      setSelectedUnitPosition(coord);
+      const moveableGrids = getMoveableGrids(coord, unit.movement);
+      setMoveableGrids(moveableGrids);
+    }
+  };
 
   const isMoveableCell = (coord: HexCoordinate): boolean => {
     if (!selectedUnitPosition) return false;
-    const unit = findUnitAtPosition(selectedUnitPosition);
-    if (!unit) return false;
+    const unit = selectedUnit || findUnitAtPosition(selectedUnitPosition);
+    if (!unit) return false;  // Remove faction check here
     
-    const moveableGrids = movementCalculator.getMoveableGrids(selectedUnitPosition, unit.movement, units);
     return moveableGrids.some(grid => grid.x === coord.x && grid.y === coord.y);
   };
 
@@ -214,7 +244,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1 || e.button === 2) { // Middle or right click
+    if (e.button === 1) { // Only middle click for dragging
       e.preventDefault();
       setIsDragging(true);
       setStartDrag({ x: e.clientX - scrollPosition.x, y: e.clientY - scrollPosition.y });
@@ -231,8 +261,10 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     }
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
+  const handleMouseUp = (e: React.MouseEvent) => {
+    if (e.button === 1) { // Only respond to middle button release
+      setIsDragging(false);
+    }
   };
 
   // Handle wheel scrolling
@@ -306,8 +338,10 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
                 terrain={mapData.terrain[coord.y][coord.x] as TerrainType}
                 isMoveable={isMoveableCell(coord)}
                 onHover={handleCellHover}
+                onClick={handleCellClick}
                 unitPosition={selectedUnitPosition}
                 findUnitAtPosition={findUnitAtPosition}
+                isSelected={selectedUnit !== null && coord.x === selectedUnitPosition?.x && coord.y === selectedUnitPosition?.y}
               />
             ))}
           </div>
