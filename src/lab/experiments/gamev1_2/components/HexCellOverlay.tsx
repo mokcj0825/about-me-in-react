@@ -1,6 +1,10 @@
 import React from 'react';
 
-export const HexCellOverlay: React.FC = () => (
+interface HexCellOverlayProps {
+  style?: React.CSSProperties;
+}
+
+export const HexCellOverlay: React.FC<HexCellOverlayProps> = ({ style }) => (
   <>
     {/* Content fill */}
     <div 
@@ -14,6 +18,7 @@ export const HexCellOverlay: React.FC = () => (
         opacity: 0.2,
         pointerEvents: 'none',
         zIndex: 1,
+        ...style,
       }}
     />
     {/* SVG hexagon grid lines */}

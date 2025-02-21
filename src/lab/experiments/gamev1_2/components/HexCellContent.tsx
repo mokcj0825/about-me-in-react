@@ -6,6 +6,7 @@ import { DirectionIndicator } from './DirectionIndicator';
 interface HexCellContentProps {
   coordinate: HexCoordinate;
   unit?: UnitData;
+  style?: React.CSSProperties;
 }
 
 const getUnitColor = (faction: string) => {

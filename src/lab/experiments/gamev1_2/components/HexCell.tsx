@@ -8,6 +8,7 @@ import { HexCellHighlight } from "./HexCellHighlight";
 import { UnitInfoDisplay } from './UnitInfoDisplay';
 import { getTerrainSvgPath } from '../utils/terrainLoader'
 import type { TerrainType } from '../movement/types'
+import { HexCellHoverIndicator } from './HexCellHoverIndicator';
 
 interface HexCellProps {
   coordinate: HexCoordinate;
@@ -146,19 +147,34 @@ export const HexCell: React.FC<HexCellProps> = ({
           position: 'relative',
           transition: 'background-color 0.2s ease',
           ...getBackgroundStyle(),
-          outline: isSelected ? '2px solid yellow' : undefined,
+          outline: isSelected 
+            ? '2px solid yellow' 
+            : isHovered 
+              ? '2px solid rgba(255, 255, 255, 0.5)' 
+              : undefined,
+          zIndex: isHovered ? 3 : 1,
         }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
         onContextMenu={handleClick}
       >
-        <HexCellOverlay />
+        <HexCellOverlay style={{ zIndex: 1 }} />
         <HexCellHighlight 
           type={getHighlightType()} 
           faction={getHighlightFaction()} 
+          style={{ zIndex: 2 }}
         />
-        <HexCellContent coordinate={coordinate} unit={unit} />
+        <HexCellContent 
+          coordinate={coordinate} 
+          unit={unit} 
+          style={{ zIndex: 3 }}
+        />
+        <HexCellHoverIndicator 
+          isHovered={isHovered} 
+          isSelected={isSelected || false} 
+          style={{ zIndex: 5 }}
+        />
       </div>
       {showInfo && unit && (
         <UnitInfoDisplay unit={unit} mousePosition={mousePos} />
