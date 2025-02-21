@@ -198,7 +198,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean) => {
     if (isRightClick) {
-      // Cancel selection on right click
+      // Cancel selection
       setSelectedUnit(null);
       setSelectedUnitPosition(null);
       setMoveableGrids([]);
@@ -206,7 +206,23 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     }
 
     const unit = findUnitAtPosition(coord);
-    if (unit) {  // Remove faction check to allow selecting any unit
+    
+    if (selectedUnit && isMoveableCell(coord)) {
+      // Move the selected unit to the clicked cell
+      const updatedUnits = units.map(u => {
+        if (u.id === selectedUnit.id) {
+          return { ...u, position: coord };
+        }
+        return u;
+      });
+      setUnits(updatedUnits);
+      
+      // Clear selection after moving
+      setSelectedUnit(null);
+      setSelectedUnitPosition(null);
+      setMoveableGrids([]);
+    } else if (unit) {
+      // Select the unit
       setSelectedUnit(unit);
       setSelectedUnitPosition(coord);
       const moveableGrids = getMoveableGrids(coord, unit.movement);
