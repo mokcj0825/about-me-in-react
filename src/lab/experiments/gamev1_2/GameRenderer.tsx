@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
-import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl } from "./types/HexCoordinate";
+import { HexCoordinate, createHexCoordinate } from "./types/HexCoordinate";
 import { UnitData, initialUnits } from "./types/UnitData";
-import { HexCell } from "./components/HexCell";
-import { hasCharacteristic } from './types/Characteristics';
+import { HexCell } from "./components/HexaGrids/HexCell";
 import { MovementCalculator } from "./movement/MovementCalculator";
 import { GroundMovement } from "./movement/rules/GroundMovement";
 import { StandardZOC } from "./zoc/rules/StandardZOC";
@@ -129,49 +128,6 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   const grid = generateGrid();
 
-  // Helper functions
-  const isHostileUnit = (movingUnit: UnitData, targetUnit: UnitData): boolean => {
-    if (movingUnit.faction === 'enemy') {
-      return targetUnit.faction === 'player' || targetUnit.faction === 'ally';
-    }
-    if (movingUnit.faction === 'player' || movingUnit.faction === 'ally') {
-      return targetUnit.faction === 'enemy';
-    }
-    return false;
-  };
-
-  const getOpposingZOC = (movingUnit: UnitData, units: UnitData[]): HexCoordinate[] => {
-    return units
-      .filter(u => isHostileUnit(movingUnit, u))
-      .flatMap(u => getZoneOfControl(u.position));
-  };
-
-  const calculateNewRemainingMove = (
-    current: HexCoordinate,
-    neighbor: HexCoordinate,
-    remainingMove: number,
-    ignoresZOC: boolean,
-    opposingZOC: HexCoordinate[]
-  ): number => {
-    const moveCost = 1;
-    let newRemainingMove = remainingMove - moveCost;
-
-    if (!ignoresZOC) {
-      const currentInZOC = opposingZOC.some(zoc => 
-        zoc.x === current.x && zoc.y === current.y
-      );
-      const neighborInZOC = opposingZOC.some(zoc => 
-        zoc.x === neighbor.x && zoc.y === neighbor.y
-      );
-      
-      if (currentInZOC && neighborInZOC) {
-        newRemainingMove = 0;
-      }
-    }
-
-    return newRemainingMove;
-  };
-
   // Main function
   const getMoveableGrids = (startCoord: HexCoordinate, movement: number): HexCoordinate[] => {
     return movementCalculator.getMoveableGrids(startCoord, movement, units);
@@ -236,11 +192,6 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     if (!unit) return false;  // Remove faction check here
     
     return moveableGrids.some(grid => grid.x === coord.x && grid.y === coord.y);
-  };
-
-  // Get the position of our single unit
-  const getUnitPosition = () => {
-    return units[0]?.position;  // Since we only have one unit
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {

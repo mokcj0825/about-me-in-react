@@ -1,10 +1,27 @@
 import React from 'react';
 
-interface HexCellOverlayProps {
+interface Props {
+  /** Optional CSS styles to apply to the overlay */
   style?: React.CSSProperties;
 }
 
-export const HexCellOverlay: React.FC<HexCellOverlayProps> = ({ style }) => (
+/**
+ * HexCellOverlay component - Renders a hex cell overlay with borders
+ * 
+ * Provides two layers:
+ * 1. A semi-transparent white fill for visual depth
+ * 2. An SVG hexagonal border with a brown stroke
+ * 
+ * The component uses absolute positioning and SVG paths to create
+ * the hexagonal shape and border effect.
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <HexCellOverlay style={{ zIndex: 1 }} />
+ * ```
+ */
+export const HexCellOverlay: React.FC<Props> = ({ style }) => (
   <>
     {/* Content fill */}
     <div 
