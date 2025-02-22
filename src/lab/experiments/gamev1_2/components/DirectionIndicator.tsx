@@ -6,7 +6,6 @@ import { UnitDirection } from '../types/UnitData';
  * @interface DirectionIndicatorProps
  * @property {UnitDirection} direction - The direction to point the indicator towards.
  * Valid values are: 'top-right', 'right', 'bottom-right', 'bottom-left', 'left', 'top-left'
- *
  */
 interface DirectionIndicatorProps {
   direction: UnitDirection;
