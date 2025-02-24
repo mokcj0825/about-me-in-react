@@ -8,42 +8,69 @@ import { StandardZOC } from "./zoc/rules/StandardZOC";
 import mapData from './data/map-data.json'
 import type { TerrainType } from './movement/types'
 
-
-// Types
+/**
+ * Props for the GameRenderer component
+ * @interface GameRendererProps
+ * @property {number} width - Number of hexes in horizontal direction
+ * @property {number} height - Number of hexes in vertical direction
+ */
 interface GameRendererProps {
   width: number;
   height: number;
 }
 
-// Grid constants
+/**
+ * Grid layout constants
+ * @constant GRID
+ */
 const GRID = {
-  WIDTH: 100,
-  ROW_OFFSET: 50
+  WIDTH: 100,        // Width of each hex cell
+  ROW_OFFSET: 50     // Horizontal offset for odd rows
 };
 
-// Main Renderer Component
+/**
+ * Main game board renderer component
+ * Handles:
+ * - Grid generation and layout
+ * - Unit movement and selection
+ * - Mouse interaction and scrolling
+ * - Visual state management
+ * 
+ * @component
+ * @param {GameRendererProps} props
+ */
 export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => {
+  // State management for units and movement
   const [units, setUnits] = useState<UnitData[]>(initialUnits);
   const [moveableGrids, setMoveableGrids] = useState<HexCoordinate[]>([]);
   const [selectedUnitPosition, setSelectedUnitPosition] = useState<HexCoordinate | null>(null);
+  const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
+
+  // Mouse and scroll state
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const scrollIntervalRef = useRef<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startDrag, setStartDrag] = useState({ x: 0, y: 0 });
   const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
-  const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
 
-  const SCROLL_THRESHOLD = 100;
-  const SCROLL_SPEED = 15;
-  const PADDING = 400;
+  // Refs for DOM elements and intervals
+  const mapRef = useRef<HTMLDivElement>(null);
+  const scrollIntervalRef = useRef<number | null>(null);
 
+  // Scroll configuration
+  const SCROLL_THRESHOLD = 100;  // Distance from edge to trigger scroll
+  const SCROLL_SPEED = 15;       // Pixels per scroll tick
+  const PADDING = 400;           // Padding around the game board
+
+  // Movement system initialization
   const movementCalculator = new MovementCalculator(
     new GroundMovement(),
     [new StandardZOC()]
   );
 
-  // Grid generation with cube coordinates
+  /**
+   * Generates the hex grid layout
+   * @returns {HexCoordinate[][]} 2D array of hex coordinates
+   */
   const generateGrid = () => {
     const grid: HexCoordinate[][] = [];
     for (let y = height - 1; y >= 0; y--) {
@@ -56,6 +83,11 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     return grid;
   };
 
+  /**
+   * Finds a unit at a specific coordinate
+   * @param {HexCoordinate} coord - Position to check
+   * @returns {UnitData | undefined} Unit at position if found
+   */
   const findUnitAtPosition = (coord: HexCoordinate): UnitData | undefined => {
     return units.find(unit => 
       unit.position.x === coord.x && unit.position.y === coord.y

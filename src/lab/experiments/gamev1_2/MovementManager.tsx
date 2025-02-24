@@ -5,15 +5,38 @@ import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl } fr
 import { UnitData, initialUnits } from "./types/UnitData";
 import { hasCharacteristic } from "./types/Characteristics";
 
+/**
+ * MovementManager Component
+ * 
+ * Manages unit movement calculations and interactions:
+ * - Handles unit selection and hover events
+ * - Calculates moveable grid positions
+ * - Applies movement rules and restrictions
+ * - Integrates with Zone of Control system
+ * 
+ * @component
+ */
 export const MovementManager = () => {
+  // Initialize units from data
   const [units] = useState<UnitData[]>(initialUnits);
 
+  /**
+   * Finds a unit at a specific coordinate
+   * @param {HexCoordinate} coord - Position to check
+   * @returns {UnitData | undefined} Unit at position if found
+   */
   const findUnitAtPosition = (coord: HexCoordinate): UnitData | undefined => {
     return units.find(unit => 
       unit.position.x === coord.x && unit.position.y === coord.y
     );
   };
 
+  /**
+   * Calculates all grid positions a unit can move to
+   * @param {HexCoordinate} startCoord - Unit's current position
+   * @param {number} movement - Unit's movement range
+   * @returns {HexCoordinate[]} Array of reachable coordinates
+   */
   const getMoveableGrids = (startCoord: HexCoordinate, movement: number): HexCoordinate[] => {
     const result = new Set<string>();
     const visited = new Map<string, number>();
@@ -21,15 +44,18 @@ export const MovementManager = () => {
     const movingUnit = findUnitAtPosition(startCoord);
     if (!movingUnit) return [];
 
+    // Debug logs for movement characteristics
     console.log('Moving unit:', movingUnit);
     console.log('Has 神速:', hasCharacteristic(movingUnit.characteristics, movingUnit.buffs, 'ignore-zoc'));
 
+    // Check if unit ignores Zone of Control
     const ignoresZOC = hasCharacteristic(
       movingUnit.characteristics,
       movingUnit.buffs,
       'ignore-zoc'
     );
 
+    // Calculate opposing units' Zone of Control
     const opposingZOC = units
       .filter(u => {
         if (movingUnit.faction === 'enemy') {
@@ -50,7 +76,10 @@ export const MovementManager = () => {
   };
 
   useEffect(() => {
-    // Handle unit selection
+    /**
+     * Handles unit selection events
+     * @param {UnitSelectedEvent} event - Unit selection event data
+     */
     const handleUnitSelected = ({ unitId, position }: UnitSelectedEvent) => {
       const unit = findUnitAtPosition(position);
       if (unit) {
@@ -59,7 +88,10 @@ export const MovementManager = () => {
       }
     };
 
-    // Handle unit hover
+    /**
+     * Handles unit hover events
+     * @param {UnitHoveredEvent} event - Unit hover event data
+     */
     const handleUnitHovered = ({ unitId }: UnitHoveredEvent) => {
       const unit = units.find(u => u.id === unitId);
       if (unit) {
@@ -68,9 +100,11 @@ export const MovementManager = () => {
       }
     };
 
+    // Subscribe to events
     eventBus.on('unit-selected', handleUnitSelected);
     eventBus.on('unit-hovered', handleUnitHovered);
     
+    // Cleanup event subscriptions
     return () => {
       eventBus.off('unit-selected', handleUnitSelected);
       eventBus.off('unit-hovered', handleUnitHovered);

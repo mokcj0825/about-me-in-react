@@ -5,34 +5,55 @@ import { ZoneOfControl } from "../zoc/types";
 import { isHostileUnit } from "../utils/FactionUtils";
 import { hasCharacteristic } from "../types/Characteristics";
 
+/**
+ * Defines movement costs for different terrain types and movement types
+ * Key: terrain type
+ * Value: cost for each movement type (foot, ooze, float, flying)
+ */
 export interface MovementCost {
     [key: string]: {
-        foot: number;
-        ooze: number;
-        float: number;
-        flying: number;
+        foot: number;   // Standard ground movement
+        ooze: number;   // Slime/liquid movement
+        float: number;  // Hovering movement
+        flying: number; // Aerial movement
     };
 }
 
+/**
+ * Default movement costs for each terrain type
+ * 999 represents impassable terrain for that movement type
+ */
 export const DEFAULT_MOVEMENT_COSTS: MovementCost = {
-    'plain': { foot: 1, ooze: 1, float: 1, flying: 1 },
-    'road': { foot: 1, ooze: 2, float: 1, flying: 1 },
-    'forest': { foot: 2, ooze: 2, float: 1, flying: 1 },
-    'cliff': { foot: 3, ooze: 999, float: 2, flying: 1 },
-    'mountain': { foot: 3, ooze: 999, float: 2, flying: 1 },
-    'wasteland': { foot: 2, ooze: 1, float: 1, flying: 1 },
-    'ruins': { foot: 2, ooze: 2, float: 1, flying: 1 },
-    'river': { foot: 999, ooze: 1, float: 1, flying: 1 },
-    'swamp': { foot: 2, ooze: 1, float: 1, flying: 1 },
-    'sea': { foot: 999, ooze: 2, float: 1, flying: 1 },
+    'plain': { foot: 1, ooze: 1, float: 1, flying: 1 },      // Basic terrain
+    'road': { foot: 1, ooze: 2, float: 1, flying: 1 },       // Improved for foot units
+    'forest': { foot: 2, ooze: 2, float: 1, flying: 1 },     // Dense vegetation
+    'cliff': { foot: 3, ooze: 999, float: 2, flying: 1 },    // Vertical terrain
+    'mountain': { foot: 3, ooze: 999, float: 2, flying: 1 }, // High elevation
+    'wasteland': { foot: 2, ooze: 1, float: 1, flying: 1 },  // Rough terrain
+    'ruins': { foot: 2, ooze: 2, float: 1, flying: 1 },      // Broken structures
+    'river': { foot: 999, ooze: 1, float: 1, flying: 1 },    // Water terrain
+    'swamp': { foot: 2, ooze: 1, float: 1, flying: 1 },      // Wet terrain
+    'sea': { foot: 999, ooze: 2, float: 1, flying: 1 },      // Deep water
 };
 
+/**
+ * MovementCalculator class - Handles movement calculations and pathfinding
+ * 
+ * This class is responsible for:
+ * 1. Calculating movement costs based on terrain and unit type
+ * 2. Finding all reachable hexes within a unit's movement range
+ * 3. Handling special movement rules (ZoC, characteristics)
+ */
 export class MovementCalculator {
     constructor(
         private movementRule: MovementRule,
         private zocRules: ZoneOfControl[]
     ) {}
 
+    /**
+     * Calculates the movement cost for a specific terrain and movement type
+     * Applies special characteristics like 'amphibious' that modify costs
+     */
     getMovementCost(terrainType: string, movementType: MovementType, unit?: UnitData): number {
         const costs = DEFAULT_MOVEMENT_COSTS[terrainType] || DEFAULT_MOVEMENT_COSTS['plain'];
         let cost = costs[movementType];
@@ -42,10 +63,10 @@ export class MovementCalculator {
             switch (terrainType) {
                 case 'river':
                 case 'swamp':
-                    cost = Math.min(cost, 1);
+                    cost = Math.min(cost, 1);  // Water terrain becomes normal
                     break;
                 case 'sea':
-                    cost = Math.min(cost, 2);
+                    cost = Math.min(cost, 2);  // Deep water becomes difficult but passable
                     break;
             }
         }
@@ -53,18 +74,25 @@ export class MovementCalculator {
         return cost;
     }
 
+    /**
+     * Finds all hexes that a unit can move to within its movement range
+     * Uses a breadth-first search algorithm with movement costs
+     */
     getMoveableGrids(startCoord: HexCoordinate, movement: number, units: UnitData[]): HexCoordinate[] {
         const result = new Set<string>();
         const visited = new Map<string, number>();
         
+        // Find the moving unit
         const movingUnit = units.find(u => 
             u.position.x === startCoord.x && u.position.y === startCoord.y
         );
         if (!movingUnit) return [];
 
+        // Check if unit is affected by Zones of Control
         const isAffectedByZOC = this.zocRules.some(rule => rule.affectsUnit(movingUnit));
         const opposingZOC = isAffectedByZOC ? this.getOpposingZOC(movingUnit, units) : [];
         
+        // Initialize search queue with start position
         const queue: [HexCoordinate, number][] = [
             [startCoord, movement]
         ];
@@ -111,6 +139,9 @@ export class MovementCalculator {
         });
     }
 
+    /**
+     * Gets all hexes that are in the Zone of Control of opposing units
+     */
     private getOpposingZOC(movingUnit: UnitData, units: UnitData[]): HexCoordinate[] {
         const hostileUnits = units.filter(u => isHostileUnit(movingUnit, u));
         return hostileUnits.flatMap(u => 
@@ -118,6 +149,13 @@ export class MovementCalculator {
         );
     }
 
+    /**
+     * Calculates remaining movement points after moving to a new hex
+     * Takes into account:
+     * - Terrain costs
+     * - Zone of Control effects
+     * - Unit characteristics
+     */
     private calculateRemainingMove(
         current: HexCoordinate,
         neighbor: HexCoordinate,
@@ -130,6 +168,7 @@ export class MovementCalculator {
         const moveCost = this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
         let newRemainingMove = remainingMove - moveCost;
 
+        // Apply Zone of Control rules
         if (isAffectedByZOC) {
             const currentInZOC = opposingZOC.some(zoc => 
                 zoc.x === current.x && zoc.y === current.y
@@ -138,6 +177,7 @@ export class MovementCalculator {
                 zoc.x === neighbor.x && zoc.y === neighbor.y
             );
             
+            // Moving between two ZoC hexes stops movement
             if (currentInZOC && neighborInZOC) {
                 newRemainingMove = 0;
             }
