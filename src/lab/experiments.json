@@ -40,7 +40,7 @@
           "id": "gamedev-3",
           "name": "Game V1.2 - Implement terrain and movement cost System",
           "description": "Adding terrain types with different movement costs, affecting unit mobility and tactical positioning. Includes basic terrains (plains, forest, mountains) and their impact on movement points.",
-          "status": "in-progress",
+          "status": "completed",
           "url": "/labs/game-theater-v1_2"
         }
       ]
