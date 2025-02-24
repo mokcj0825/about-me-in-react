@@ -54,11 +54,11 @@
     },
     {
       "version": "0.1.1",
-      "date": "2024-03-20",
+      "date": "2025-02-24",
       "entries": [
         {
           "id": "unit-stats-system",
-          "date": "2024-03-20",
+          "date": "2025-02-24",
           "title": "Enhanced Unit Statistics System",
           "description": "Comprehensive overhaul of unit data structure with expanded statistics and combat mechanics",
           "category": "feature",
@@ -153,6 +153,51 @@
             "- Defensive bonuses from terrain",
             "- Line of sight modifications",
             "- Strategic positioning options"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.1.2",
+      "date": "2025-02-24",
+      "entries": [
+        {
+          "id": "ui-panel-system",
+          "date": "2025-02-24",
+          "title": "Enhanced UI Panel System",
+          "description": "Comprehensive update to game UI panels with improved organization and visual feedback",
+          "category": "feature",
+          "tags": ["ui", "panels", "information", "display", "react", "typescript"],
+          "details": [
+            "Panel Architecture:",
+            "- Implemented DisplayPanel component system",
+            "- Created consistent styling framework",
+            "- Added responsive positioning system",
+            "- Developed panel state management",
+            
+            "Unit Information Display:",
+            "- Redesigned unit stats presentation",
+            "- Added combat preview calculations",
+            "- Implemented status effect icons",
+            "- Enhanced terrain interaction display",
+            
+            "Interactive Features:",
+            "- Smart positioning to prevent edge overflow",
+            "- Smooth transition animations",
+            "- Context-sensitive information display",
+            "- Keyboard shortcut support",
+            
+            "Visual Improvements:",
+            "- Consistent color scheme implementation",
+            "- Enhanced typography system",
+            "- Added icon support for stats",
+            "- Improved contrast and readability",
+            
+            "Technical Updates:",
+            "- Modular panel component system",
+            "- Type-safe panel content management",
+            "- Event-driven panel updates",
+            "- Performance optimizations for animations"
           ]
         }
       ]

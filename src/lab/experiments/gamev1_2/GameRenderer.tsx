@@ -7,6 +7,8 @@ import { GroundMovement } from "./movement/rules/GroundMovement";
 import { StandardZOC } from "./zoc/rules/StandardZOC";
 import mapData from './data/map-data.json'
 import type { TerrainType } from './movement/types'
+import { UnitInfoDisplay } from "./components/DisplayPanel/UnitInfoDisplay";
+import { TerrainInfoDisplay } from './components/DisplayPanel/TerrainInfoDisplay';
 
 /**
  * Props for the GameRenderer component
@@ -66,6 +68,10 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     new GroundMovement(),
     [new StandardZOC()]
   );
+
+  // Add state for hovered unit
+  const [hoveredUnit, setHoveredUnit] = useState<UnitData | null>(null);
+  const [hoveredTerrain, setHoveredTerrain] = useState<TerrainType | null>(null);
 
   /**
    * Generates the hex grid layout
@@ -165,23 +171,14 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     return movementCalculator.getMoveableGrids(startCoord, movement, units);
   };
 
-  const handleCellHover = (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => {
-    if (selectedUnit) {
-      // Don't show hover effects if a unit is selected
-      return;
-    }
-
-    if (isHovering && isUnit) {
-      const unit = findUnitAtPosition(coord);
-      if (unit) {  // Remove faction check to show all units' movement
-        setSelectedUnitPosition(coord);
-        const moveableGrids = getMoveableGrids(coord, unit.movement);
-        setMoveableGrids(moveableGrids);
-      }
-    } else if (!isHovering) {
-      setSelectedUnitPosition(null);
-      setMoveableGrids([]);
-    }
+  /**
+   * Handles cell hover events
+   * Updates the hovered unit state
+   */
+  const handleCellHover = (coord: HexCoordinate) => {
+    const unit = findUnitAtPosition(coord);
+    setHoveredUnit(unit || null);
+    setHoveredTerrain(mapData.terrain[coord.y][coord.x] as TerrainType);
   };
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean) => {
@@ -290,9 +287,37 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseLeave={(e) => {
+        handleMouseUp(e);
+        setHoveredUnit(null);  // Clear hover state when mouse leaves
+      }}
       onContextMenu={(e) => e.preventDefault()}
     >
+      {/* Show UnitInfoDisplay with priority for hover over selection */}
+      {mousePosition && (
+        <>
+          {hoveredUnit ? (
+            <UnitInfoDisplay
+              unit={hoveredUnit}
+              mousePosition={mousePosition}
+            />
+          ) : selectedUnit && (
+            <UnitInfoDisplay
+              unit={selectedUnit}
+              mousePosition={mousePosition}
+            />
+          )}
+          
+          {/* Terrain Info Display */}
+          {hoveredTerrain && (
+            <TerrainInfoDisplay
+              terrain={hoveredTerrain}
+              mousePosition={mousePosition}
+            />
+          )}
+        </>
+      )}
+      
       <div style={{
         padding: `${PADDING}px`,
         minWidth: `${width * GRID.WIDTH + GRID.ROW_OFFSET + (PADDING * 2)}px`,
