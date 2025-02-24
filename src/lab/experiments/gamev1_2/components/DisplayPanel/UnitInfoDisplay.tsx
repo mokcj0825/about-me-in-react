@@ -1,12 +1,37 @@
 import React from 'react';
-import { UnitData } from '../types/UnitData';
+import { UnitData } from '../../types/UnitData';
 
-interface UnitInfoDisplayProps {
+interface Props {
+  /** The unit data to display information for */
   unit: UnitData;
-  mousePosition: { x: number, y: number };
+  
+  /** The current mouse position to position the info display */
+  mousePosition: { x: number; y: number };
 }
 
-export const UnitInfoDisplay: React.FC<UnitInfoDisplayProps> = ({ unit, mousePosition }) => {
+/**
+ * UnitInfoDisplay component - Renders a floating information panel for units
+ * 
+ * Displays detailed unit information in a fixed position panel, including:
+ * - Unit name
+ * - Class
+ * - Description
+ * - Faction
+ * - Movement details
+ * - Position coordinates
+ * 
+ * The panel position adjusts based on mouse location to prevent edge overflow.
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <UnitInfoDisplay
+ *   unit={unitData}
+ *   mousePosition={{ x: 100, y: 200 }}
+ * />
+ * ```
+ */
+export const UnitInfoDisplay: React.FC<Props> = ({ unit, mousePosition }) => {
   const isLeftSide = mousePosition.x < window.innerWidth / 2;
 
   const containerStyle: React.CSSProperties = {

@@ -1,68 +1,79 @@
+import CHARACTERISTICS_DATA from '../data/characteristics.json';
+
+/**
+ * Valid tags that can be assigned to characteristics
+ * @typedef {string} CharacteristicTag
+ */
 export type CharacteristicTag = 
-  | 'ignore-zoc'
-  | 'heavy-armor'
-  | 'flying'
-  | 'amphibious'
+  | 'ignore-zoc'    // Unit can ignore zones of control
+  | 'heavy-armor'   // Unit has enhanced defense
+  | 'flying'        // Unit ignores terrain movement costs
+  | 'amphibious'    // Unit can move through water terrain
   // Add more tags as needed
 
-export type CharacteristicId = string;  // For IDs like "00001"
+/**
+ * Unique identifier for characteristics
+ * @typedef {string} CharacteristicId - Format: "00001", "00002", etc.
+ */
+export type CharacteristicId = string;
 
+/**
+ * Structure for a characteristic definition
+ * @interface Characteristic
+ * @property {CharacteristicId} id - Unique identifier
+ * @property {string} name - Display name of the characteristic
+ * @property {CharacteristicTag[]} tag - Array of tags defining behavior
+ * @property {string} description - Detailed description of the effect
+ */
 export interface Characteristic {
   id: CharacteristicId;
   name: string;
-  tag: CharacteristicTag[];  // Changed to array to support multiple tags
+  tag: CharacteristicTag[];
   description: string;
 }
 
-export const CHARACTERISTICS: Record<CharacteristicId, Characteristic> = {
-  '00001': {
-    id: '00001',
-    name: '神速',
-    tag: ['ignore-zoc'],
-    description: '这个单位移动时可以无视ZOC'
-  },
-  '00002': {
-    id: '00002',
-    name: '重装',
-    tag: ['heavy-armor'],
-    description: '这个单位具有更高的防御力'
-  },
-  '00003': {
-    id: '00003',
-    name: '飞行',
-    tag: ['flying'],
-    description: '这个单位可以无视地形移动'
-  },
-  '00004': {
-    id: '00004',
-    name: '水栖',
-    tag: ['amphibious'],
-    description: '这个单位可以在浅水自由移动，亦可在海上移动'
-  }
-  // Add more characteristics as needed
-};
+/**
+ * Map of all available characteristics
+ * Loaded from characteristics.json and type-asserted to match interface
+ */
+export const CHARACTERISTICS: Record<CharacteristicId, Characteristic> = 
+  CHARACTERISTICS_DATA as Record<CharacteristicId, Characteristic>;
 
+/**
+ * Structure for a temporary characteristic buff
+ * @interface Buff
+ * @property {CharacteristicId} characteristicId - ID of the granted characteristic
+ * @property {number} duration - Number of turns the buff lasts
+ */
 export interface Buff {
   characteristicId: CharacteristicId;
   duration: number;
 }
 
-// Helper function to check if unit has a characteristic (either innate or from buff)
+/**
+ * Checks if a unit has a specific characteristic tag
+ * Either from innate characteristics or temporary buffs
+ * 
+ * @param {CharacteristicId[]} characteristics - Unit's innate characteristics
+ * @param {Buff[]} buffs - Unit's active buffs
+ * @param {CharacteristicTag} tag - Tag to check for
+ * @returns {boolean} True if unit has the characteristic
+ */
 export const hasCharacteristic = (
   characteristics: CharacteristicId[], 
   buffs: Buff[], 
   tag: CharacteristicTag
 ): boolean => {
-  // Check if any of the unit's characteristics match the tag
+  // Check innate characteristics
   const hasDirectCharacteristic = characteristics.some(id => {
     const characteristic = CHARACTERISTICS[id];
-    return characteristic?.tag.includes(tag);  // Changed to check array inclusion
+    return characteristic?.tag.includes(tag);
   });
 
-  // Check if any of the unit's buffs provide the tag
+  // Check temporary buffs
   const hasBuffCharacteristic = buffs.some(buff => {
     const characteristic = CHARACTERISTICS[buff.characteristicId];
-    return characteristic?.tag.includes(tag);  // Changed to check array inclusion
+    return characteristic?.tag.includes(tag);
   });
 
   return hasDirectCharacteristic || hasBuffCharacteristic;

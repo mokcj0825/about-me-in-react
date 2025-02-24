@@ -1,11 +1,34 @@
 import React from 'react';
-import { UnitDirection } from '../types/UnitData';
+import { UnitDirection } from '../../types/UnitData';
 
-interface DirectionIndicatorProps {
+/**
+ * Props interface for the DirectionIndicator component
+ * @interface Props
+ * @property {UnitDirection} direction - The direction to point the indicator towards.
+ * Valid values are: 'top-right', 'right', 'bottom-right', 'bottom-left', 'left', 'top-left'
+ */
+interface Props {
   direction: UnitDirection;
 }
 
-export const DirectionIndicator: React.FC<DirectionIndicatorProps> = ({ direction }) => {
+/**
+ * A component that renders a directional line indicator using SVG
+ * 
+ * @component
+ * @example
+ * ```tsx
+ * <DirectionIndicator direction="top-right" />
+ * ```
+ * 
+ * The component creates an SVG line that points in the specified direction.
+ * It uses absolute positioning and covers its container, with the line drawn
+ * according to the specified direction using predetermined coordinates.
+ * 
+ * @param {DirectionIndicatorProps} props - Component props
+ * @param {UnitDirection} props.direction - The direction the line should point towards
+ * @returns {React.ReactElement} A div containing an SVG with a directional line
+ */
+export const DirectionIndicator: React.FC<Props> = ({ direction }) => {
   const getLineCoordinates = () => {
     switch (direction) {
       case 'top-right':

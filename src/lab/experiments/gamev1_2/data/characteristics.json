@@ -1,0 +1,26 @@
+{
+  "00001": {
+    "id": "00001",
+    "name": "神速",
+    "tag": ["ignore-zoc"],
+    "description": "这个单位移动时可以无视ZOC"
+  },
+  "00002": {
+    "id": "00002",
+    "name": "重装",
+    "tag": ["heavy-armor"],
+    "description": "这个单位具有更高的防御力"
+  },
+  "00003": {
+    "id": "00003",
+    "name": "飞行",
+    "tag": ["flying"],
+    "description": "这个单位可以无视地形移动"
+  },
+  "00004": {
+    "id": "00004",
+    "name": "水栖",
+    "tag": ["amphibious"],
+    "description": "这个单位可以在浅水自由移动，亦可在海上移动"
+  }
+} 
