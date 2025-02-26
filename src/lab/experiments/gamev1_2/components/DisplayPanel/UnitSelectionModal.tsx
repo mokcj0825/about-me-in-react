@@ -31,9 +31,6 @@ export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect,
     cursor: 'pointer',
     borderRadius: '2px',
     transition: 'background-color 0.2s',
-    ':hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    },
   };
 
   return (
@@ -45,6 +42,7 @@ export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect,
         <div
           key={unit.id}
           style={unitItemStyle}
+          className="unit-selection-item"
           onClick={() => onSelect(unit)}
         >
           <div style={{ fontWeight: 'bold' }}>{unit.name}</div>
