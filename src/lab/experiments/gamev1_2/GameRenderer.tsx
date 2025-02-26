@@ -72,8 +72,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     [new StandardZOC()]
   );
 
-  // Add state for hovered unit
-  const [hoveredUnit, setHoveredUnit] = useState<UnitData | null>(null);
+  // Add state for hovered terrain
   const [hoveredTerrain, setHoveredTerrain] = useState<TerrainType | null>(null);
 
   // Add state for modal position
@@ -179,11 +178,10 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   /**
    * Handles cell hover events
-   * Updates the hovered unit state
+   * Updates the hovered terrain state only
    */
   const handleCellHover = (coord: HexCoordinate) => {
-    const unit = findUnitAtPosition(coord);
-    setHoveredUnit(unit || null);
+    // ONLY handle terrain hover, remove any unit-related hover logic
     setHoveredTerrain(mapData.terrain[coord.y][coord.x] as TerrainType);
   };
 
@@ -196,21 +194,18 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       return;
     }
 
-    // If we have moveable grids and this is a valid move
-    if (moveableGrids.length > 0 && isMoveableCell(coord)) {
-      // Handle unit movement
-      if (selectedUnit) {
-        const updatedUnits = units.map(unit => 
-          unit.id === selectedUnit.id 
-            ? { ...unit, position: coord }
-            : unit
-        );
-        setUnits(updatedUnits);
-        setSelectedUnit(null);
-        setSelectedUnitPosition(null);
-        setMoveableGrids([]);
-        return;
-      }
+    // If we have a selected unit and this is a valid move, handle movement first
+    if (selectedUnit && moveableGrids.length > 0 && isMoveableCell(coord)) {
+      const updatedUnits = units.map(unit => 
+        unit.id === selectedUnit.id 
+          ? { ...unit, position: coord }
+          : unit
+      );
+      setUnits(updatedUnits);
+      setSelectedUnit(null);
+      setSelectedUnitPosition(null);
+      setMoveableGrids([]);
+      return;
     }
 
     // Handle unit selection
@@ -219,16 +214,17 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     );
 
     if (unitsAtPosition.length > 1) {
+      // For multiple units, show selection modal first
       setMultipleUnits(unitsAtPosition);
-      setModalPosition(mousePosition); // Store click position for modal
-    } else {
+      setModalPosition(mousePosition);
+      // Don't set selectedUnit yet - wait for modal selection
+    } else if (unitsAtPosition.length === 1) {
+      // For single unit, select immediately
       const unit = unitsAtPosition[0];
-      if (unit) {
-        setSelectedUnit(unit);
-        setSelectedUnitPosition(coord);
-        const moveableGrids = getMoveableGrids(coord, unit.movement);
-        setMoveableGrids(moveableGrids);
-      }
+      setSelectedUnit(unit);
+      setSelectedUnitPosition(coord);
+      const moveableGrids = getMoveableGrids(coord, unit.movement);
+      setMoveableGrids(moveableGrids);
     }
   };
 
@@ -357,6 +353,11 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     };
   }, []);
 
+  const handleMouseLeave = (e: React.MouseEvent) => {
+    handleMouseUp(e);
+    setHoveredTerrain(null);
+  };
+
   return (
     <div 
       ref={mapRef} 
@@ -372,41 +373,29 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={(e) => {
-        handleMouseUp(e);
-        setHoveredUnit(null);
-      }}
+      onMouseLeave={handleMouseLeave}
       onContextMenu={(e) => e.preventDefault()}
     >
-      {/* Show UnitInfoDisplay with priority for hover over selection */}
-      {mousePosition && (
-        <>
-          {hoveredUnit ? (
-            <UnitInfoDisplay
-              unit={hoveredUnit}
-              mousePosition={mousePosition}
-            />
-          ) : selectedUnit && (
-            <UnitInfoDisplay
-              unit={selectedUnit}
-              mousePosition={mousePosition}
-            />
-          )}
-          
-          {/* Terrain Info Display */}
-          {hoveredTerrain && (
-            <TerrainInfoDisplay
-              terrain={hoveredTerrain}
-              mousePosition={mousePosition}
-            />
-          )}
-        </>
+      {/* ONLY show UnitInfoDisplay for selected unit */}
+      {selectedUnit && !multipleUnits && mousePosition && (
+        <UnitInfoDisplay
+          unit={selectedUnit}
+          mousePosition={mousePosition}
+        />
+      )}
+      
+      {/* Terrain hover display */}
+      {hoveredTerrain && mousePosition && (
+        <TerrainInfoDisplay
+          terrain={hoveredTerrain}
+          mousePosition={mousePosition}
+        />
       )}
       
       {multipleUnits && modalPosition && (
         <UnitSelectionModal
           units={multipleUnits}
-          position={modalPosition}  // Use fixed position instead of mousePosition
+          position={modalPosition}
           onSelect={handleUnitSelect}
           onClose={() => {
             setMultipleUnits(null);
@@ -446,7 +435,9 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
                 onClick={handleCellClick}
                 unitPosition={selectedUnitPosition}
                 findUnitAtPosition={findUnitAtPosition}
-                isSelected={selectedUnit !== null && coord.x === selectedUnitPosition?.x && coord.y === selectedUnitPosition?.y}
+                isSelected={selectedUnit !== null && 
+                  coord.x === selectedUnitPosition?.x && 
+                  coord.y === selectedUnitPosition?.y}
               />
             ))}
           </div>
