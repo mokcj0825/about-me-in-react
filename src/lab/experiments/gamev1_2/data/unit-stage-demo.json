@@ -206,7 +206,7 @@
       "aggro": 0,
       "damageType": "physical",
       "role": "dps",
-      "characteristics": [],
+      "characteristics": ["00003"],
       "buffs": [],
       "movementType": "flying"
     }
