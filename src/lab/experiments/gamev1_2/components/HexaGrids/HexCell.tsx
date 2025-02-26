@@ -4,10 +4,10 @@ import { UnitData } from "../../types/UnitData";
 import { HexCellOverlay } from "./HexCellOverlay";
 import { HexCellContent } from "./HexCellContent";
 import { HexCellHighlight } from "./HexCellHighlight";
-import { UnitInfoDisplay } from '../DisplayPanel/UnitInfoDisplay';
-import type { TerrainType } from '../../movement/types'
 import { HexCellHoverIndicator } from './HexCellHoverIndicator';
 import { HexCellContainer } from './HexCellContainer';
+import type { TerrainType } from '../../movement/types';
+
 
 /**
  * Props interface for the HexCell component
@@ -192,9 +192,6 @@ export const HexCell: React.FC<Props> = ({
           </div>
         )}
       </HexCellContainer>
-      {showInfo && units.length > 0 && (
-        <UnitInfoDisplay unit={units[0]} mousePosition={mousePos} />
-      )}
     </>
   );
 }; 
