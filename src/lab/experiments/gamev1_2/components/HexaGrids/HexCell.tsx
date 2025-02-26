@@ -52,10 +52,13 @@ interface Props {
    * @param coord - The coordinate of the clicked cell
    * @param isRightClick - Whether the click was a right click
    */
-  onClick: (coord: HexCoordinate, isRightClick: boolean) => void;
+  onClick: (coord: HexCoordinate, isRightClick?: boolean) => void;
   
   /** Whether this cell is currently selected */
   isSelected?: boolean;
+  
+  /** The array of units present in this cell */
+  units: UnitData[];
 }
 
 /**
@@ -94,7 +97,7 @@ interface Props {
  */
 export const HexCell: React.FC<Props> = ({
   coordinate, 
-  unit, 
+  units, 
   terrain,
   isMoveable,
   isInZOC,
@@ -114,12 +117,12 @@ export const HexCell: React.FC<Props> = ({
    * Shows unit info if a unit is present and triggers hover callback
    */
   const handleMouseEnter = (e: React.MouseEvent) => {
-    if (unit) {
+    if (units.length > 0) {
       setShowInfo(true);
       setMousePos({ x: e.clientX, y: e.clientY });
     }
     setIsHovered(true);
-    onHover(coordinate, true, !!unit);
+    onHover(coordinate, true, units.length > 0);
   };
 
   /**
@@ -129,7 +132,7 @@ export const HexCell: React.FC<Props> = ({
   const handleMouseLeave = () => {
     setShowInfo(false);
     setIsHovered(false);
-    onHover(coordinate, false, !!unit);
+    onHover(coordinate, false, units.length > 0);
   };
 
   /**
@@ -139,6 +142,14 @@ export const HexCell: React.FC<Props> = ({
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onClick(coordinate, e.button === 2);
+  };
+
+  const renderUnit = (unit: UnitData) => {
+    return (
+      <div className={`unit ${unit.faction}`}>
+        {unit.name}
+      </div>
+    );
   };
 
   return (
@@ -159,7 +170,7 @@ export const HexCell: React.FC<Props> = ({
         />
         <HexCellContent 
           coordinate={coordinate} 
-          unit={unit} 
+          unit={units.length > 0 ? units[0] : undefined} 
           style={{ zIndex: 3 }}
         />
         <HexCellHoverIndicator 
@@ -167,9 +178,22 @@ export const HexCell: React.FC<Props> = ({
           isSelected={isSelected || false} 
           style={{ zIndex: 5 }}
         />
+        {units.length > 0 && (
+          <div className="unit-stack">
+            <div className="unit-primary">
+              {renderUnit(units[0])}
+            </div>
+            
+            {units.length > 1 && (
+              <div className="unit-stack-indicator">
+                +{units.length - 1}
+              </div>
+            )}
+          </div>
+        )}
       </HexCellContainer>
-      {showInfo && unit && (
-        <UnitInfoDisplay unit={unit} mousePosition={mousePos} />
+      {showInfo && units.length > 0 && (
+        <UnitInfoDisplay unit={units[0]} mousePosition={mousePos} />
       )}
     </>
   );
