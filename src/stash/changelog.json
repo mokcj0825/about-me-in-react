@@ -209,15 +209,35 @@
         {
           "id": "turn-system",
           "date": "2025-02-27",
-          "title": "Add turn system",
-          "description": "Turn system for the game",
-          "category": "mechanism",
-          "tags": ["ui", "panels", "turn", "react", "typescript"],
+          "title": "Turn System Implementation Plan",
+          "description": "Comprehensive plan for implementing the turn system",
+          "category": "feature",
+          "tags": ["turn-system", "day-night", "phases", "effects"],
           "details": [
-            "Unit turn",
-            "- Achieve minimum functionality for end turn.",
-            "- Disable action when unit completed their actions.",
-            "- Add entry point for switch turn"
+            "1. Basic Turn System:",
+            "- Simple turn counter",
+            "- Day/Night cycle toggle",
+            "- Basic UI to show current turn and phase",
+            
+            "2. Phase Transition Framework:",
+            "- Define phase types (dayStart, dayEnd, etc.)",
+            "- Basic phase transition logic",
+            "- Event system foundation",
+            
+            "3. Unit Phase Effects Structure:",
+            "- Add phase effects to unit data",
+            "- Simple effect types first (like movement only)",
+            "- Basic effect application",
+            
+            "4. Effect System:",
+            "- Effect duration handling",
+            "- Active effects tracking",
+            "- Effect stacking rules",
+            
+            "5. Complex Effects:",
+            "- Additional effect types (damage, heal, etc.)",
+            "- Multiple effects per phase",
+            "- Conditional effects"
           ]
         }
       ]
