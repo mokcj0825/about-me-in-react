@@ -174,30 +174,50 @@
             "- Created consistent styling framework",
             "- Added responsive positioning system",
             "- Developed panel state management",
-            
+
             "Unit Information Display:",
             "- Redesigned unit stats presentation",
             "- Added combat preview calculations",
             "- Implemented status effect icons",
             "- Enhanced terrain interaction display",
-            
+
             "Interactive Features:",
             "- Smart positioning to prevent edge overflow",
             "- Smooth transition animations",
             "- Context-sensitive information display",
             "- Keyboard shortcut support",
-            
+
             "Visual Improvements:",
             "- Consistent color scheme implementation",
             "- Enhanced typography system",
             "- Added icon support for stats",
             "- Improved contrast and readability",
-            
+
             "Technical Updates:",
             "- Modular panel component system",
             "- Type-safe panel content management",
             "- Event-driven panel updates",
             "- Performance optimizations for animations"
+          ]
+        }
+      ]
+    },
+    {
+      "version": "0.1.3",
+      "date": "2025-02-27",
+      "entries": [
+        {
+          "id": "turn-system",
+          "date": "2025-02-27",
+          "title": "Add turn system",
+          "description": "Turn system for the game",
+          "category": "mechanism",
+          "tags": ["ui", "panels", "turn", "react", "typescript"],
+          "details": [
+            "Unit turn",
+            "- Achieve minimum functionality for end turn.",
+            "- Disable action when unit completed their actions.",
+            "- Add entry point for switch turn"
           ]
         }
       ]
