@@ -42,6 +42,13 @@
           "description": "Adding terrain types with different movement costs, affecting unit mobility and tactical positioning. Includes basic terrains (plains, forest, mountains) and their impact on movement points.",
           "status": "completed",
           "url": "/labs/game-theater-v1_2"
+        },
+        {
+          "id": "gamedev-4",
+          "name": "Game V1.3 - Implement turn system",
+          "description": "Add turn mechanism.",
+          "status": "in-progress",
+          "url": "/labs/game-theater-v1_3"
         }
       ]
     }
