@@ -1,5 +1,6 @@
 import React from 'react';
 import { UnitData } from '../../types/UnitData';
+import { MOVEMENT_TYPE_LABELS } from '../../movement/types';
 
 interface Props {
   /** The unit data to display information for */
@@ -31,7 +32,7 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, mousePosition }) => {
     padding: '12px',
     border: '1px solid rgba(255, 255, 255, 0.2)',
     borderRadius: '4px',
-    zIndex: 9999,
+    zIndex: 99,
     width: '280px',
     color: 'white',
     fontFamily: 'Arial, sans-serif',
@@ -68,15 +69,19 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, mousePosition }) => {
           {unit.name || 'Unknown Unit'}
         </div>
         <div style={statRowStyle}>
-          <span>Class: {unit.class || 'Unknown'}</span>
-          <span>Faction: {unit.faction || 'Neutral'}</span>
+          <span>职业: {unit.class || 'Unknown'}</span>
+          <span>阵营: {unit.faction || 'Neutral'}</span>
         </div>
       </div>
 
       {/* Combat Stats Section */}
       <div style={sectionStyle}>
-        <div style={{ fontSize: '14px', marginBottom: '4px' }}>Combat Stats</div>
+        <div style={{ fontSize: '14px', marginBottom: '4px' }}>属性数据</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+        <div style={statRowStyle}>
+            <span style={labelStyle}>生命值</span>
+            <span style={valueStyle}>{unit.hitpoint}</span>
+          </div>
           <div style={statRowStyle}>
             <span style={labelStyle}>攻击力</span>
             <span style={valueStyle}>{unit.attack}</span>
@@ -84,10 +89,6 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, mousePosition }) => {
           <div style={statRowStyle}>
             <span style={labelStyle}>防御力</span>
             <span style={valueStyle}>{unit.defense}</span>
-          </div>
-          <div style={statRowStyle}>
-            <span style={labelStyle}>战意</span>
-            <span style={valueStyle}>{unit.hitpoint}</span>
           </div>
           <div style={statRowStyle}>
             <span style={labelStyle}>敏捷</span>
@@ -100,7 +101,9 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, mousePosition }) => {
       <div style={sectionStyle}>
         <div style={statRowStyle}>
           <span style={labelStyle}>移动速度</span>
-          <span style={valueStyle}>{unit.movement} ({unit.movementType})</span>
+          <span style={valueStyle}>
+            {unit.movement} ({MOVEMENT_TYPE_LABELS[unit.movementType]})
+          </span>
         </div>
         <div style={statRowStyle}>
           <span style={labelStyle}>朝向</span>

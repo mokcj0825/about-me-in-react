@@ -11,6 +11,9 @@ import { UnitInfoDisplay } from "./components/DisplayPanel/UnitInfoDisplay";
 import { TerrainInfoDisplay } from './components/DisplayPanel/TerrainInfoDisplay';
 import { UnitSelectionModal } from './components/DisplayPanel/UnitSelectionModal';
 import { hasCharacteristic } from "./types/Characteristics";
+import { TerrainDetailDisplay } from './components/DisplayPanel/TerrainDetailDisplay';
+import { UIModalState } from './types/UIState';
+import { ControlHints } from './components/DisplayPanel/ControlHints';
 
 /**
  * Props for the GameRenderer component
@@ -75,8 +78,8 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   // Add state for hovered terrain
   const [hoveredTerrain, setHoveredTerrain] = useState<TerrainType | null>(null);
 
-  // Add state for modal position
-  const [modalPosition, setModalPosition] = useState<{ x: number; y: number } | null>(null);
+  // Replace separate modal states with single UI state
+  const [uiModal, setUiModal] = useState<UIModalState>({ type: null });
 
   /**
    * Generates the hex grid layout
@@ -186,7 +189,15 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   };
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
-    // Handle right click - deselect current unit
+    // If any modal is shown, only handle closing actions
+    if (uiModal.type) {
+      if (isRightClick) {
+        setUiModal({ type: null });
+      }
+      return;  // Block all other click actions
+    }
+
+    // Normal click handling
     if (isRightClick) {
       setSelectedUnit(null);
       setSelectedUnitPosition(null);
@@ -194,7 +205,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       return;
     }
 
-    // If we have a selected unit and this is a valid move, handle movement first
+    // Unit movement handling
     if (selectedUnit && moveableGrids.length > 0 && isMoveableCell(coord)) {
       const updatedUnits = units.map(unit => 
         unit.id === selectedUnit.id 
@@ -208,32 +219,26 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       return;
     }
 
-    // Handle unit selection
+    // Unit selection handling
     const unitsAtPosition = units.filter(unit => 
       unit.position.x === coord.x && unit.position.y === coord.y
     );
 
     if (unitsAtPosition.length > 1) {
-      // For multiple units, show selection modal first
-      setMultipleUnits(unitsAtPosition);
-      setModalPosition(mousePosition);
-      // Don't set selectedUnit yet - wait for modal selection
+      setUiModal({
+        type: 'unitSelection',
+        data: {
+          units: unitsAtPosition,
+          position: mousePosition || undefined
+        }
+      });
     } else if (unitsAtPosition.length === 1) {
-      // For single unit, select immediately
       const unit = unitsAtPosition[0];
       setSelectedUnit(unit);
       setSelectedUnitPosition(coord);
       const moveableGrids = getMoveableGrids(coord, unit.movement);
       setMoveableGrids(moveableGrids);
     }
-  };
-
-  const handleUnitSelect = (unit: UnitData) => {
-    setSelectedUnit(unit);
-    setSelectedUnitPosition(unit.position);
-    setMultipleUnits(null);
-    const moveableGrids = getMoveableGrids(unit.position, unit.movement);
-    setMoveableGrids(moveableGrids);
   };
 
   const isMoveableCell = (coord: HexCoordinate): boolean => {
@@ -358,6 +363,25 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     setHoveredTerrain(null);
   };
 
+  // Update keyboard handler to respect modal states
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 't') {
+        setUiModal(current => 
+          current.type ? { type: null } : { 
+            type: 'terrain', 
+            data: { terrain: hoveredTerrain || undefined } 
+          }
+        );
+      } else if (e.key === 'Escape') {
+        setUiModal({ type: null });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [hoveredTerrain]);
+
   return (
     <div 
       ref={mapRef} 
@@ -366,7 +390,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
         height: '100vh',
         overflow: 'auto',
         position: 'relative',
-        backgroundColor: '#FFE4C4', // Changed from #e0e0e0 to our background color
+        backgroundColor: '#FFE4C4',  // Keep the background color
         cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none'
       }}
@@ -374,7 +398,13 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseLeave}
-      onContextMenu={(e) => e.preventDefault()}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (multipleUnits) {
+          setMultipleUnits(null);
+          setUiModal({ type: null });
+        }
+      }}
     >
       {/* ONLY show UnitInfoDisplay for selected unit */}
       {selectedUnit && !multipleUnits && mousePosition && (
@@ -392,15 +422,26 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
         />
       )}
       
-      {multipleUnits && modalPosition && (
+      {uiModal.type === 'terrain' && uiModal.data?.terrain && (
+        <TerrainDetailDisplay
+          visible={true}
+          terrain={uiModal.data.terrain}
+          onClose={() => setUiModal({ type: null })}
+        />
+      )}
+      
+      {uiModal.type === 'unitSelection' && uiModal.data?.units && uiModal.data?.position && (
         <UnitSelectionModal
-          units={multipleUnits}
-          position={modalPosition}
-          onSelect={handleUnitSelect}
-          onClose={() => {
-            setMultipleUnits(null);
-            setModalPosition(null);
+          units={uiModal.data.units}
+          position={uiModal.data.position}
+          onSelect={(unit) => {
+            setSelectedUnit(unit);
+            setSelectedUnitPosition(unit.position);
+            const moveableGrids = getMoveableGrids(unit.position, unit.movement);
+            setMoveableGrids(moveableGrids);
+            setUiModal({ type: null });
           }}
+          onClose={() => setUiModal({ type: null })}
         />
       )}
       
@@ -443,6 +484,8 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
           </div>
         ))}
       </div>
+      
+      <ControlHints />
     </div>
   );
 }; 

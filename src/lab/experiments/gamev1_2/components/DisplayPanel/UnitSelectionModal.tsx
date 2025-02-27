@@ -1,5 +1,6 @@
 import React from 'react';
 import { UnitData } from '../../types/UnitData';
+import { MOVEMENT_TYPE_LABELS } from '../../movement/types';
 
 interface Props {
   units: UnitData[];
@@ -17,7 +18,7 @@ export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect,
     padding: '8px',
     border: '1px solid rgba(255, 255, 255, 0.2)',
     borderRadius: '4px',
-    zIndex: 10000,
+    zIndex: 100,
     minWidth: '200px',
     color: 'white',
     fontFamily: 'Arial, sans-serif',
@@ -34,11 +35,17 @@ export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect,
   };
 
   return (
-    <div style={containerStyle}>
+    <div 
+      style={containerStyle}
+      onContextMenu={(e) => {
+        e.preventDefault();  // Prevent default right-click menu
+        onClose();          // Close the modal
+      }}
+    >
       <div style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.2)', padding: '4px', marginBottom: '8px' }}>
         Select Unit
       </div>
-      {units.map((unit, index) => (
+      {units.map((unit) => (
         <div
           key={unit.id}
           style={unitItemStyle}
@@ -47,7 +54,7 @@ export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect,
         >
           <div style={{ fontWeight: 'bold' }}>{unit.name}</div>
           <div style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: '11px' }}>
-            {unit.class} {unit.movementType === 'flying' ? '(Flying)' : '(Ground)'}
+            {unit.class} ({MOVEMENT_TYPE_LABELS[unit.movementType]})
           </div>
         </div>
       ))}

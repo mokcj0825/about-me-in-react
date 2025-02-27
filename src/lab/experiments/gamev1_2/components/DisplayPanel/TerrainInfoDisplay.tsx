@@ -1,5 +1,6 @@
 import React from 'react';
 import type { TerrainType } from '../../movement/types';
+import { getTerrainDescription } from '../../utils/terrainUtils';
 
 const TERRAIN_LABELS: Record<TerrainType, string> = {
   'plain': '平地',
@@ -44,39 +45,12 @@ export const TerrainInfoDisplay: React.FC<Props> = ({ terrain, mousePosition }) 
     padding: '8px 12px',
     border: '1px solid rgba(255, 255, 255, 0.2)',
     borderRadius: '4px',
-    zIndex: 9999,
+    zIndex: 99,
     width: '200px',
     color: 'white',
     fontFamily: 'Arial, sans-serif',
     fontSize: '12px',
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-  };
-
-  const getTerrainDescription = (type: TerrainType): string => {
-    switch (type) {
-      case 'plain':
-        return '你没法期待获得多少掩护，敌人也是。';
-      case 'mountain':
-        return '你可以占据一个比较险要的地方，至少可以居高临下。';
-      case 'forest':
-        return '适合埋伏的地方，在雾战时位于此的飞行单位无法隐蔽。';
-      case 'sea':
-        return '只有水上单位和飞行单位可以移动。';
-      case 'river':
-        return '步行单位难以跨越的天险。';
-      case 'cliff':
-        return '险峻的地形，可以获得更大的战斗优势。';
-      case 'road':
-        return '文明的血管，可以快速移动。';
-      case 'wasteland':
-        return '荒芜人烟的区域，难以移动，但是视野还算广阔。';
-      case 'ruins':
-        return '不知名的废墟，可以提供一定的掩护，在雾战时位于此的飞行单位无法隐蔽。';
-      case 'swamp':
-        return '糟糕的区域，对大部分生物都不友好。';
-      default:
-        return '未知地形。';
-    }
   };
 
   return (
