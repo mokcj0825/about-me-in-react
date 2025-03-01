@@ -1,5 +1,6 @@
-import { CharacteristicId, Buff } from "./Characteristics";
+import { CharacteristicId } from "./Characteristics";
 import { HexCoordinate, createHexCoordinate } from "./HexCoordinate";
+import type { Buff as CharacteristicBuff } from './Characteristics';
 
 export type UnitFaction = 'player' | 'ally' | 'enemy';
 export type DamageType = 'physical' | 'magical' | 'true';
@@ -7,6 +8,14 @@ export type UnitRole = 'tank' | 'dps' | 'support' | 'control';
 export type UnitClass = 'warrior' | 'mage' | 'rogue' | 'priest' | 'archer' | 'knight';
 export type UnitDirection = 'top-left' | 'top-right' | 'right' | 'bottom-right' | 'bottom-left' | 'left';
 export type MovementType = 'foot' | 'ooze' | 'float' | 'flying';
+
+export interface Buff extends CharacteristicBuff {
+  id: string;
+  source: string;
+  value: number;
+  characteristicId: string;
+  duration: number;
+}
 
 export interface UnitData {
   // Basic Info
@@ -63,6 +72,9 @@ export interface UnitData {
   
   // Movement System
   movementType: MovementType;
+  
+  // New properties
+  hasMoved: boolean;
 }
 
 // Import demo data and convert positions to HexCoordinate
@@ -70,5 +82,6 @@ import demoData from '../data/unit-stage-demo.json';
 
 export const initialUnits: UnitData[] = (demoData.initialUnits as any[]).map(unit => ({
   ...unit,
-  position: createHexCoordinate(unit.position.x, unit.position.y)
+  position: createHexCoordinate(unit.position.x, unit.position.y),
+  hasMoved: false
 })) as UnitData[]; 

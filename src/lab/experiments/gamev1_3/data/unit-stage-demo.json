@@ -31,7 +31,7 @@
       "aggro": 0,
       "damageType": "physical",
       "role": "tank",
-      "characteristics": [],
+      "characteristics": ["00005", "00006"],
       "buffs": [],
       "movementType": "foot"
     },

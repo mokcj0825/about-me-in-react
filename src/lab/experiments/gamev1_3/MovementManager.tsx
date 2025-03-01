@@ -44,17 +44,6 @@ export const MovementManager = () => {
     const movingUnit = findUnitAtPosition(startCoord);
     if (!movingUnit) return [];
 
-    // Debug logs for movement characteristics
-    console.log('Moving unit:', movingUnit);
-    console.log('Has 神速:', hasCharacteristic(movingUnit.characteristics, movingUnit.buffs, 'ignore-zoc'));
-
-    // Check if unit ignores Zone of Control
-    const ignoresZOC = hasCharacteristic(
-      movingUnit.characteristics,
-      movingUnit.buffs,
-      'ignore-zoc'
-    );
-
     // Calculate opposing units' Zone of Control
     const opposingZOC = units
       .filter(u => {

@@ -63,6 +63,26 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, mousePosition }) => {
 
   return (
     <div style={containerStyle}>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '8px',
+        marginBottom: '8px' 
+      }}>
+        <div>{unit.name}</div>
+        {unit.hasMoved && (
+          <div style={{
+            backgroundColor: 'rgba(255, 0, 0, 0.2)',
+            color: '#ff6b6b',
+            padding: '2px 6px',
+            borderRadius: '3px',
+            fontSize: '12px'
+          }}>
+            已行动
+          </div>
+        )}
+      </div>
+
       {/* Header Section */}
       <div style={{ ...sectionStyle, borderBottom: '2px solid rgba(255, 255, 255, 0.2)' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px' }}>

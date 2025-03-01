@@ -14,6 +14,11 @@ import { hasCharacteristic } from "./types/Characteristics";
 import { TerrainDetailDisplay } from './components/DisplayPanel/TerrainDetailDisplay';
 import { UIModalState } from './types/UIState';
 import { ControlHints } from './components/DisplayPanel/ControlHints';
+import { TurnDisplay } from './components/TurnDisplay';
+import { TurnState } from './types/TurnState';
+import { advanceTurn, DayNightCycle, handleFactionTurn, handlePhaseEvent, TurnPhase } from './systems/TurnSystem';
+import { GameMenu } from './components/GameMenu/GameMenu';
+import stageData from './data/stage-data.json';
 
 /**
  * Props for the GameRenderer component
@@ -80,6 +85,15 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   // Replace separate modal states with single UI state
   const [uiModal, setUiModal] = useState<UIModalState>({ type: null });
+
+  const [turnState, setTurnState] = useState<TurnState>({
+    number: stageData.initialState.turnNumber,
+    cycle: stageData.initialState.startCycle as DayNightCycle,
+    phase: stageData.initialState.startPhase as TurnPhase
+  });
+
+  // Add state for game menu
+  const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
 
   /**
    * Generates the hex grid layout
@@ -188,6 +202,22 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     setHoveredTerrain(mapData.terrain[coord.y][coord.x] as TerrainType);
   };
 
+  const handleUnitMove = (unit: UnitData, newPosition: HexCoordinate) => {
+    // Only allow movement if unit hasn't moved this turn
+    if (unit.hasMoved) return;
+
+    const updatedUnits = units.map(u => 
+      u.id === unit.id 
+        ? { ...u, position: newPosition, hasMoved: true }
+        : u
+    );
+    
+    setUnits(updatedUnits);
+    setSelectedUnit(null);
+    setSelectedUnitPosition(null);
+    setMoveableGrids([]);
+  };
+
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
     // If any modal is shown, only handle closing actions
     if (uiModal.type) {
@@ -207,15 +237,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
     // Unit movement handling
     if (selectedUnit && moveableGrids.length > 0 && isMoveableCell(coord)) {
-      const updatedUnits = units.map(unit => 
-        unit.id === selectedUnit.id 
-          ? { ...unit, position: coord }
-          : unit
-      );
-      setUnits(updatedUnits);
-      setSelectedUnit(null);
-      setSelectedUnitPosition(null);
-      setMoveableGrids([]);
+      handleUnitMove(selectedUnit, coord);
       return;
     }
 
@@ -258,22 +280,6 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       u.position.x === coord.x && u.position.y === coord.y
     );
 
-    // Debug logs for movement checks
-    console.log('Moving unit:', {
-      name: unit.name,
-      characteristics: unit.characteristics,
-      buffs: unit.buffs,
-      isFlying: hasCharacteristic(unit.characteristics, unit.buffs || [], 'flying')
-    });
-
-    if (unitsAtTarget.length > 0) {
-      console.log('Target units:', unitsAtTarget.map(u => ({
-        name: u.name,
-        characteristics: u.characteristics,
-        buffs: u.buffs,
-        isFlying: hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
-      })));
-    }
 
     // If no units at target, movement is allowed
     if (unitsAtTarget.length === 0) return true;
@@ -374,13 +380,84 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
           }
         );
       } else if (e.key === 'Escape') {
-        setUiModal({ type: null });
+        if (uiModal.type) {
+          setUiModal({ type: null });
+        } else {
+          setIsGameMenuOpen(current => !current);
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [hoveredTerrain]);
+  }, [hoveredTerrain, uiModal.type]);
+
+  // Add effect to monitor turn state changes
+  useEffect(() => {
+    console.log('Turn state changed:', turnState);
+    
+    // Handle AI turns automatically
+    if (turnState.phase === 'ally') {
+      console.log('Ally AI is thinking...');
+      setTimeout(() => {
+        console.log('Ally AI finished their turn');
+        setTurnState(prevTurn => advanceTurn(prevTurn));
+      }, 1000);
+    }
+    else if (turnState.phase === 'enemy') {
+      console.log('Enemy AI is thinking...');
+      setTimeout(() => {
+        console.log('Enemy AI finished their turn');
+        if (turnState.cycle === 'day') {
+          setUnits(units => {
+            let updatedUnits = handlePhaseEvent(units, 'onDayEnd');
+            return handlePhaseEvent(updatedUnits, 'onNightStart');
+          });
+        }
+        setTurnState(prevTurn => advanceTurn(prevTurn));
+      }, 1000);
+    }
+  }, [turnState]);
+
+  const handleEndTurn = () => {
+    if (turnState.cycle === 'day') {
+      setTurnState(prevTurn => advanceTurn(prevTurn));
+      setUnits(prevUnits => handleFactionTurn(prevUnits, 'player'));
+    } else {
+      // Night ends, day starts - immediate transition
+      console.log('Transitioning: Night -> Day');
+      setUnits(units => {
+        let updatedUnits = handlePhaseEvent(units, 'onNightEnd');
+        return handlePhaseEvent(updatedUnits, 'onDayStart');
+      });
+      setTurnState(prevTurn => advanceTurn(prevTurn));
+      setUnits(prevUnits => 
+        prevUnits.map(unit => ({ ...unit, hasMoved: false }))
+      );
+    }
+    setIsGameMenuOpen(false);
+  };
+
+  // Add keyboard handler for turn advancement
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleEndTurn();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
+  // Apply initial day/night effects
+  useEffect(() => {
+    if (stageData.initialState.startCycle === 'day') {
+      setUnits(units => handlePhaseEvent(units, 'onDayStart'));
+    } else {
+      setUnits(units => handlePhaseEvent(units, 'onNightStart'));
+    }
+  }, []); // Run once on component mount
 
   return (
     <div 
@@ -406,6 +483,21 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
         }
       }}
     >
+      <TurnDisplay 
+        turn={turnState}
+      />
+      
+      {isGameMenuOpen && (
+        <GameMenu
+          turn={turnState}
+          onEndTurn={() => {
+            handleEndTurn();
+            setIsGameMenuOpen(false);
+          }}
+          onClose={() => setIsGameMenuOpen(false)}
+        />
+      )}
+      
       {/* ONLY show UnitInfoDisplay for selected unit */}
       {selectedUnit && !multipleUnits && mousePosition && (
         <UnitInfoDisplay
