@@ -9,6 +9,8 @@ export type CharacteristicTag =
   | 'heavy-armor'   // Unit has enhanced defense
   | 'flying'        // Unit ignores terrain movement costs
   | 'amphibious'    // Unit can move through water terrain
+  | 'dayWalker'     // Unit gains extra movement during the day
+  | 'nightPhobic'   // Unit loses movement during the night
   // Add more tags as needed
 
 /**

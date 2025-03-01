@@ -214,17 +214,17 @@
           "category": "feature",
           "tags": ["turn-system", "day-night", "phases", "effects"],
           "details": [
-            "1. Basic Turn System:",
+            "1. Basic Turn System: (Done)",
             "- Simple turn counter",
             "- Day/Night cycle toggle",
             "- Basic UI to show current turn and phase",
             
-            "2. Phase Transition Framework:",
+            "2. Phase Transition Framework: (Done)",
             "- Define phase types (dayStart, dayEnd, etc.)",
             "- Basic phase transition logic",
             "- Event system foundation",
             
-            "3. Unit Phase Effects Structure:",
+            "3. Unit Phase Effects Structure: (Done)",
             "- Add phase effects to unit data",
             "- Simple effect types first (like movement only)",
             "- Basic effect application",
