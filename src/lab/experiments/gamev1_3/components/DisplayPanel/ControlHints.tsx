@@ -29,6 +29,10 @@ export const ControlHints: React.FC = () => {
         <span style={keyStyle}>T</span>
         <span style={{ marginLeft: '8px' }}>地形信息</span>
       </div>
+      <div>
+        <span style={keyStyle}>Esc</span>
+        <span style={{ marginLeft: '8px' }}>主菜单</span>
+      </div>
     </div>
   );
 }; 
