@@ -229,12 +229,12 @@
             "- Simple effect types first (like movement only)",
             "- Basic effect application",
             
-            "4. Effect System:",
+            "4. Effect System: (Done)",
             "- Effect duration handling",
             "- Active effects tracking",
             "- Effect stacking rules",
             
-            "5. Complex Effects:",
+            "5. Complex Effects: (Postponed)",
             "- Additional effect types (damage, heal, etc.)",
             "- Multiple effects per phase",
             "- Conditional effects"
