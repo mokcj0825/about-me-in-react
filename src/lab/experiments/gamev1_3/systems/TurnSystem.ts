@@ -14,11 +14,6 @@ export interface TurnState {
 function handleCharacteristicEffects(unit: UnitData, event: PhaseEvent): UnitData {
   let updatedUnit = { ...unit };
   
-  // Debug logging
-  console.log('Processing unit:', unit.id, 'for event:', event);
-  console.log('Current characteristics:', unit.characteristics);
-  console.log('Current buffs:', unit.buffs);
-  
   switch(event) {
     case 'onDayStart':
       if (hasCharacteristic(unit.characteristics, [], 'dayWalker') && 
@@ -63,7 +58,6 @@ function handleCharacteristicEffects(unit: UnitData, event: PhaseEvent): UnitDat
       break;
   }
 
-  console.log('Updated unit:', updatedUnit);
   return updatedUnit;
 }
 
@@ -110,12 +104,15 @@ export function handleFactionTurn(units: UnitData[], faction: UnitFaction): Unit
 
 // TODO: Implement AI movement for ally and enemy units
 export function handleAITurn(units: UnitData[], faction: UnitFaction): UnitData[] {
+  // First, reset movement for units of the current faction
+  const resetUnits = handleFactionTurn(units, faction);
+  
   // TODO: Add AI logic for unit movement
-  // TODO: Consider:
   // - Path finding
   // - Target selection
   // - Combat decisions
   // - Formation maintenance
   // - Strategic objectives
-  return units;
+  
+  return resetUnits; // Return units with reset movement, even if AI hasn't moved yet
 } 

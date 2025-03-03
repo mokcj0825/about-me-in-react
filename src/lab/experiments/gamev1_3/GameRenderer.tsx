@@ -19,6 +19,7 @@ import { TurnState } from './types/TurnState';
 import { advanceTurn, DayNightCycle, handleFactionTurn, handlePhaseEvent, TurnPhase } from './systems/TurnSystem';
 import { GameMenu } from './components/GameMenu/GameMenu';
 import stageData from './data/stage-data.json';
+import { getAnnouncementMessage, TurnAnnouncement } from './components/TurnAnnouncement';
 
 /**
  * Props for the GameRenderer component
@@ -94,6 +95,11 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   // Add state for game menu
   const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
+
+  const [announcement, setAnnouncement] = useState<string | null>(null);
+
+  // Add new state near the top with other state declarations
+  const [isAITurnActive, setIsAITurnActive] = useState(false);
 
   /**
    * Generates the hex grid layout
@@ -219,6 +225,9 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   };
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
+    // Block all actions during AI turns
+    if (isAITurnActive) return;
+
     // If any modal is shown, only handle closing actions
     if (uiModal.type) {
       if (isRightClick) {
@@ -372,6 +381,8 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   // Update keyboard handler to respect modal states
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+      if (isAITurnActive) return; // Block keyboard shortcuts during AI turns
+
       if (e.key.toLowerCase() === 't') {
         setUiModal(current => 
           current.type ? { type: null } : { 
@@ -390,30 +401,26 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [hoveredTerrain, uiModal.type]);
+  }, [hoveredTerrain, uiModal.type, isAITurnActive]);
 
-  // Add effect to monitor turn state changes
+  // Update effect to monitor turn state changes
   useEffect(() => {
     console.log('Turn state changed:', turnState);
     
-    // Handle AI turns automatically
-    if (turnState.phase === 'ally') {
-      console.log('Ally AI is thinking...');
+    if (turnState.phase === 'ally' || turnState.phase === 'enemy') {
+      setIsAITurnActive(true); // Lock player actions
+      const message = getAnnouncementMessage(turnState);
+      setAnnouncement(message);
+      
       setTimeout(() => {
-        console.log('Ally AI finished their turn');
-        setTurnState(prevTurn => advanceTurn(prevTurn));
-      }, 1000);
-    }
-    else if (turnState.phase === 'enemy') {
-      console.log('Enemy AI is thinking...');
-      setTimeout(() => {
-        console.log('Enemy AI finished their turn');
-        if (turnState.cycle === 'day') {
+        if (turnState.phase === 'enemy' && turnState.cycle === 'day') {
           setUnits(units => {
             let updatedUnits = handlePhaseEvent(units, 'onDayEnd');
             return handlePhaseEvent(updatedUnits, 'onNightStart');
           });
         }
+        setAnnouncement(null);
+        setIsAITurnActive(false); // Unlock player actions
         setTurnState(prevTurn => advanceTurn(prevTurn));
       }, 1000);
     }
@@ -458,6 +465,15 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       setUnits(units => handlePhaseEvent(units, 'onNightStart'));
     }
   }, []); // Run once on component mount
+
+  // Remove or modify the existing announcement effect
+  useEffect(() => {
+    const message = getAnnouncementMessage(turnState);
+    if (message && turnState.phase === 'player') {  // Only handle player phase here
+      setAnnouncement(message);
+      setTimeout(() => setAnnouncement(null), 1100);
+    }
+  }, [turnState]);
 
   return (
     <div 
@@ -578,6 +594,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       </div>
       
       <ControlHints />
+      {announcement && <TurnAnnouncement message={announcement} />}
     </div>
   );
 }; 
