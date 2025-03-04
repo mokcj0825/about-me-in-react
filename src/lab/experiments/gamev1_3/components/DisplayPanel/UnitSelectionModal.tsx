@@ -1,6 +1,7 @@
 import React from 'react';
 import { UnitData } from '../../types/UnitData';
 import { MOVEMENT_TYPE_LABELS } from '../../movement/types';
+import {Z_INDEX} from "../../constants/zIndex";
 
 interface Props {
   units: UnitData[];
@@ -10,7 +11,7 @@ interface Props {
 }
 
 export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect, onClose }) => {
-  const containerStyle: React.CSSProperties = {
+  const wrapperStyle: React.CSSProperties = {
     position: 'fixed',
     top: position.y,
     left: position.x,
@@ -18,7 +19,7 @@ export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect,
     padding: '8px',
     border: '1px solid rgba(255, 255, 255, 0.2)',
     borderRadius: '4px',
-    zIndex: 100,
+    zIndex: Z_INDEX.BASE_MODAL,
     minWidth: '200px',
     color: 'white',
     fontFamily: 'Arial, sans-serif',
@@ -26,17 +27,9 @@ export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect,
     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
   };
 
-  const unitItemStyle: React.CSSProperties = {
-    padding: '8px',
-    margin: '4px 0',
-    cursor: 'pointer',
-    borderRadius: '2px',
-    transition: 'background-color 0.2s',
-  };
-
   return (
     <div 
-      style={containerStyle}
+      style={wrapperStyle}
       onContextMenu={(e) => {
         e.preventDefault();  // Prevent default right-click menu
         onClose();          // Close the modal
@@ -60,4 +53,12 @@ export const UnitSelectionModal: React.FC<Props> = ({ units, position, onSelect,
       ))}
     </div>
   );
-}; 
+};
+
+const unitItemStyle: React.CSSProperties = {
+  padding: '8px',
+  margin: '4px 0',
+  cursor: 'pointer',
+  borderRadius: '2px',
+  transition: 'background-color 0.2s',
+};

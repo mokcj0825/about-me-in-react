@@ -168,8 +168,7 @@ export const HexCell: React.FC<Props> = ({
           faction={isMoveable && unitPosition ? findUnitAtPosition(unitPosition)?.faction : undefined} 
           style={{ zIndex: 2 }}
         />
-        <HexCellContent 
-          coordinate={coordinate} 
+        <HexCellContent
           unit={units.length > 0 ? units[0] : undefined} 
           style={{ zIndex: 3 }}
         />

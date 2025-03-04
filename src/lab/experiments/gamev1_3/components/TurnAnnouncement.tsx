@@ -16,22 +16,7 @@ export const TurnAnnouncement: React.FC<Props> = ({ message }) => {
   if (!visible) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      color: 'white',
-      fontSize: '32px',
-      fontWeight: 'bold',
-      zIndex: 1000,
-      animation: 'fadeInOut 1s ease-in-out',
-    }}>
+    <div style={wrapperStyle}>
       {message}
       <style>
         {`
@@ -47,8 +32,25 @@ export const TurnAnnouncement: React.FC<Props> = ({ message }) => {
   );
 };
 
+const wrapperStyle = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  color: 'white' ,
+  fontSize: '32px',
+  fontWeight: 'bold',
+  zIndex: 1000,
+  animation: 'fadeInOut 1s ease-in-out'
+} as const
+
 export function getAnnouncementMessage(turnState: TurnState): string {
-    console.log('turnState', turnState);
+  console.log('turnState', turnState);
   if (turnState.phase === 'ally') return '盟军行动';
   if (turnState.phase === 'enemy') return '敌军行动';
   if (turnState.phase === 'player') {

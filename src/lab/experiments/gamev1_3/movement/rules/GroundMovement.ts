@@ -4,6 +4,7 @@ import { MovementRule } from "../types";
 import { isHostileUnit } from "../../utils/FactionUtils";
 import type { TerrainType } from '../types'
 import mapData from '../../data/map-data.json'
+import { hasCharacteristic } from "../../types/Characteristics";
 
 /**
  * GroundMovement class - Implements basic ground movement rules for units
@@ -21,8 +22,8 @@ export class GroundMovement implements MovementRule {
      * Determines if a unit can move through a specific cell
      * 
      * @param movingUnit - The unit attempting to move
-     * @param current - Current hex coordinate
-     * @param target - Target hex coordinate to check
+     * @param from - Starting hex coordinate
+     * @param to - Destination hex coordinate to check
      * @param units - Array of all units on the map
      * @returns boolean - True if movement is allowed, false if blocked
      * 
@@ -34,20 +35,43 @@ export class GroundMovement implements MovementRule {
      */
     canMoveThrough(
         movingUnit: UnitData,
-        current: HexCoordinate,
-        target: HexCoordinate,
+        from: HexCoordinate,
+        to: HexCoordinate,
         units: UnitData[]
     ): boolean {
-        // Find if there's a unit at the target location
-        const targetUnit = units.find(u => 
-            u.position.x === target.x && u.position.y === target.y
+        // Check terrain passability
+        const terrainType = this.getTerrainType(to);
+        if (!terrainType) return false;
+
+        // Find units at target position
+        const unitsAtTarget = units.filter(u => 
+            u.position.x === to.x && u.position.y === to.y
         );
-        
-        // Allow movement if no unit present
-        if (!targetUnit) return true;
-        
-        // Allow movement through friendly units, block hostile units
-        return !isHostileUnit(movingUnit, targetUnit);
+
+        // If no units at target, movement is allowed
+        if (unitsAtTarget.length === 0) return true;
+
+        // Flying units can pass through ground units and vice versa
+        const isMovingUnitFlying = hasCharacteristic(
+            movingUnit.characteristics,
+            movingUnit.buffs || [],
+            'flying'
+        );
+
+        // Allow passing through friendly units
+        const hasFriendlyUnits = unitsAtTarget.every(u => u.faction === movingUnit.faction);
+        if (hasFriendlyUnits) return true;
+
+        // For enemy units, maintain flying vs ground rules
+        const hasTargetFlying = unitsAtTarget.some(u => 
+            hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
+        );
+
+        return isMovingUnitFlying 
+            ? !hasTargetFlying  // Flying units can't pass through flying units
+            : unitsAtTarget.every(u =>  // Ground units can't pass through ground units
+                hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
+            );
     }
 
     /**
