@@ -20,17 +20,9 @@ import { advanceTurn, DayNightCycle, handleFactionTurn, handlePhaseEvent, TurnPh
 import { GameMenu } from './components/GameMenu/GameMenu';
 import stageData from './data/stage-data.json';
 import { getAnnouncementMessage, TurnAnnouncement } from './components/TurnAnnouncement';
+import { ActionMenu } from './components/ActionMenu/ActionMenu';
+import { onUnitSelected } from './events/RendererEvents';
 
-/**
- * Props for the GameRenderer component
- * @interface GameRendererProps
- * @property {number} width - Number of hexes in horizontal direction
- * @property {number} height - Number of hexes in vertical direction
- */
-interface GameRendererProps {
-  width: number;
-  height: number;
-}
 
 /**
  * Grid layout constants
@@ -50,9 +42,11 @@ const GRID = {
  * - Visual state management
  * 
  * @component
- * @param {GameRendererProps} props
  */
-export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => {
+export const GameRenderer: React.FC = () => {
+  // Use map dimensions directly from map data
+  const { width, height } = mapData;
+
   // State management for units and movement
   const [units, setUnits] = useState<UnitData[]>(initialUnits);
   const [moveableGrids, setMoveableGrids] = useState<HexCoordinate[]>([]);
@@ -101,21 +95,8 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
   // Add new state near the top with other state declarations
   const [isAITurnActive, setIsAITurnActive] = useState(false);
 
-  /**
-   * Generates the hex grid layout
-   * @returns {HexCoordinate[][]} 2D array of hex coordinates
-   */
-  const generateGrid = () => {
-    const grid: HexCoordinate[][] = [];
-    for (let y = height - 1; y >= 0; y--) {
-      const row: HexCoordinate[] = [];
-      for (let x = 0; x < width; x++) {
-        row.push(createHexCoordinate(x, y));
-      }
-      grid.push(row);
-    }
-    return grid;
-  };
+  const [showActionMenu, setShowActionMenu] = useState<{ x: number; y: number } | null>(null);
+  const [lastMovePosition, setLastMovePosition] = useState<HexCoordinate | null>(null);
 
   /**
    * Finds a unit at a specific coordinate
@@ -192,7 +173,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     }
   }, []);
 
-  const grid = generateGrid();
+  const grid = generateGrid(width, height);
 
   // Main function
   const getMoveableGrids = (startCoord: HexCoordinate, movement: number): HexCoordinate[] => {
@@ -201,11 +182,33 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   /**
    * Handles cell hover events
-   * Updates the hovered terrain state only
+   * Shows moveable grids for any unit being hovered
    */
-  const handleCellHover = (coord: HexCoordinate) => {
-    // ONLY handle terrain hover, remove any unit-related hover logic
+  const handleCellHover = (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => {
     setHoveredTerrain(mapData.terrain[coord.y][coord.x] as TerrainType);
+
+    // If a unit is already selected, don't show hover movement range
+    if (selectedUnit) return;
+
+    if (isHovering && isUnit) {
+      const unitsAtPosition = units.filter(unit => 
+        unit.position.x === coord.x && unit.position.y === coord.y
+      );
+
+      if (unitsAtPosition.length > 1) {
+        // For multiple units, don't show movement range
+        setMoveableGrids([]);
+        setMultipleUnits(unitsAtPosition);
+      } else if (unitsAtPosition.length === 1) {
+        // For single unit, show movement range
+        const moveableGrids = getMoveableGrids(coord, unitsAtPosition[0].movement);
+        setMoveableGrids(moveableGrids);
+        setMultipleUnits(null);
+      }
+    } else {
+      setMoveableGrids([]);
+      setMultipleUnits(null);
+    }
   };
 
   const handleUnitMove = (unit: UnitData, newPosition: HexCoordinate) => {
@@ -214,14 +217,54 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
     const updatedUnits = units.map(u => 
       u.id === unit.id 
-        ? { ...u, position: newPosition, hasMoved: true }
+        ? { ...u, position: newPosition }
         : u
     );
     
     setUnits(updatedUnits);
+    setLastMovePosition(newPosition);
+    
+    // Show action menu at mouse position
+    if (mousePosition && mapRef.current) {
+      const rect = mapRef.current.getBoundingClientRect();
+      const scrollLeft = mapRef.current.scrollLeft;
+      const scrollTop = mapRef.current.scrollTop;
+      
+      setShowActionMenu({ 
+        x: mousePosition.x + scrollLeft - rect.left,
+        y: mousePosition.y + scrollTop - rect.top
+      });
+    }
+  };
+
+  const handleStandby = () => {
+    if (!selectedUnit || !lastMovePosition) return;
+
+    setUnits(prevUnits => prevUnits.map(u => 
+      u.id === selectedUnit.id 
+        ? { ...u, hasMoved: true }
+        : u
+    ));
+    
     setSelectedUnit(null);
     setSelectedUnitPosition(null);
     setMoveableGrids([]);
+    setShowActionMenu(null);
+    setLastMovePosition(null);
+  };
+
+  const handleCancelMove = () => {
+    if (!selectedUnit || !lastMovePosition) return;
+
+    // Revert the unit's position
+    setUnits(prevUnits => prevUnits.map(u => 
+      u.id === selectedUnit.id 
+        ? { ...u, position: selectedUnitPosition! }
+        : u
+    ));
+    
+    setShowActionMenu(null);
+    setLastMovePosition(null);
   };
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
@@ -233,7 +276,13 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       if (isRightClick) {
         setUiModal({ type: null });
       }
-      return;  // Block all other click actions
+      return;
+    }
+
+    // If action menu is shown, handle right-click as cancel
+    if (showActionMenu && isRightClick) {
+      handleCancelMove();
+      return;
     }
 
     // Normal click handling
@@ -251,64 +300,45 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
     }
 
     // Unit selection handling
-    const unitsAtPosition = units.filter(unit => 
-      unit.position.x === coord.x && unit.position.y === coord.y
-    );
-
-    if (unitsAtPosition.length > 1) {
-      setUiModal({
-        type: 'unitSelection',
-        data: {
-          units: unitsAtPosition,
-          position: mousePosition || undefined
-        }
-      });
-    } else if (unitsAtPosition.length === 1) {
-      const unit = unitsAtPosition[0];
-      setSelectedUnit(unit);
-      setSelectedUnitPosition(coord);
-      const moveableGrids = getMoveableGrids(coord, unit.movement);
-      setMoveableGrids(moveableGrids);
-    }
+    onUnitSelected(coord, {
+      units,
+      setSelectedUnit,
+      setSelectedUnitPosition,
+      setMoveableGrids,
+      setUiModal,
+      mousePosition,
+      movementCalculator
+    });
   };
 
   const isMoveableCell = (coord: HexCoordinate): boolean => {
     if (!selectedUnitPosition) return false;
     const unit = selectedUnit || findUnitAtPosition(selectedUnitPosition);
     if (!unit) return false;
-    
-    // Check if this is a valid movement coordinate
-    const isValidMove = moveableGrids.some(grid => 
+
+    const isValidMove = moveableGrids.some(grid =>
       grid.x === coord.x && grid.y === coord.y
     );
-    
+
     if (!isValidMove) return false;
 
-    // Get units at target position
-    const unitsAtTarget = units.filter(u => 
+    const unitsAtTarget = units.filter(u =>
       u.position.x === coord.x && u.position.y === coord.y
     );
 
-
-    // If no units at target, movement is allowed
     if (unitsAtTarget.length === 0) return true;
 
-    // Check if moving unit is flying
     const isMovingUnitFlying = hasCharacteristic(
       unit.characteristics,
       unit.buffs || [],
       'flying'
     );
 
-    // Check if any target unit is flying
-    const hasTargetFlying = unitsAtTarget.some(u => 
+    const hasTargetFlying = unitsAtTarget.some(u =>
       hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
     );
 
-    // Allow stacking if:
-    // 1. Moving unit is flying and NO target units are flying
-    // 2. Moving unit is not flying and ALL target units are flying
-    return isMovingUnitFlying ? !hasTargetFlying : unitsAtTarget.every(u => 
+    return isMovingUnitFlying ? !hasTargetFlying : unitsAtTarget.every(u =>
       hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
     );
   };
@@ -553,6 +583,15 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
         />
       )}
       
+      {/* Show unit info for multiple units */}
+      {multipleUnits && mousePosition && (
+        <UnitInfoDisplay
+          units={multipleUnits}
+          mousePosition={mousePosition}
+          isMultiple={true}
+        />
+      )}
+      
       <div style={{
         padding: `${PADDING}px`,
         minWidth: `${width * GRID.WIDTH + GRID.ROW_OFFSET + (PADDING * 2)}px`,
@@ -580,7 +619,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
                 units={findUnitsAtPosition(coord)}
                 terrain={mapData.terrain[coord.y][coord.x] as TerrainType}
                 isMoveable={isMoveableCell(coord)}
-                onHover={handleCellHover}
+                onHover={(coord, isHovering, isUnit) => handleCellHover(coord, isHovering, isUnit)}
                 onClick={handleCellClick}
                 unitPosition={selectedUnitPosition}
                 findUnitAtPosition={findUnitAtPosition}
@@ -595,6 +634,26 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
       
       <ControlHints />
       {announcement && <TurnAnnouncement message={announcement} />}
+      
+      {showActionMenu && (
+        <ActionMenu
+          position={showActionMenu}
+          onStandby={handleStandby}
+          onCancel={handleCancelMove}
+        />
+      )}
     </div>
   );
-}; 
+};
+
+const generateGrid = (width: number, height: number) => {
+  const grid: HexCoordinate[][] = [];
+  for (let y = height - 1; y >= 0; y--) {
+    const row: HexCoordinate[] = [];
+    for (let x = 0; x < width; x++) {
+      row.push(createHexCoordinate(x, y));
+    }
+    grid.push(row);
+  }
+  return grid;
+};

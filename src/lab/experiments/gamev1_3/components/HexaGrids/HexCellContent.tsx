@@ -1,5 +1,4 @@
 import React from 'react';
-import { HexCoordinate } from '../../types/HexCoordinate';
 import { UnitData } from '../../types/UnitData';
 import { DirectionIndicator } from './DirectionIndicator';
 
@@ -8,8 +7,6 @@ import { DirectionIndicator } from './DirectionIndicator';
  * @interface HexCellContentProps
  */
 interface HexCellContentProps {
-  /** The coordinate position of this hex cell */
-  coordinate: HexCoordinate;
   
   /** The unit data if a unit is present in this cell */
   unit?: UnitData;
@@ -29,8 +26,7 @@ interface HexCellContentProps {
  * 
  * @component
  */
-export const HexCellContent: React.FC<HexCellContentProps> = ({ 
-  coordinate,
+export const HexCellContent: React.FC<HexCellContentProps> = ({
   unit,
   style
 }) => (

@@ -1,6 +1,5 @@
 import React from 'react';
 import { getTerrainSvgPath } from '../../utils/terrainLoader';
-import { UnitFaction } from '../../types/UnitData';
 import type { TerrainType } from '../../movement/types';
 
 /**

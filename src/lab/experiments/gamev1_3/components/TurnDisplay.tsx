@@ -9,21 +9,7 @@ interface Props {
 
 export const TurnDisplay: React.FC<Props> = ({ turn }) => {
   return (
-    <div style={{
-      position: 'fixed',
-      top: '20px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      padding: '10px 20px',
-      borderRadius: '4px',
-      color: 'white',
-      fontSize: '14px',
-      zIndex: 50,
-      display: 'flex',
-      alignItems: 'center',
-      gap: '32px'
-    }}>
+    <div style={wrapperStyle}>
       <div style={{ 
         opacity: turn.cycle === 'day' ? 1 : 0.3,
         transition: 'opacity 0.3s'
@@ -53,4 +39,20 @@ export const TurnDisplay: React.FC<Props> = ({ turn }) => {
       </div>
     </div>
   );
-}; 
+};
+
+const wrapperStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: '20px',
+  left: '50%',
+  transform: 'translateX(-50%)',
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  padding: '10px 20px',
+  borderRadius: '4px',
+  color: 'white',
+  fontSize: '14px',
+  zIndex: 50,
+  display: 'flex',
+  alignItems: 'center',
+  gap: '32px'
+} as const;

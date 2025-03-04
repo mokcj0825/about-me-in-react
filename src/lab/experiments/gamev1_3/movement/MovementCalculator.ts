@@ -125,23 +125,13 @@ export class MovementCalculator {
     }
 
     /**
-     * Gets all hexes that are in the Zone of Control of opposing units
-     */
-    private getOpposingZOC(movingUnit: UnitData, units: UnitData[]): HexCoordinate[] {
-        const hostileUnits = units.filter(u => isHostileUnit(movingUnit, u));
-        return hostileUnits.flatMap(u => 
-            this.zocRules.flatMap(rule => rule.getControlledArea(u.position))
-        );
-    }
-
-    /**
      * Calculates remaining movement points after moving to a new hex
      * Takes into account:
      * - Terrain costs
      * - Zone of Control effects
      * - Unit characteristics
      */
-    private calculateRemainingMove(
+    calculateRemainingMove(
         current: HexCoordinate,
         neighbor: HexCoordinate,
         remainingMove: number,
@@ -149,11 +139,13 @@ export class MovementCalculator {
         opposingZOC: HexCoordinate[],
         movingUnit: UnitData
     ): number {
-        const terrainType = this.movementRule.getTerrainType(neighbor);
-        const moveCost = this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
-        let newRemainingMove = remainingMove - moveCost;
+        // Flying units ignore ZOC
+        if (hasCharacteristic(movingUnit.characteristics, movingUnit.buffs || [], 'flying')) {
+            const terrainType = this.movementRule.getTerrainType(neighbor);
+            return remainingMove - this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
+        }
 
-        // Apply Zone of Control rules
+        // Handle ZOC rules for non-flying units
         if (isAffectedByZOC) {
             const currentInZOC = opposingZOC.some(zoc => 
                 zoc.x === current.x && zoc.y === current.y
@@ -162,12 +154,58 @@ export class MovementCalculator {
                 zoc.x === neighbor.x && zoc.y === neighbor.y
             );
             
-            // Moving between two ZoC hexes stops movement
+            // Cannot move from one ZOC to another
             if (currentInZOC && neighborInZOC) {
-                newRemainingMove = 0;
+                return -1; // Movement not allowed
+            }
+
+            // Moving into ZOC stops movement
+            if (neighborInZOC) {
+                return 0;
+            }
+
+            // When starting in ZOC, can only move to non-ZOC hexes in specific directions
+            if (currentInZOC) {
+                // Get the direction from current to neighbor
+                const dx = neighbor.x - current.x;
+                const dy = neighbor.y - current.y;
+                
+                // Check if any enemy unit is in the direction we're trying to move
+                const hasEnemyInDirection = opposingZOC.some(zoc => {
+                    const zocDx = zoc.x - current.x;
+                    const zocDy = zoc.y - current.y;
+                    // If enemy is in same general direction, movement is blocked
+                    return Math.sign(dx) === Math.sign(zocDx) && 
+                           Math.sign(dy) === Math.sign(zocDy);
+                });
+
+                if (hasEnemyInDirection) {
+                    return -1; // Movement blocked in this direction
+                }
+                
+                // Allow movement in directions away from enemy ZOC
+                const terrainType = this.movementRule.getTerrainType(neighbor);
+                return remainingMove - this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
             }
         }
 
-        return newRemainingMove;
+        // Normal movement cost calculation
+        const terrainType = this.movementRule.getTerrainType(neighbor);
+        return remainingMove - this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
+    }
+
+    /**
+     * Gets all hexes that are in the Zone of Control of opposing units
+     */
+    getOpposingZOC(movingUnit: UnitData, units: UnitData[]): HexCoordinate[] {
+        const hostileUnits = units.filter(u => isHostileUnit(movingUnit, u));
+        const zocHexes = hostileUnits.flatMap(u => 
+            this.zocRules.flatMap(rule => rule.getControlledArea(u.position))
+        );
+
+        // Remove duplicates
+        return zocHexes.filter((hex, index, self) =>
+            index === self.findIndex((h) => h.x === hex.x && h.y === hex.y)
+        );
     }
 } 
