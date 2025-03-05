@@ -49,9 +49,13 @@ export class GroundMovement implements MovementRule {
         if (unitsAtTarget.length === 0) return true;
 
         // Check for hostile units - cannot move through them
-        if (unitsAtTarget.some(u => u.faction === 'enemy')) return false;
+        const hasHostileUnit = unitsAtTarget.some(u => 
+            (movingUnit.faction === 'enemy' && u.faction !== 'enemy') ||
+            (movingUnit.faction !== 'enemy' && u.faction === 'enemy')
+        );
+        if (hasHostileUnit) return false;
 
-        // Can move through friendly units (but not stop there - handled by MovementCalculator)
+        // Always allow moving through (stacking rules are handled by MovementCalculator)
         return true;
     }
 

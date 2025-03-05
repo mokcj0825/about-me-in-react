@@ -296,53 +296,57 @@ export const GameRenderer: React.FC = () => {
 
     // If any modal is shown, only handle closing actions
     if (uiModal.type) {
-      if (isRightClick) {
-        setUiModal({ type: null });
-      }
-      return;
+        if (isRightClick) {
+            setUiModal({ type: null });
+        }
+        return;
     }
 
     // If action menu is shown, handle right-click as cancel
     if (showActionMenu && isRightClick) {
-      handleCancelMove();
-      return;
+        handleCancelMove();
+        return;
     }
 
-    // Normal click handling
+    // Handle right-click to deselect unit
     if (isRightClick) {
-      setSelectedUnit(null);
-      setSelectedUnitPosition(null);
-      setMoveableGrids([]);
-      return;
+        setSelectedUnit(null);
+        setSelectedUnitPosition(null);
+        setMoveableGrids([]);
+        return;
     }
 
-    // Unit movement handling
-    if (selectedUnit && moveableGrids.length > 0 && isMoveableCell(coord)) {
-      handleUnitMove(selectedUnit, coord);
-      return;
+    // Handle unit movement if a unit is selected
+    if (selectedUnit) {
+        // Check if clicked position is in moveable grids
+        const isValidMove = moveableGrids.some(grid => 
+            grid.x === coord.x && grid.y === coord.y
+        );
+
+        if (isValidMove) {
+            handleUnitMove(selectedUnit, coord);
+            return;
+        }
     }
 
-    // Unit selection handling
+    // Handle new unit selection
     const unitAtPosition = findUnitAtPosition(coord);
     if (unitAtPosition) {
-      console.log('Selected Unit Position:', coord);
-      const calculator = getMovementCalculator(unitAtPosition);
-      const grids = calculator.getMoveableGrids(coord, unitAtPosition.movement, units);
-      console.log('Moveable Grids:', grids);
+        onUnitSelected(coord, {
+            units,
+            setUnits,
+            selectedUnit,
+            moveableGrids,
+            setSelectedUnit,
+            setSelectedUnitPosition,
+            setMoveableGrids,
+            setUiModal,
+            mousePosition,
+            movementCalculator: unitAtPosition.movementType === 'flying' ? 
+                new MovementCalculator(new AirMovement(), []) : 
+                new MovementCalculator(new GroundMovement(), [new StandardZOC()])
+        });
     }
-
-    onUnitSelected(coord, {
-      units,
-      setUnits,
-      selectedUnit,
-      moveableGrids,
-      setSelectedUnit,
-      setSelectedUnitPosition,
-      setMoveableGrids,
-      setUiModal,
-      mousePosition,
-      movementCalculator: selectedUnit ? getMovementCalculator(selectedUnit) : groundMovementCalculator
-    });
   };
 
   const isMoveableCell = (coord: HexCoordinate): boolean => {

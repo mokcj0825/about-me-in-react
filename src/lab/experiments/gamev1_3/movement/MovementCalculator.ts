@@ -59,7 +59,11 @@ export class MovementCalculator {
         movement: number,
         units: UnitData[]
     ): HexCoordinate[] {
-        const moveableGrids: HexCoordinate[] = [];
+        const moveableGrids: HexCoordinate[] = [{
+            x: position.x,
+            y: position.y,
+            z: position.z
+        }];
         
         const movingUnit = units.find(u => 
             u.position.x === position.x && 
@@ -115,27 +119,15 @@ export class MovementCalculator {
             
             while (queue.length > 0) {
                 const [current, remainingMovement] = queue.shift()!;
-                console.log('\nProcessing hex:', current, 'with remaining movement:', remainingMovement);
                 
-                if (remainingMovement <= 0) {
-                    console.log('No movement points left, skipping');
-                    continue;
-                }
+                if (remainingMovement <= 0) continue;
                 
                 const neighbors = getNeighbors(current);
-                console.log('Neighbors:', neighbors);
-                
                 for (const neighbor of neighbors) {
                     const neighborKey = `${neighbor.x},${neighbor.y}`;
-                    console.log('\nChecking neighbor:', neighbor);
+                    if (visited.has(neighborKey)) continue;
                     
-                    if (visited.has(neighborKey)) {
-                        console.log('Already visited, skipping');
-                        continue;
-                    }
-
                     if (!this.movementRule.canMoveThrough(movingUnit, current, neighbor, units)) {
-                        console.log('Cannot move through this hex, skipping');
                         continue;
                     }
                     
@@ -143,42 +135,51 @@ export class MovementCalculator {
                     const cost = this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
                     let newRemainingMovement = remainingMovement - cost;
                     
-                    console.log('Movement cost:', cost);
-                    console.log('New remaining movement before ZOC:', newRemainingMovement);
-                    
-                    if (newRemainingMovement < 0) {
-                        console.log('Not enough movement points, skipping');
-                        continue;
-                    }
+                    if (newRemainingMovement < 0) continue;
                     
                     const isInEnemyZOC = enemyZOC.some(zoc => 
                         zoc.x === neighbor.x && zoc.y === neighbor.y
                     );
-                    console.log('Is neighbor in enemy ZOC:', isInEnemyZOC);
                     
                     if (isInEnemyZOC) {
-                        console.log('Entering enemy ZOC, consuming all movement');
                         newRemainingMovement = 0;
                     }
-                    
-                    moveableGrids.push({
-                        x: neighbor.x,
-                        y: neighbor.y,
-                        z: neighbor.z
-                    });
-                    console.log('Added to moveable grids');
+
+                    // Check stacking rules
+                    const unitsAtTarget = units.filter(u => 
+                        u.position.x === neighbor.x && 
+                        u.position.y === neighbor.y &&
+                        u.id !== movingUnit.id
+                    );
+
+                    const canStop = unitsAtTarget.every(u => 
+                        (movingUnit.movementType === 'flying' && u.movementType !== 'flying') || 
+                        (movingUnit.movementType !== 'flying' && u.movementType === 'flying')
+                    );
+
+                    if (canStop) {
+                        moveableGrids.push({
+                            x: neighbor.x,
+                            y: neighbor.y,
+                            z: neighbor.z
+                        });
+                    }
                     
                     visited.add(neighborKey);
                     
                     if (newRemainingMovement > 0) {
-                        console.log('Adding to queue with remaining movement:', newRemainingMovement);
                         queue.push([neighbor, newRemainingMovement]);
-                    } else {
-                        console.log('No movement left, not adding to queue');
                     }
                 }
             }
         }
+
+        moveableGrids.push({
+            x: position.x,
+            y: position.y,
+            z: position.z
+        });
+        console.log('Moveable grids:', moveableGrids);
 
         return moveableGrids;
     }
