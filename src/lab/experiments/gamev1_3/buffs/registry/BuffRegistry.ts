@@ -1,9 +1,17 @@
 import { BuffProvider, BuffEffect } from '../types';
 import { Buff, UnitData } from '../../types/UnitData';
 import { characteristicRegistry } from '../../characteristics/registry/CharacteristicRegistry';
+import { DayWalkerBuff } from '../DayWalkerBuff';
+import { NightPhobicDebuff } from '../NightPhobicDebuff';
 
 class BuffRegistry {
   private providers: Map<string, BuffProvider> = new Map();
+
+  constructor() {
+    // Register the DayWalkerBuff
+    this.register(new DayWalkerBuff());
+    this.register(new NightPhobicDebuff());
+  }
 
   register(provider: BuffProvider) {
     this.providers.set(provider.id, provider);

@@ -2,8 +2,6 @@ import { HexCoordinate, createHexCoordinate, getNeighbors } from "../types/HexCo
 import { UnitData, MovementType } from "../types/UnitData";
 import { MovementRule } from "./types";
 import { ZoneOfControl } from "../zoc/types";
-import { isHostileUnit } from "../utils/FactionUtils";
-import { hasCharacteristic } from "../types/Characteristics";
 import { movementCostRegistry } from './registry/MovementCostRegistry';
 import { buffRegistry } from '../buffs/registry/BuffRegistry';
 
