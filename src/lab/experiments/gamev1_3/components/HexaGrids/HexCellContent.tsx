@@ -13,6 +13,9 @@ interface HexCellContentProps {
   
   /** Optional CSS styles to apply to the container */
   style?: React.CSSProperties;
+  
+  /** The coordinates of this hex cell */
+  coord: { x: number, y: number };
 }
 
 /**
@@ -28,7 +31,8 @@ interface HexCellContentProps {
  */
 export const HexCellContent: React.FC<HexCellContentProps> = ({
   unit,
-  style
+  style,
+  coord
 }) => (
   <div
     style={{
@@ -67,5 +71,16 @@ export const HexCellContent: React.FC<HexCellContentProps> = ({
         />
       </>
     )}
+    
+    {/* Coordinates display */}
+    <div style={{
+      position: 'absolute',
+      bottom: '2px',
+      left: '2px',
+      fontSize: '10px',
+      color: 'rgba(0, 0, 0, 0.7)'
+    }}>
+      {coord.x},{coord.y}
+    </div>
   </div>
 );

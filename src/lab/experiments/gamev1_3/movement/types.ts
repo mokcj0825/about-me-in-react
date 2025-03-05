@@ -1,17 +1,12 @@
 import { HexCoordinate } from "../types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
 
-export type TerrainType = 
-    | 'plain'
-    | 'road'
-    | 'forest'
-    | 'cliff'
-    | 'mountain'
-    | 'wasteland'
-    | 'ruins'
-    | 'river'
-    | 'swamp'
-    | 'sea';
+export interface MovementRule {
+    canMoveThrough: (movingUnit: UnitData, from: HexCoordinate, to: HexCoordinate, units: UnitData[]) => boolean;
+    getTerrainType: (coord: HexCoordinate) => string;
+}
+
+export type TerrainType = 'plain' | 'mountain' | 'forest' | 'sea' | 'river' | 'cliff' | 'road' | 'wasteland' | 'ruins' | 'swamp';
 
 export type MovementType = 'foot' | 'ooze' | 'float' | 'flying';
 
@@ -31,10 +26,4 @@ export interface MovementCost {
     [terrain: string]: {
         [K in MovementType]: number;
     };
-}
-
-export interface MovementRule {
-    canMoveThrough: (movingUnit: UnitData, current: HexCoordinate, target: HexCoordinate, units: UnitData[]) => boolean;
-    calculateMovementCost: (from: HexCoordinate, to: HexCoordinate) => number;
-    getTerrainType: (coordinate: HexCoordinate) => TerrainType;
 } 

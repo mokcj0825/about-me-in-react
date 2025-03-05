@@ -171,6 +171,7 @@ export const HexCell: React.FC<Props> = ({
         <HexCellContent
           unit={units.length > 0 ? units[0] : undefined} 
           style={{ zIndex: 3 }}
+          coord={coordinate}
         />
         <HexCellHoverIndicator 
           isHovered={isHovered} 

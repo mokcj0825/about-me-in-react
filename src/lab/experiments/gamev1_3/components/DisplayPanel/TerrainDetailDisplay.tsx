@@ -1,9 +1,9 @@
 import React from 'react';
 import type { TerrainType } from '../../movement/types';
 import { getTerrainDescription } from '../../utils/terrainUtils';
-import { DEFAULT_MOVEMENT_COSTS } from '../../movement/constants';
 import { TERRAIN_LABELS } from '../../utils/terrainUtils';
-import { MOVEMENT_TYPE_LABELS, MovementType } from '../../movement/types';
+import { MovementType } from '../../movement/types';
+import { movementCostRegistry } from '../../movement/registry/MovementCostRegistry';
 
 interface Props {
 	visible: boolean;
@@ -13,6 +13,12 @@ interface Props {
 
 export const TerrainDetailDisplay: React.FC<Props> = ({ visible, terrain, onClose }) => {
 	if (!visible) return null;
+
+	const movementTypes: MovementType[] = ['foot', 'ooze', 'float', 'flying'];
+	const costs = movementTypes.map(type => ({
+		type,
+		cost: movementCostRegistry.getMovementCost(terrain, type)
+	}));
 
 	return (
 		<div style={displayStyle}>
@@ -110,7 +116,11 @@ const TerrainDescription: React.FC<{ terrain: TerrainType }> = ({terrain}) => {
 };
 
 const MovementCostDisplay: React.FC<{ terrain: TerrainType }> = ({terrain}) => {
-  const costs = DEFAULT_MOVEMENT_COSTS[terrain];
+  const movementTypes: MovementType[] = ['foot', 'ooze', 'float', 'flying'];
+  const costs = movementTypes.map(type => ({
+    type,
+    cost: movementCostRegistry.getMovementCost(terrain, type)
+  }));
 
   return (
     <div style={{ marginTop: "8px", fontSize: "12px" }}>
@@ -125,10 +135,10 @@ const MovementCostDisplay: React.FC<{ terrain: TerrainType }> = ({terrain}) => {
           fontSize: "11px",
         }}
       >
-        {(Object.keys(costs) as MovementType[]).map((type) => (
-          <div key={type}>
-            {MOVEMENT_TYPE_LABELS[type]}:{" "}
-            {costs[type] === 999 ? "不可通行" : costs[type]}
+        {costs.map(({ type, cost }) => (
+          <div key={type} className="cost-row">
+            <span>{type}: </span>
+            <span>{cost === 99 ? '不可通行' : cost}</span>
           </div>
         ))}
       </div>

@@ -1,4 +1,5 @@
 import CHARACTERISTICS_DATA from '../data/characteristics.json';
+import { Buff } from './UnitData';
 
 /**
  * Valid tags that can be assigned to characteristics
@@ -42,17 +43,6 @@ export const CHARACTERISTICS: Record<CharacteristicId, Characteristic> =
   CHARACTERISTICS_DATA as Record<CharacteristicId, Characteristic>;
 
 /**
- * Structure for a temporary characteristic buff
- * @interface Buff
- * @property {CharacteristicId} characteristicId - ID of the granted characteristic
- * @property {number} duration - Number of turns the buff lasts
- */
-export interface Buff {
-  characteristicId: CharacteristicId;
-  duration: number;
-}
-
-/**
  * Checks if a unit has a specific characteristic tag
  * Either from innate characteristics or temporary buffs
  * 
@@ -61,22 +51,11 @@ export interface Buff {
  * @param {CharacteristicTag} tag - Tag to check for
  * @returns {boolean} True if unit has the characteristic
  */
-export const hasCharacteristic = (
-  characteristics: CharacteristicId[], 
-  buffs: Buff[], 
-  tag: CharacteristicTag
-): boolean => {
-  // Check innate characteristics
-  const hasDirectCharacteristic = characteristics.some(id => {
-    const characteristic = CHARACTERISTICS[id];
-    return characteristic?.tag.includes(tag);
-  });
-
-  // Check temporary buffs
-  const hasBuffCharacteristic = buffs.some(buff => {
-    const characteristic = CHARACTERISTICS[buff.characteristicId];
-    return characteristic?.tag.includes(tag);
-  });
-
-  return hasDirectCharacteristic || hasBuffCharacteristic;
-};
+export function hasCharacteristic(
+  characteristics: string[],
+  buffs: Buff[],
+  characteristicId: string
+): boolean {
+  return characteristics.includes(characteristicId) || 
+         buffs.some(buff => buff.id === characteristicId);
+}

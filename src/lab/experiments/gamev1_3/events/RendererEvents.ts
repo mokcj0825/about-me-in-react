@@ -11,12 +11,23 @@ interface RendererState {
   setUiModal: (modal: UIModalState) => void;
   mousePosition: { x: number; y: number } | null;
   movementCalculator: MovementCalculator;
+  selectedUnit: UnitData | null;
+  moveableGrids: HexCoordinate[];
+  setUnits: (units: UnitData[]) => void;
 }
 
 export const onUnitSelected = (
   coord: HexCoordinate,
   state: RendererState
 ) => {
+  // If we have a selected unit and the clicked coord is in moveable grids,
+  // this is a move action, not a selection action
+  if (state.selectedUnit && state.moveableGrids.some(grid => 
+    grid.x === coord.x && grid.y === coord.y
+  )) {
+    return;  // Let the movement handler deal with this
+  }
+
   const unitsAtPosition = state.units.filter(unit => 
     unit.position.x === coord.x && unit.position.y === coord.y
   );
@@ -44,4 +55,36 @@ export const onUnitSelected = (
     }
     // If no player units, do nothing (can't select enemy/ally units)
   }
+};
+
+export const onUnitMove = (
+  coord: HexCoordinate,
+  state: RendererState
+) => {
+  if (!state.selectedUnit) return;
+  
+  // Check if the target coordinate is in moveable grids
+  const canMove = state.moveableGrids.some(grid => 
+    grid.x === coord.x && grid.y === coord.y
+  );
+
+  if (!canMove) return;
+
+  // Update unit position
+  const updatedUnits = state.units.map(unit => {
+    if (unit.id === state.selectedUnit!.id) {
+      return {
+        ...unit,
+        position: coord,
+        hasMoved: true
+      };
+    }
+    return unit;
+  });
+
+  // Update state
+  state.setUnits(updatedUnits);
+  state.setSelectedUnit(null);
+  state.setSelectedUnitPosition(null);
+  state.setMoveableGrids([]);
 };
