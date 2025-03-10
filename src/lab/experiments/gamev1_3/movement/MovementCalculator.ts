@@ -183,10 +183,18 @@ export class MovementCalculator {
     }
 
     private getEnemyZOC(unit: UnitData, units: UnitData[]): HexCoordinate[] {
-        const enemyUnits = units.filter(u => 
-            (u.faction === 'enemy') && // Only enemy faction units, not ally
-            u.movementType !== 'flying'   // Only ground units
-        );
+        const enemyUnits = units.filter(u => {
+            // Skip flying units
+            if (u.movementType === 'flying') return false;
+            
+            // Determine opposing factions based on unit's faction
+            if (unit.faction === 'enemy') {
+                return u.faction === 'player' || u.faction === 'ally';
+            } else if (unit.faction === 'player' || unit.faction === 'ally') {
+                return u.faction === 'enemy';
+            }
+            return false;
+        });
         
         console.log('Enemy units for ZOC:', enemyUnits);
         

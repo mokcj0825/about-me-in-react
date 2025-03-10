@@ -25,6 +25,7 @@ import { ActionMenu } from './components/ActionMenu/ActionMenu';
 import { onUnitSelected } from './events/RendererEvents';
 import { initMovementCosts } from './movement/initMovementCosts';
 import { initBuffs } from './buffs/initBuffs';
+import {DEBUGGING_MODE} from "./config";
 
 
 /**
@@ -292,7 +293,9 @@ export const GameRenderer: React.FC = () => {
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
     // Block all actions during AI turns
-    if (isAITurnActive) return;
+    if (isAITurnActive) {
+      if (!DEBUGGING_MODE) return;
+    }
 
     // If any modal is shown, only handle closing actions
     if (uiModal.type) {
