@@ -1,5 +1,6 @@
 import type { UnitData, UnitFaction } from '../types/UnitData';
 import { hasCharacteristic } from '../types/Characteristics';
+import { buffRegistry } from '../buffs/registry/BuffRegistry';
 
 export type TurnPhase = 'player' | 'ally' | 'enemy';
 export type DayNightCycle = 'day' | 'night';
@@ -14,50 +15,9 @@ export interface TurnState {
 function handleCharacteristicEffects(unit: UnitData, event: PhaseEvent): UnitData {
   let updatedUnit = { ...unit };
   
-  switch(event) {
-    case 'onDayStart':
-      if (hasCharacteristic(unit.characteristics, [], 'dayWalker') && 
-          !unit.buffs.some(buff => buff.source === 'dayWalker')) {
-        updatedUnit.buffs = [...unit.buffs, { 
-          id: 'dayWalker_buff',
-          source: 'dayWalker',
-          value: 1,
-          characteristicId: '00005',
-          duration: 1
-        }];
-        updatedUnit.movement += 1;
-      }
-      break;
-      
-    case 'onDayEnd':
-      if (unit.buffs.some(buff => buff.source === 'dayWalker')) {
-        updatedUnit.buffs = unit.buffs.filter(buff => buff.source !== 'dayWalker');
-        updatedUnit.movement -= 1;
-      }
-      break;
-      
-    case 'onNightStart':
-      if (hasCharacteristic(unit.characteristics, [], 'nightPhobic') && 
-          !unit.buffs.some(buff => buff.source === 'nightPhobic')) {
-        updatedUnit.buffs = [...unit.buffs, {
-          id: 'nightPhobic_debuff',
-          source: 'nightPhobic',
-          value: -2,
-          characteristicId: '00006',
-          duration: 1
-        }];
-        updatedUnit.movement -= 2;
-      }
-      break;
-      
-    case 'onNightEnd':
-      if (unit.buffs.some(buff => buff.source === 'nightPhobic')) {
-        updatedUnit.buffs = unit.buffs.filter(buff => buff.source !== 'nightPhobic');
-        updatedUnit.movement += 2;
-      }
-      break;
-  }
-
+  // Let the buff registry handle all effects
+  buffRegistry.applyEffects(event, updatedUnit);
+  
   return updatedUnit;
 }
 

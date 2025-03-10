@@ -9,6 +9,10 @@ export class StandardZOC implements ZoneOfControl {
     }
 
     affectsUnit(unit: UnitData): boolean {
-        return !hasCharacteristic(unit.characteristics, unit.buffs, 'ignore-zoc');
+        // Flying units ignore ZOC
+        if (unit.movementType === 'flying') return false;
+        
+        // Other units can ignore ZOC if they have the characteristic
+        return !hasCharacteristic(unit.characteristics, unit.buffs || [], 'ignore-zoc');
     }
 } 

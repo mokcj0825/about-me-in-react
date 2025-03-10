@@ -2,9 +2,8 @@ import { HexCoordinate, createHexCoordinate, getNeighbors } from "../types/HexCo
 import { UnitData, MovementType } from "../types/UnitData";
 import { MovementRule } from "./types";
 import { ZoneOfControl } from "../zoc/types";
-import { isHostileUnit } from "../utils/FactionUtils";
-import { hasCharacteristic } from "../types/Characteristics";
-import { DEFAULT_MOVEMENT_COSTS } from "./constants";
+import { movementCostRegistry } from './registry/MovementCostRegistry';
+import { buffRegistry } from '../buffs/registry/BuffRegistry';
 
 /**
  * Defines movement costs for different terrain types and movement types
@@ -40,22 +39,12 @@ export class MovementCalculator {
      * Applies special characteristics like 'amphibious' that modify costs
      */
     getMovementCost(terrainType: string, movementType: MovementType, unit?: UnitData): number {
-        const costs = DEFAULT_MOVEMENT_COSTS[terrainType] || DEFAULT_MOVEMENT_COSTS['plain'];
-        let cost = costs[movementType];
-
-        // Apply amphibious characteristic if unit has it
-        if (unit && hasCharacteristic(unit.characteristics, unit.buffs, 'amphibious')) {
-            switch (terrainType) {
-                case 'river':
-                case 'swamp':
-                    cost = Math.min(cost, 1);  // Water terrain becomes normal
-                    break;
-                case 'sea':
-                    cost = Math.min(cost, 2);  // Deep water becomes difficult but passable
-                    break;
-            }
+        let cost = movementCostRegistry.getMovementCost(terrainType, movementType);
+        
+        if (unit) {
+            buffRegistry.calculateStats(unit);
         }
-
+        
         return cost;
     }
 
@@ -63,149 +52,180 @@ export class MovementCalculator {
      * Finds all hexes that a unit can move to within its movement range
      * Uses a breadth-first search algorithm with movement costs
      */
-    getMoveableGrids(startCoord: HexCoordinate, movement: number, units: UnitData[]): HexCoordinate[] {
-        const result = new Set<string>();
-        const visited = new Map<string, number>();
+    getMoveableGrids(
+        position: HexCoordinate,
+        movement: number,
+        units: UnitData[]
+    ): HexCoordinate[] {
+        const moveableGrids: HexCoordinate[] = [{
+            x: position.x,
+            y: position.y,
+            z: position.z
+        }];
         
-        // Find the moving unit
         const movingUnit = units.find(u => 
-            u.position.x === startCoord.x && u.position.y === startCoord.y
-        );
-        if (!movingUnit) return [];
+            u.position.x === position.x && 
+            u.position.y === position.y
+        )!;
 
-        // Check if unit is affected by Zones of Control
-        const isAffectedByZOC = this.zocRules.some(rule => rule.affectsUnit(movingUnit));
-        const opposingZOC = isAffectedByZOC ? this.getOpposingZOC(movingUnit, units) : [];
-        
-        // Initialize search queue with start position
-        const queue: [HexCoordinate, number][] = [
-            [startCoord, movement]
-        ];
-        
-        while (queue.length > 0) {
-            const [current, remainingMove] = queue.shift()!;
-            const currentKey = `${current.x},${current.y}`;
+        if (movingUnit.movementType === 'flying') {
+            const visited = new Set<string>();
+            const queue: [HexCoordinate, number][] = [[position, movement]];
             
-            if (remainingMove >= 0) {
-                result.add(currentKey);
+            while (queue.length > 0) {
+                const [current, remainingMovement] = queue.shift()!;
+                const key = `${current.x},${current.y}`;
+
+                if (visited.has(key)) continue;
+                visited.add(key);
+
+                if (current.x !== position.x || current.y !== position.y) {
+                    moveableGrids.push(current);
+                }
+
+                if (remainingMovement <= 0) continue;
+
+                const neighbors = getNeighbors(current);
+                for (const neighbor of neighbors) {
+                    const neighborKey = `${neighbor.x},${neighbor.y}`;
+                    if (visited.has(neighborKey)) continue;
+
+                    if (!this.movementRule.canMoveThrough(movingUnit, current, neighbor, units)) {
+                        continue;
+                    }
+
+                    const terrainType = this.movementRule.getTerrainType(neighbor);
+                    const cost = this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
+                    const newRemainingMovement = remainingMovement - cost;
+
+                    if (newRemainingMovement >= 0) {
+                        queue.push([neighbor, newRemainingMovement]);
+                    }
+                }
+            }
+        } else {
+            const enemyZOC = this.getEnemyZOC(movingUnit, units);
+            
+            const startInZOC = enemyZOC.some(zoc => 
+                zoc.x === position.x && zoc.y === position.y
+            );
+            
+            const visited = new Set<string>();
+            visited.add(`${position.x},${position.y}`);
+            
+            const queue: [HexCoordinate, number][] = [[position, movement]];
+            
+            while (queue.length > 0) {
+                const [current, remainingMovement] = queue.shift()!;
                 
-                if (remainingMove > 0) {
-                    const neighbors = getNeighbors(current);
+                if (remainingMovement <= 0) continue;
+                
+                const neighbors = getNeighbors(current);
+                for (const neighbor of neighbors) {
+                    const neighborKey = `${neighbor.x},${neighbor.y}`;
+                    if (visited.has(neighborKey)) continue;
                     
-                    for (const neighbor of neighbors) {
-                        if (!this.movementRule.canMoveThrough(movingUnit, current, neighbor, units)) continue;
-                        
-                        const newRemainingMove = this.calculateRemainingMove(
-                            current,
-                            neighbor,
-                            remainingMove,
-                            isAffectedByZOC,
-                            opposingZOC,
-                            movingUnit
-                        );
-                        
-                        if (newRemainingMove >= 0) {
-                            const neighborKey = `${neighbor.x},${neighbor.y}`;
-                            const existingMove = visited.get(neighborKey);
-                            
-                            if (existingMove === undefined || newRemainingMove > existingMove) {
-                                visited.set(neighborKey, newRemainingMove);
-                                queue.push([neighbor, newRemainingMove]);
-                            }
-                        }
+                    if (!this.movementRule.canMoveThrough(movingUnit, current, neighbor, units)) {
+                        continue;
+                    }
+                    
+                    const terrainType = this.movementRule.getTerrainType(neighbor);
+                    const cost = this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
+                    let newRemainingMovement = remainingMovement - cost;
+                    
+                    if (newRemainingMovement < 0) continue;
+                    
+                    const isInEnemyZOC = enemyZOC.some(zoc => 
+                        zoc.x === neighbor.x && zoc.y === neighbor.y
+                    );
+                    
+                    if (isInEnemyZOC) {
+                        newRemainingMovement = 0;
+                    }
+
+                    // Check stacking rules
+                    const unitsAtTarget = units.filter(u => 
+                        u.position.x === neighbor.x && 
+                        u.position.y === neighbor.y &&
+                        u.id !== movingUnit.id
+                    );
+
+                    const canStop = unitsAtTarget.every(u => 
+                        (movingUnit.movementType === 'flying' && u.movementType !== 'flying') || 
+                        (movingUnit.movementType !== 'flying' && u.movementType === 'flying')
+                    );
+
+                    if (canStop) {
+                        moveableGrids.push({
+                            x: neighbor.x,
+                            y: neighbor.y,
+                            z: neighbor.z
+                        });
+                    }
+                    
+                    visited.add(neighborKey);
+                    
+                    if (newRemainingMovement > 0) {
+                        queue.push([neighbor, newRemainingMovement]);
                     }
                 }
             }
         }
 
-        return Array.from(result).map(key => {
-            const [x, y] = key.split(',').map(Number);
-            return createHexCoordinate(x, y);
+        moveableGrids.push({
+            x: position.x,
+            y: position.y,
+            z: position.z
         });
+        console.log('Moveable grids:', moveableGrids);
+
+        return moveableGrids;
     }
 
-    /**
-     * Calculates remaining movement points after moving to a new hex
-     * Takes into account:
-     * - Terrain costs
-     * - Zone of Control effects
-     * - Unit characteristics
-     */
-    calculateRemainingMove(
-        current: HexCoordinate,
-        neighbor: HexCoordinate,
-        remainingMove: number,
-        isAffectedByZOC: boolean,
-        opposingZOC: HexCoordinate[],
-        movingUnit: UnitData
-    ): number {
-        // Flying units ignore ZOC
-        if (hasCharacteristic(movingUnit.characteristics, movingUnit.buffs || [], 'flying')) {
-            const terrainType = this.movementRule.getTerrainType(neighbor);
-            return remainingMove - this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
-        }
-
-        // Handle ZOC rules for non-flying units
-        if (isAffectedByZOC) {
-            const currentInZOC = opposingZOC.some(zoc => 
-                zoc.x === current.x && zoc.y === current.y
-            );
-            const neighborInZOC = opposingZOC.some(zoc => 
-                zoc.x === neighbor.x && zoc.y === neighbor.y
-            );
+    private getEnemyZOC(unit: UnitData, units: UnitData[]): HexCoordinate[] {
+        const enemyUnits = units.filter(u => {
+            // Skip flying units
+            if (u.movementType === 'flying') return false;
             
-            // Cannot move from one ZOC to another
-            if (currentInZOC && neighborInZOC) {
-                return -1; // Movement not allowed
+            // Determine opposing factions based on unit's faction
+            if (unit.faction === 'enemy') {
+                return u.faction === 'player' || u.faction === 'ally';
+            } else if (unit.faction === 'player' || unit.faction === 'ally') {
+                return u.faction === 'enemy';
             }
-
-            // Moving into ZOC stops movement
-            if (neighborInZOC) {
-                return 0;
-            }
-
-            // When starting in ZOC, can only move to non-ZOC hexes in specific directions
-            if (currentInZOC) {
-                // Get the direction from current to neighbor
-                const dx = neighbor.x - current.x;
-                const dy = neighbor.y - current.y;
-                
-                // Check if any enemy unit is in the direction we're trying to move
-                const hasEnemyInDirection = opposingZOC.some(zoc => {
-                    const zocDx = zoc.x - current.x;
-                    const zocDy = zoc.y - current.y;
-                    // If enemy is in same general direction, movement is blocked
-                    return Math.sign(dx) === Math.sign(zocDx) && 
-                           Math.sign(dy) === Math.sign(zocDy);
+            return false;
+        });
+        
+        console.log('Enemy units for ZOC:', enemyUnits);
+        
+        const zocHexes: HexCoordinate[] = [];
+        for (const enemy of enemyUnits) {
+            const neighbors = getNeighbors(enemy.position);
+            for (const neighbor of neighbors) {
+                zocHexes.push({
+                    x: neighbor.x,
+                    y: neighbor.y,
+                    z: neighbor.z
                 });
-
-                if (hasEnemyInDirection) {
-                    return -1; // Movement blocked in this direction
-                }
-                
-                // Allow movement in directions away from enemy ZOC
-                const terrainType = this.movementRule.getTerrainType(neighbor);
-                return remainingMove - this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
             }
         }
 
-        // Normal movement cost calculation
-        const terrainType = this.movementRule.getTerrainType(neighbor);
-        return remainingMove - this.getMovementCost(terrainType, movingUnit.movementType, movingUnit);
+        console.log('ZOC hexes before deduplication:', zocHexes);
+
+        const uniqueKeys = new Set<string>();
+        const uniqueZocHexes: HexCoordinate[] = [];
+        
+        for (const hex of zocHexes) {
+            const key = `${hex.x},${hex.y}`;
+            if (!uniqueKeys.has(key)) {
+                uniqueKeys.add(key);
+                uniqueZocHexes.push(hex);
+            }
+        }
+        
+        console.log('Final ZOC hexes:', uniqueZocHexes);
+        
+        return uniqueZocHexes;
     }
 
-    /**
-     * Gets all hexes that are in the Zone of Control of opposing units
-     */
-    getOpposingZOC(movingUnit: UnitData, units: UnitData[]): HexCoordinate[] {
-        const hostileUnits = units.filter(u => isHostileUnit(movingUnit, u));
-        const zocHexes = hostileUnits.flatMap(u => 
-            this.zocRules.flatMap(rule => rule.getControlledArea(u.position))
-        );
-
-        // Remove duplicates
-        return zocHexes.filter((hex, index, self) =>
-            index === self.findIndex((h) => h.x === hex.x && h.y === hex.y)
-        );
-    }
 } 

@@ -80,7 +80,10 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, units, mousePosition, i
 
       {/* Movement Section */}
       <div style={sectionStyle}>
-        <StateRow label={'移动速度'} value={`${unit?.movement} (${unit?.movementType ? MOVEMENT_TYPE_LABELS[unit.movementType] : ''})`} />
+        <StateRow 
+          label={'移动速度'} 
+          value={`${unit?.movement || 0} (${unit?.baseMovement || 0}) ${unit?.movementType ? MOVEMENT_TYPE_LABELS[unit.movementType] : ''}`} 
+        />
         <StateRow label={'朝向'} value={`${unit?.direction}`} />
         <StateRow label={'坐标'} value={`x: ${unit?.position.x}, y: ${unit?.position.y}`} />
       </div>
@@ -94,6 +97,25 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, units, mousePosition, i
           <StateRow label={'效果抵抗'} value={`${unit?.effectResist}%`} />
         </div>
       </div>
+
+      {/* Buffs Section */}
+      {unit?.buffs && unit.buffs.length > 0 && (
+        <div style={sectionStyle}>
+          <div style={{ fontSize: '14px', marginBottom: '4px' }}>状态效果</div>
+          <div style={{ display: 'grid', gap: '4px' }}>
+            {unit.buffs.map(buff => (
+              <div key={buff.id} style={buffRowStyle}>
+                <span style={labelStyle}>
+                  {getBuffName(buff.id)}
+                </span>
+                <span style={valueStyle}>
+                  {buff.duration === -1 ? '永久' : `${buff.duration}回合`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Description Section */}
       <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
@@ -148,3 +170,19 @@ const valueStyle: React.CSSProperties = {
   color: 'rgba(255, 255, 255, 0.9)',
   fontWeight: 'bold',
 };
+
+const buffRowStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "2px 4px",
+  backgroundColor: "rgba(255, 255, 255, 0.1)",
+  borderRadius: "2px",
+};
+
+function getBuffName(buffId: string): string {
+  switch (buffId) {
+    case 'dayWalkerBuff': return '日行者增益';
+    case 'nightPhobicDebuff': return '夜晚恐惧';
+    default: return buffId;
+  }
+}

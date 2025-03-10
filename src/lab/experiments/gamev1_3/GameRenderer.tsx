@@ -4,6 +4,7 @@ import { UnitData, initialUnits } from "./types/UnitData";
 import { HexCell } from "./components/HexaGrids/HexCell";
 import { MovementCalculator } from "./movement/MovementCalculator";
 import { GroundMovement } from "./movement/rules/GroundMovement";
+import { AirMovement } from "./movement/rules/AirMovement";
 import { StandardZOC } from "./zoc/rules/StandardZOC";
 import mapData from './data/map-data.json'
 import type { TerrainType } from './movement/types'
@@ -22,6 +23,9 @@ import stageData from './data/stage-data.json';
 import { getAnnouncementMessage, TurnAnnouncement } from './components/TurnAnnouncement';
 import { ActionMenu } from './components/ActionMenu/ActionMenu';
 import { onUnitSelected } from './events/RendererEvents';
+import { initMovementCosts } from './movement/initMovementCosts';
+import { initBuffs } from './buffs/initBuffs';
+import {DEBUGGING_MODE} from "./config";
 
 
 /**
@@ -70,9 +74,14 @@ export const GameRenderer: React.FC = () => {
   const PADDING = 400;           // Padding around the game board
 
   // Movement system initialization
-  const movementCalculator = new MovementCalculator(
+  const groundMovementCalculator = new MovementCalculator(
     new GroundMovement(),
     [new StandardZOC()]
+  );
+
+  const airMovementCalculator = new MovementCalculator(
+    new AirMovement(),
+    [] // Air units ignore ZOC
   );
 
   // Add state for hovered terrain
@@ -97,6 +106,12 @@ export const GameRenderer: React.FC = () => {
 
   const [showActionMenu, setShowActionMenu] = useState<{ x: number; y: number } | null>(null);
   const [lastMovePosition, setLastMovePosition] = useState<HexCoordinate | null>(null);
+
+  // Initialize movement costs once when component mounts
+  useEffect(() => {
+    initMovementCosts();
+    initBuffs();
+  }, []);
 
   /**
    * Finds a unit at a specific coordinate
@@ -175,9 +190,18 @@ export const GameRenderer: React.FC = () => {
 
   const grid = generateGrid(width, height);
 
-  // Main function
-  const getMoveableGrids = (startCoord: HexCoordinate, movement: number): HexCoordinate[] => {
-    return movementCalculator.getMoveableGrids(startCoord, movement, units);
+  // Create movement calculators based on unit type
+  const getMovementCalculator = (unit: UnitData): MovementCalculator => {
+    if (unit.movementType === 'flying') {
+      return new MovementCalculator(new AirMovement(), []); // Air units ignore ZOC
+    } else {
+      return new MovementCalculator(new GroundMovement(), [new StandardZOC()]);
+    }
+  };
+
+  const getMoveableGrids = (unit: UnitData): HexCoordinate[] => {
+    const calculator = getMovementCalculator(unit);
+    return calculator.getMoveableGrids(unit.position, unit.movement, units);
   };
 
   /**
@@ -200,8 +224,8 @@ export const GameRenderer: React.FC = () => {
         setMoveableGrids([]);
         setMultipleUnits(unitsAtPosition);
       } else if (unitsAtPosition.length === 1) {
-        // For single unit, show movement range
-        const moveableGrids = getMoveableGrids(coord, unitsAtPosition[0].movement);
+        const unit = unitsAtPosition[0];
+        const moveableGrids = getMoveableGrids(unit);
         setMoveableGrids(moveableGrids);
         setMultipleUnits(null);
       }
@@ -269,46 +293,63 @@ export const GameRenderer: React.FC = () => {
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
     // Block all actions during AI turns
-    if (isAITurnActive) return;
+    if (isAITurnActive) {
+      if (!DEBUGGING_MODE) return;
+    }
 
     // If any modal is shown, only handle closing actions
     if (uiModal.type) {
-      if (isRightClick) {
-        setUiModal({ type: null });
-      }
-      return;
+        if (isRightClick) {
+            setUiModal({ type: null });
+        }
+        return;
     }
 
     // If action menu is shown, handle right-click as cancel
     if (showActionMenu && isRightClick) {
-      handleCancelMove();
-      return;
+        handleCancelMove();
+        return;
     }
 
-    // Normal click handling
+    // Handle right-click to deselect unit
     if (isRightClick) {
-      setSelectedUnit(null);
-      setSelectedUnitPosition(null);
-      setMoveableGrids([]);
-      return;
+        setSelectedUnit(null);
+        setSelectedUnitPosition(null);
+        setMoveableGrids([]);
+        return;
     }
 
-    // Unit movement handling
-    if (selectedUnit && moveableGrids.length > 0 && isMoveableCell(coord)) {
-      handleUnitMove(selectedUnit, coord);
-      return;
+    // Handle unit movement if a unit is selected
+    if (selectedUnit) {
+        // Check if clicked position is in moveable grids
+        const isValidMove = moveableGrids.some(grid => 
+            grid.x === coord.x && grid.y === coord.y
+        );
+
+        if (isValidMove) {
+            handleUnitMove(selectedUnit, coord);
+            return;
+        }
     }
 
-    // Unit selection handling
-    onUnitSelected(coord, {
-      units,
-      setSelectedUnit,
-      setSelectedUnitPosition,
-      setMoveableGrids,
-      setUiModal,
-      mousePosition,
-      movementCalculator
-    });
+    // Handle new unit selection
+    const unitAtPosition = findUnitAtPosition(coord);
+    if (unitAtPosition) {
+        onUnitSelected(coord, {
+            units,
+            setUnits,
+            selectedUnit,
+            moveableGrids,
+            setSelectedUnit,
+            setSelectedUnitPosition,
+            setMoveableGrids,
+            setUiModal,
+            mousePosition,
+            movementCalculator: unitAtPosition.movementType === 'flying' ? 
+                new MovementCalculator(new AirMovement(), []) : 
+                new MovementCalculator(new GroundMovement(), [new StandardZOC()])
+        });
+    }
   };
 
   const isMoveableCell = (coord: HexCoordinate): boolean => {
@@ -505,6 +546,18 @@ export const GameRenderer: React.FC = () => {
     }
   }, [turnState]);
 
+  const handleUnitSelect = (unit: UnitData) => {
+    console.log('Selected Unit Position:', unit.position);
+    
+    const calculator = getMovementCalculator(unit);
+    const grids = calculator.getMoveableGrids(unit.position, unit.movement, units);
+    
+    console.log('Moveable Grids:', grids);
+    
+    setSelectedUnit(unit);
+    setMoveableGrids(grids);
+  };
+
   return (
     <div 
       ref={mapRef} 
@@ -575,7 +628,7 @@ export const GameRenderer: React.FC = () => {
           onSelect={(unit) => {
             setSelectedUnit(unit);
             setSelectedUnitPosition(unit.position);
-            const moveableGrids = getMoveableGrids(unit.position, unit.movement);
+            const moveableGrids = getMoveableGrids(unit);
             setMoveableGrids(moveableGrids);
             setUiModal({ type: null });
           }}
