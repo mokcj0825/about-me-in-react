@@ -1,0 +1,12 @@
+{
+  "stageId": "stage-1",
+  "name": "First Battle",
+  "initialState": {
+    "turnNumber": 1,
+    "startCycle": "day",
+    "startPhase": "player"
+  },
+  "maxTurns": 20,
+  "victoryConditions": [],
+  "defeatConditions": []
+} 

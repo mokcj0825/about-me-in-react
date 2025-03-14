@@ -47,8 +47,15 @@
           "id": "gamedev-4",
           "name": "Game V1.3 - Implement turn system",
           "description": "Add turn mechanism.",
-          "status": "in-progress",
+          "status": "completed",
           "url": "/labs/game-theater-v1_3"
+        },
+        {
+          "id": "gamedev-5",
+          "name": "Game V1.4 - Implement weapon system",
+          "description": "Add weapon mechanism.",
+          "status": "in-progress",
+          "url": "/labs/game-theater-v1_4"
         }
       ]
     }
