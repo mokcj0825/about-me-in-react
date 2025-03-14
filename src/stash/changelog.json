@@ -241,6 +241,87 @@
           ]
         }
       ]
+    },
+    {
+      "version": "0.1.4",
+      "date": "2025-03-10",
+      "entries": [
+        {
+          "id": "weapon-system",
+          "date": "2025-03-10",
+          "title": "Comprehensive Weapon System",
+          "description": "Implementation of detailed weapon mechanics including types, areas, and effects",
+          "category": "feature",
+          "tags": ["combat", "weapons", "mechanics", "area-effects"],
+          "details": [
+            "Bugfixes:",
+            "- Fixed right-click cancel move bug",
+            
+            "Weapon Item System:",
+            "- Weapon data structure with unique identifiers",
+            "- Weapon name and description fields",
+            "- Rarity system (common, uncommon, rare, etc.)",
+            "- Weight and size properties",
+            "- Equipment slot requirements",
+            
+            "Weapon Type Framework:",
+            "- Melee weapons (sword, spear, axe, etc.)",
+            "- Ranged weapons (bow, crossbow, thrown)",
+            "- Magical weapons (staff, wand, orb)",
+            "- Hybrid weapons with multiple attack modes",
+            "- Type-specific bonuses and penalties",
+            
+            "Area Shape System:",
+            "- Single hex targeting",
+            "- Line shapes (2-3 hexes) - In progress",
+            "- Cone shapes (60/120 degrees)",
+            "- Circle/radius patterns",
+            "- Custom polygon shapes",
+            "- Shape rotation support",
+            
+            "Effective Area Mechanics:",
+            "- Primary target zone",
+            "- Secondary effect zones",
+            "- Damage falloff calculations",
+            "- Obstacle interaction",
+            "- Terrain modification effects",
+            
+            "Hit Effect Framework:",
+            "- Direct damage calculations",
+            "- Status effect application",
+            "- Knockback mechanics",
+            "- Area denial effects",
+            "- Chain reaction triggers",
+            
+            "Ammunition/Usage System:",
+            "- Available use count tracking",
+            "- Ammunition types and compatibility",
+            "- Durability mechanics",
+            "- Resource consumption rates",
+            
+            "Weapon Recharge Mechanics:",
+            "- Cooldown system implementation",
+            "- Charge-based usage tracking",
+            "- Recharge rate calculations",
+            "- Conditional recharge triggers",
+            "- Overcharge mechanics",
+            
+            "Technical Implementation:",
+            "- Weapon data interfaces",
+            "- Effect calculation system",
+            "- Area calculation utilities",
+            "- State management integration",
+            "- Event system hooks",
+            
+            "Visual Feedback:",
+            "- Attack range indicators",
+            "- Area preview system",
+            "- Effect visualization",
+            "- Cooldown/charge display",
+            "- Hit confirmation effects"
+          ]
+        }
+      ]
     }
   ]
 }
