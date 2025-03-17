@@ -118,6 +118,9 @@ export const GameRenderer: React.FC = () => {
   // Add attack state
   const [isAttacking, setIsAttacking] = useState(false);
 
+  // Add state for hovered coordinates near other state declarations
+  const [hoveredCoord, setHoveredCoord] = useState<HexCoordinate | null>(null);
+
   // Initialize movement costs once when component mounts
   useEffect(() => {
     initMovementCosts();
@@ -221,6 +224,7 @@ export const GameRenderer: React.FC = () => {
    */
   const handleCellHover = (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => {
     setHoveredTerrain(mapData.terrain[coord.y][coord.x] as TerrainType);
+    setHoveredCoord(isHovering ? coord : null);
 
     // If a unit is already selected, don't show hover movement range
     if (selectedUnit) return;
@@ -777,7 +781,7 @@ export const GameRenderer: React.FC = () => {
         ))}
       </div>
       
-      <ControlHints />
+      <ControlHints hoveredCoord={hoveredCoord} />
       {announcement && <TurnAnnouncement message={announcement} />}
       
       {showActionMenu && (

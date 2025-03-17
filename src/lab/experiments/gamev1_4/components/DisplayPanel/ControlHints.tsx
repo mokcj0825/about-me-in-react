@@ -1,11 +1,19 @@
 import React from 'react';
 import {Z_INDEX} from "../../constants/zIndex";
+import { HexCoordinate } from '../../types/HexCoordinate';
 
-export const ControlHints: React.FC = () => {
+interface Props {
+  hoveredCoord: HexCoordinate | null;
+}
+
+export const ControlHints: React.FC<Props> = ({ hoveredCoord }) => {
   return (
     <div style={containerStyle}>
       <HintItem shortcut={'T'} tooltip={'地形信息'} />
       <HintItem shortcut={'Esc'} tooltip={'主菜单'} />
+      {hoveredCoord && (
+        <HintItem shortcut={`${hoveredCoord.x},${hoveredCoord.y}`} tooltip={'坐标'} />
+      )}
     </div>
   );
 };
@@ -33,7 +41,6 @@ const containerStyle: React.CSSProperties = {
   gap: '16px',
   zIndex: Z_INDEX.CONTROL_HINTS
 };
-
 const keyStyle: React.CSSProperties = {
   backgroundColor: 'rgba(255, 255, 255, 0.2)',
   padding: '2px 8px',
