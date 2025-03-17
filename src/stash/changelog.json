@@ -271,9 +271,9 @@
             "- Hybrid weapons with multiple attack modes",
             "- Type-specific bonuses and penalties",
             
-            "Area Shape System:",
+            "Area Shape System: (Done for selection)",
             "- Single hex targeting",
-            "- Line shapes (2-3 hexes) - In progress",
+            "- Line shapes (2-3 hexes) - Fixed",
             "- Cone shapes (60/120 degrees)",
             "- Circle/radius patterns",
             "- Custom polygon shapes",
