@@ -1,5 +1,7 @@
 import { areCoordinatesEqual, createHexCoordinate, getNeighbors, HexCoordinate } from '../types/HexCoordinate';
 import { UnitDirection } from '../types/UnitData';
+import mapData from '../data/map-data.json';
+
 export type ShapeType = 'area' | 'line' | 'fan' | 'round';
 
 export interface ShapeConfig {
@@ -11,6 +13,11 @@ export interface ShapeConfig {
 }
 
 export class ShapeCalculator {
+  private isValidCoordinate(coord: HexCoordinate): boolean {
+    return coord.x >= 0 && coord.x < mapData.width && 
+           coord.y >= 0 && coord.y < mapData.height;
+  }
+
   // Get selectable area based on weapon configuration
   getSelectableArea(origin: HexCoordinate, config: ShapeConfig): HexCoordinate[] {
     switch (config.type) {
@@ -82,36 +89,45 @@ export class ShapeCalculator {
   }
 
   private getLineSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-    // Return line-based selection options
     console.log('Calculating line selection from', origin, 'range:', minRange, '-', maxRange);
     const result: HexCoordinate[] = [];
     
-    // Get all possible directions (6 directions in hex grid)
-    const directions = getNeighbors(origin);
+    const getNextCoordinate = (current: HexCoordinate, direction: string): HexCoordinate => {
+      const isYEven = current.y % 2 === 0;
+      switch (direction) {
+        case 'right':
+          return createHexCoordinate(current.x + 1, current.y);
+        case 'left':
+          return createHexCoordinate(current.x - 1, current.y);
+        case 'topLeft':
+          return createHexCoordinate(current.x + (isYEven ? 0 : -1), current.y + 1);
+        case 'topRight':
+          return createHexCoordinate(current.x + (isYEven ? 1 : 0), current.y + 1);
+        case 'bottomLeft':
+          return createHexCoordinate(current.x + (isYEven ? 0 : -1), current.y - 1);
+        case 'bottomRight':
+          return createHexCoordinate(current.x + (isYEven ? 1 : 0), current.y - 1);
+        default:
+          return current;
+      }
+    };
+
+    const directions = ['right', 'left', 'topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
     
-    // For each direction, get hexes in line
-    directions.forEach(firstStep => {
-      let current = firstStep;
-      const direction = {
-        x: firstStep.x - origin.x,
-        y: firstStep.y - origin.y
-      };
+    directions.forEach(direction => {
+      let current = origin;
+      let distance = 0;
       
-      let distance = 1;
       while (distance <= maxRange) {
-        if (distance >= minRange) {
+        if (distance >= minRange && this.isValidCoordinate(current)) {
           result.push(current);
         }
         
-        // Move to next hex in line
-        current = createHexCoordinate(
-          current.x + direction.x,
-          current.y + direction.y
-        );
+        current = getNextCoordinate(current, direction);
         distance++;
       }
     });
-    console.log('Line selection:', result);
+    
     return result;
   }
 
