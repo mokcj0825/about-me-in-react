@@ -1,6 +1,6 @@
 import React from "react";
-import { UnitDirection } from "../../types/UnitData";
 import { Z_INDEX } from "../../constants/zIndex";
+import {DirectionData} from "../../types/DirectionData";
 
 /**
  * Props interface for the DirectionIndicator component
@@ -9,7 +9,7 @@ import { Z_INDEX } from "../../constants/zIndex";
  * Valid values are: 'top-right', 'right', 'bottom-right', 'bottom-left', 'left', 'top-left'
  */
 interface Props {
-  direction: UnitDirection;
+  direction: DirectionData;
 }
 
 export const DirectionIndicator: React.FC<Props> = ({ direction }) => {
@@ -29,7 +29,7 @@ export const DirectionIndicator: React.FC<Props> = ({ direction }) => {
   );
 };
 
-const getLineCoordinates = (direction: UnitDirection) => {
+const getLineCoordinates = (direction: DirectionData) => {
   switch (direction) {
     case "top-right":
       return { x1: "55", y1: "10", x2: "89", y2: "27" }; // reference line
