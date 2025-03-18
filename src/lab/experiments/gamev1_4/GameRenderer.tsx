@@ -29,6 +29,7 @@ import {DEBUGGING_MODE} from "./config";
 import { ShapeCalculator, ShapeConfig, ShapeType } from './weapon/ShapeCalculator';
 import { WeaponSelectionPanel } from './components/DisplayPanel/WeaponSelectionPanel';
 import weaponData from './data/weapon-data.json';
+import { GameActionState } from './types/GameState';
 
 
 /**
@@ -76,17 +77,6 @@ export const GameRenderer: React.FC = () => {
   const SCROLL_SPEED = 15;       // Pixels per scroll tick
   const PADDING = 400;           // Padding around the game board
 
-  // Movement system initialization
-  const groundMovementCalculator = new MovementCalculator(
-    new GroundMovement(),
-    [new StandardZOC()]
-  );
-
-  const airMovementCalculator = new MovementCalculator(
-    new AirMovement(),
-    [] // Air units ignore ZOC
-  );
-
   // Add state for hovered terrain
   const [hoveredTerrain, setHoveredTerrain] = useState<TerrainType | null>(null);
 
@@ -115,8 +105,8 @@ export const GameRenderer: React.FC = () => {
   const [showWeaponPanel, setShowWeaponPanel] = useState(false);
   const shapeCalculator = new ShapeCalculator();
 
-  // Add attack state
-  const [isAttacking, setIsAttacking] = useState(false);
+  // Replace multiple state booleans with single action state
+  const [actionState, setActionState] = useState<GameActionState>('idle');
 
   // Add state for hovered coordinates near other state declarations
   const [hoveredCoord, setHoveredCoord] = useState<HexCoordinate | null>(null);
@@ -278,7 +268,7 @@ export const GameRenderer: React.FC = () => {
 
   const handleStandby = () => {
     if (!selectedUnit || !lastMovePosition) return;
-
+    
     setUnits(prevUnits => prevUnits.map(u => 
       u.id === selectedUnit.id 
         ? { ...u, hasMoved: true }
@@ -290,6 +280,7 @@ export const GameRenderer: React.FC = () => {
     setMoveableGrids([]);
     setShowActionMenu(null);
     setLastMovePosition(null);
+    setActionState('idle');
   };
 
   const handleCancelMove = () => {
@@ -307,13 +298,12 @@ export const GameRenderer: React.FC = () => {
   };
 
   const handleAttackAction = () => {
-    setIsAttacking(true);
+    setActionState('weaponSelection');
     setShowActionMenu(null);
   };
 
   const handleWeaponSelect = (weaponId: string, unit: UnitData) => {
     setSelectedWeapon(weaponId);
-    setIsAttacking(false);
     
     const weapon = weaponData[weaponId as keyof typeof weaponData];
     if (!weapon) return;
@@ -339,83 +329,80 @@ export const GameRenderer: React.FC = () => {
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
     // Block all actions during AI turns
-    if (isAITurnActive) {
-      if (!DEBUGGING_MODE) return;
-    }
+    if (actionState === 'aiTurn' && !DEBUGGING_MODE) return;
 
     // If any modal is shown, only handle closing actions
     if (uiModal.type) {
-        if (isRightClick) {
-            setUiModal({ type: null });
-        }
-        return;
+      if (isRightClick) {
+        setUiModal({type: null});
+      }
+      return;
     }
 
-    // Handle right-click during weapon selection
+    // Handle right-click based on current state
     if (isRightClick) {
-      if (selectedWeapon) {
-        setSelectedWeapon(null);  // Clear weapon selection
-        setSelectionArea([]);     // Clear selection area
-        setIsAttacking(true);     // Show weapon panel again
-        return;
+      switch (actionState) {
+        case 'targetSelection':
+          setSelectedWeapon(null);
+          setSelectionArea([]);
+          setActionState('weaponSelection');
+          setShowActionMenu(null);
+          return;
+        case 'weaponSelection':
+          setActionState('unitMoved');
+          setShowActionMenu(mousePosition);
+          return;
+        case 'unitMoved':
+          handleCancelMove();
+          setActionState('unitSelected');
+          setShowActionMenu(null);
+          return;
+        case 'unitSelected':
+          setSelectedUnit(null);
+          setSelectedUnitPosition(null);
+          setMoveableGrids([]);
+          setActionState('idle');
+          setShowActionMenu(null);
+          return;
       }
-      
-      if (isAttacking) {
-        setIsAttacking(false);    // Exit attack mode
-        setShowActionMenu(mousePosition);  // Show action menu again
-        return;
-      }
-
-      if (showActionMenu) {
-        handleCancelMove();  // Use existing cancel move handler
-        return;
-      }
-
-      if (selectedUnit) {
-        setSelectedUnit(null);    // Clear unit selection
-        setSelectedUnitPosition(null);
-        setMoveableGrids([]);    // Clear moveable area
-        return;
-      }
+      return;
     }
 
-    // Handle unit movement if a unit is selected
-    if (selectedUnit) {
-        // Check if clicked position is in moveable grids
-        const isValidMove = moveableGrids.some(grid => 
-            grid.x === coord.x && grid.y === coord.y
-        );
-
-        if (isValidMove) {
-            handleUnitMove(selectedUnit, coord);
-            return;
-        }
-    }
-
-    // Handle new unit selection
-    const unitAtPosition = findUnitAtPosition(coord);
-    if (unitAtPosition) {
-        onUnitSelected(coord, {
+    // Handle left-click based on current state
+    switch (actionState) {
+      case 'idle':
+        const unitAtPosition = findUnitAtPosition(coord);
+        if (unitAtPosition) {
+          const rendererState = {
             units,
             setUnits,
             selectedUnit,
-            moveableGrids,
             setSelectedUnit,
             setSelectedUnitPosition,
             setMoveableGrids,
             setUiModal,
             mousePosition,
-            movementCalculator: unitAtPosition.movementType === 'flying' ? 
-                new MovementCalculator(new AirMovement(), []) : 
-                new MovementCalculator(new GroundMovement(), [new StandardZOC()])
-        });
-
-        // Show weapon panel when unit is selected
-        if (!showWeaponPanel) {
-          setSelectedUnit(unitAtPosition);
-          setSelectedUnitPosition(coord);
-          setShowWeaponPanel(true);
+            movementCalculator: new MovementCalculator(
+              unitAtPosition.movementType === 'flying' ? new AirMovement() : new GroundMovement(),
+              unitAtPosition.movementType === 'flying' ? [] : [new StandardZOC()]
+            ),
+            moveableGrids
+          };
+          onUnitSelected(coord, rendererState);
+          setActionState('unitSelected');
         }
+        break;
+
+      case 'unitSelected':
+        if (isMoveableCell(coord)) {
+          handleUnitMove(selectedUnit!, coord);
+          setActionState('unitMoved');
+        }
+        break;
+
+      case 'targetSelection':
+        // Handle weapon target selection
+        break;
     }
   };
 
@@ -613,37 +600,6 @@ export const GameRenderer: React.FC = () => {
     }
   }, [turnState]);
 
-  const handleUnitSelect = (unit: UnitData) => {
-    console.log('Selected Unit Position:', unit.position);
-    
-    const calculator = getMovementCalculator(unit);
-    const grids = calculator.getMoveableGrids(unit.position, unit.movement, units);
-    
-    console.log('Moveable Grids:', grids);
-    
-    setSelectedUnit(unit);
-    setMoveableGrids(grids);
-  };
-
-  // Add weapon selection UI to unit menu
-  const renderUnitMenu = (unit: UnitData) => {
-    return (
-      <div className="unit-menu">
-        {/* ... existing menu items ... */}
-        <div className="weapon-list">
-          {unit.weapon.map(weaponId => (
-            <button 
-              key={weaponId}
-              onClick={() => handleWeaponSelect(weaponId, unit)}
-            >
-              {weaponId} {/* Replace with weapon name from data */}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
   // Modify hex rendering to show selection area
   const renderHex = (coord: HexCoordinate) => {
     const isInSelectionArea = selectionArea.some(
@@ -793,12 +749,12 @@ export const GameRenderer: React.FC = () => {
         />
       )}
 
-      {isAttacking && selectedUnit && (
+      {actionState === 'weaponSelection' && selectedUnit && (
         <WeaponSelectionPanel
           unit={selectedUnit}
           onWeaponSelect={handleWeaponSelect}
           onClose={() => {
-            setIsAttacking(false);
+            setActionState('idle');
             setSelectedWeapon(null);
             setSelectionArea([]);
           }}
