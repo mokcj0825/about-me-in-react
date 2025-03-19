@@ -1,8 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
-import { HexCoordinate, createHexCoordinate } from "./types/HexCoordinate";
+import { HexCoordinate } from "./types/HexCoordinate";
 import { UnitData, initialUnits } from "./types/UnitData";
 import { HexCell } from "./components/HexaGrids/HexCell";
-import { MovementCalculator } from "./movement/MovementCalculator";
+import {getMoveableGrids, MovementCalculator} from "./movement/MovementCalculator";
 import { GroundMovement } from "./movement/rules/GroundMovement";
 import { AirMovement } from "./movement/rules/AirMovement";
 import { StandardZOC } from "./zoc/rules/StandardZOC";
@@ -30,16 +30,10 @@ import { ShapeCalculator, ShapeConfig, ShapeType } from './weapon/ShapeCalculato
 import { WeaponSelectionPanel } from './components/DisplayPanel/WeaponSelectionPanel';
 import weaponData from './data/weapon-data.json';
 import { GameActionState } from './types/GameState';
+import {generateGrid} from "./rendererUtils/GenerateGrid";
+import {GridLayout} from "./constants/GridLayout";
+import {ScrollConfig} from "./constants/ScrollConfig";
 
-
-/**
- * Grid layout constants
- * @constant GRID
- */
-const GRID = {
-  WIDTH: 100,        // Width of each hex cell
-  ROW_OFFSET: 50     // Horizontal offset for odd rows
-};
 
 /**
  * Main game board renderer component
@@ -55,14 +49,14 @@ export const GameRenderer: React.FC = () => {
   // Use map dimensions directly from map data
   const { width, height } = mapData;
 
-  // State management for units and movement
+  // TODO: Extract unit-related state management to a custom hook (useUnitState)
   const [units, setUnits] = useState<UnitData[]>(initialUnits);
   const [moveableGrids, setMoveableGrids] = useState<HexCoordinate[]>([]);
   const [selectedUnitPosition, setSelectedUnitPosition] = useState<HexCoordinate | null>(null);
   const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
   const [multipleUnits, setMultipleUnits] = useState<UnitData[] | null>(null);
 
-  // Mouse and scroll state
+  // TODO: Extract mouse/scroll handling to a custom hook (useMapInteraction)
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [startDrag, setStartDrag] = useState({ x: 0, y: 0 });
@@ -71,11 +65,6 @@ export const GameRenderer: React.FC = () => {
   // Refs for DOM elements and intervals
   const mapRef = useRef<HTMLDivElement>(null);
   const scrollIntervalRef = useRef<number | null>(null);
-
-  // Scroll configuration
-  const SCROLL_THRESHOLD = 100;  // Distance from edge to trigger scroll
-  const SCROLL_SPEED = 15;       // Pixels per scroll tick
-  const PADDING = 400;           // Padding around the game board
 
   // Add state for hovered terrain
   const [hoveredTerrain, setHoveredTerrain] = useState<TerrainType | null>(null);
@@ -100,6 +89,7 @@ export const GameRenderer: React.FC = () => {
   const [showActionMenu, setShowActionMenu] = useState<{ x: number; y: number } | null>(null);
   const [lastMovePosition, setLastMovePosition] = useState<HexCoordinate | null>(null);
 
+  // TODO: Extract weapon/combat state to a custom hook (useCombatState)
   const [selectedWeapon, setSelectedWeapon] = useState<string | null>(null);
   const [selectionArea, setSelectionArea] = useState<HexCoordinate[]>([]);
   const [showWeaponPanel, setShowWeaponPanel] = useState(false);
@@ -166,11 +156,11 @@ export const GameRenderer: React.FC = () => {
     const { width: containerWidth, height: containerHeight } = container.getBoundingClientRect();
 
     scrollIntervalRef.current = window.setInterval(() => {
-      const scrollLeft = mousePosition.x < SCROLL_THRESHOLD ? -SCROLL_SPEED :
-                        mousePosition.x > containerWidth - SCROLL_THRESHOLD ? SCROLL_SPEED : 0;
+      const scrollLeft = mousePosition.x < ScrollConfig.SCROLL_THRESHOLD ? -ScrollConfig.SCROLL_SPEED :
+                        mousePosition.x > containerWidth - ScrollConfig.SCROLL_THRESHOLD ? ScrollConfig.SCROLL_SPEED : 0;
       
-      const scrollTop = mousePosition.y < SCROLL_THRESHOLD ? -SCROLL_SPEED :
-                       mousePosition.y > containerHeight - SCROLL_THRESHOLD ? SCROLL_SPEED : 0;
+      const scrollTop = mousePosition.y < ScrollConfig.SCROLL_THRESHOLD ? -ScrollConfig.SCROLL_SPEED :
+                       mousePosition.y > containerHeight - ScrollConfig.SCROLL_THRESHOLD ? ScrollConfig.SCROLL_SPEED : 0;
 
       if (scrollLeft) container.scrollLeft += scrollLeft;
       if (scrollTop) container.scrollTop += scrollTop;
@@ -187,26 +177,12 @@ export const GameRenderer: React.FC = () => {
   // Initial scroll position
   useEffect(() => {
     if (mapRef.current) {
-      mapRef.current.scrollLeft = PADDING;
-      mapRef.current.scrollTop = PADDING;
+      mapRef.current.scrollLeft = ScrollConfig.PADDING;
+      mapRef.current.scrollTop = ScrollConfig.PADDING;
     }
   }, []);
 
   const grid = generateGrid(width, height);
-
-  // Create movement calculators based on unit type
-  const getMovementCalculator = (unit: UnitData): MovementCalculator => {
-    if (unit.movementType === 'flying') {
-      return new MovementCalculator(new AirMovement(), []); // Air units ignore ZOC
-    } else {
-      return new MovementCalculator(new GroundMovement(), [new StandardZOC()]);
-    }
-  };
-
-  const getMoveableGrids = (unit: UnitData): HexCoordinate[] => {
-    const calculator = getMovementCalculator(unit);
-    return calculator.getMoveableGrids(unit.position, unit.movement, units);
-  };
 
   /**
    * Handles cell hover events
@@ -230,7 +206,7 @@ export const GameRenderer: React.FC = () => {
         setMultipleUnits(unitsAtPosition);
       } else if (unitsAtPosition.length === 1) {
         const unit = unitsAtPosition[0];
-        const moveableGrids = getMoveableGrids(unit);
+        const moveableGrids = getMoveableGrids(unit, units);
         setMoveableGrids(moveableGrids);
         setMultipleUnits(null);
       }
@@ -240,6 +216,7 @@ export const GameRenderer: React.FC = () => {
     }
   };
 
+  // TODO: Extract unit movement logic to a separate file (unitMovementHandlers.ts)
   const handleUnitMove = (unit: UnitData, newPosition: HexCoordinate) => {
     // Only allow movement if unit hasn't moved this turn
     if (unit.hasMoved) return;
@@ -266,6 +243,7 @@ export const GameRenderer: React.FC = () => {
     }
   };
 
+  // TODO: Extract action handlers to a separate file (actionHandlers.ts)
   const handleStandby = () => {
     if (!selectedUnit || !lastMovePosition) return;
     
@@ -304,6 +282,7 @@ export const GameRenderer: React.FC = () => {
 
   const handleWeaponSelect = (weaponId: string, unit: UnitData) => {
     setSelectedWeapon(weaponId);
+    setActionState('targetSelection');
     
     const weapon = weaponData[weaponId as keyof typeof weaponData];
     if (!weapon) return;
@@ -346,16 +325,25 @@ export const GameRenderer: React.FC = () => {
           setSelectedWeapon(null);
           setSelectionArea([]);
           setActionState('weaponSelection');
-          setShowActionMenu(null);
           return;
         case 'weaponSelection':
+          // Return to action menu instead of unit moved state
           setActionState('unitMoved');
-          setShowActionMenu(mousePosition);
+          // Restore action menu at mouse position
+          if (mousePosition && mapRef.current) {
+            const rect = mapRef.current.getBoundingClientRect();
+            const scrollLeft = mapRef.current.scrollLeft;
+            const scrollTop = mapRef.current.scrollTop;
+            
+            setShowActionMenu({ 
+              x: mousePosition.x + scrollLeft - rect.left,
+              y: mousePosition.y + scrollTop - rect.top
+            });
+          }
           return;
         case 'unitMoved':
           handleCancelMove();
           setActionState('unitSelected');
-          setShowActionMenu(null);
           return;
         case 'unitSelected':
           setSelectedUnit(null);
@@ -551,6 +539,7 @@ export const GameRenderer: React.FC = () => {
     }
   }, [turnState]);
 
+  // TODO: Extract turn management to a custom hook (useTurnSystem)
   const handleEndTurn = () => {
     if (turnState.cycle === 'day') {
       setTurnState(prevTurn => advanceTurn(prevTurn));
@@ -600,7 +589,7 @@ export const GameRenderer: React.FC = () => {
     }
   }, [turnState]);
 
-  // Modify hex rendering to show selection area
+  // TODO: Extract cell rendering logic to a separate component (GridRenderer)
   const renderHex = (coord: HexCoordinate) => {
     const isInSelectionArea = selectionArea.some(
       area => area.x === coord.x && area.y === coord.y
@@ -695,8 +684,7 @@ export const GameRenderer: React.FC = () => {
           onSelect={(unit) => {
             setSelectedUnit(unit);
             setSelectedUnitPosition(unit.position);
-            const moveableGrids = getMoveableGrids(unit);
-            setMoveableGrids(moveableGrids);
+            setMoveableGrids(getMoveableGrids(unit, units));
             setUiModal({ type: null });
           }}
           onClose={() => setUiModal({ type: null })}
@@ -713,9 +701,9 @@ export const GameRenderer: React.FC = () => {
       )}
       
       <div style={{
-        padding: `${PADDING}px`,
-        minWidth: `${width * GRID.WIDTH + GRID.ROW_OFFSET + (PADDING * 2)}px`,
-        minHeight: `${height * GRID.WIDTH * 0.75 + (PADDING * 2)}px`,
+        padding: `${ScrollConfig.PADDING}px`,
+        minWidth: `${width * GridLayout.WIDTH + GridLayout.ROW_OFFSET + (ScrollConfig.PADDING * 2)}px`,
+        minHeight: `${height * GridLayout.WIDTH * 0.75 + (ScrollConfig.PADDING * 2)}px`,
         margin: 0,
         boxSizing: 'border-box',
         position: 'relative',
@@ -729,7 +717,7 @@ export const GameRenderer: React.FC = () => {
             lineHeight: 0,
             fontSize: 0,
             whiteSpace: 'nowrap',
-            marginLeft: (height - 1 - index) % 2 === 0 ? `${GRID.ROW_OFFSET}px` : '0',
+            marginLeft: (height - 1 - index) % 2 === 0 ? `${GridLayout.ROW_OFFSET}px` : '0',
             marginTop: index === 0 ? '0' : '-25px',
           }}>
             {row.map((coord) => renderHex(coord))}
@@ -756,27 +744,14 @@ export const GameRenderer: React.FC = () => {
           onClose={() => {
             setActionState('idle');
             setSelectedWeapon(null);
-            setSelectionArea([]);
           }}
           style={{
             position: 'absolute',
-            top: `${selectedUnit.position.y * GRID.WIDTH * 0.75 + PADDING}px`,
-            left: `${selectedUnit.position.x * GRID.WIDTH + (selectedUnit.position.y % 2 === 0 ? GRID.ROW_OFFSET : 0) + PADDING}px`
+            top: `${selectedUnit.position.y * GridLayout.WIDTH * 0.75 + ScrollConfig.PADDING}px`,
+            left: `${selectedUnit.position.x * GridLayout.WIDTH + (selectedUnit.position.y % 2 === 0 ? GridLayout.ROW_OFFSET : 0) + ScrollConfig.PADDING}px`
           }}
         />
       )}
     </div>
   );
-};
-
-const generateGrid = (width: number, height: number) => {
-  const grid: HexCoordinate[][] = [];
-  for (let y = height - 1; y >= 0; y--) {
-    const row: HexCoordinate[] = [];
-    for (let x = 0; x < width; x++) {
-      row.push(createHexCoordinate(x, y));
-    }
-    grid.push(row);
-  }
-  return grid;
 };

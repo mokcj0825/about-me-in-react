@@ -1,0 +1,18 @@
+{
+  "id": "wanderer",
+  "name": "Wanderer's Troupe",
+  "description": "A collection from a wandering troupe.",
+  "bonuses": {
+    "twoPiece": "Elemental Mastery +80",
+    "fourPiece": "Increases Charged Attack DMG by 35%."
+  },
+  "pieces": [
+    {
+      "id": "wanderer-flower",
+      "name": "Troupe's Dawnlight",
+      "type": "flower",
+      "rarity": 5,
+      "lore": "A flower preserved by a wandering troupe to remember their homeland."
+    }
+  ]
+} 

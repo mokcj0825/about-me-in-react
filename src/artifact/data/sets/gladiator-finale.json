@@ -1,0 +1,25 @@
+{
+  "id": "gladiator",
+  "name": "Gladiator's Finale",
+  "description": "The legendary gladiator who conquered the arena.",
+  "bonuses": {
+    "twoPiece": "ATK +18%",
+    "fourPiece": "Increases Normal Attack DMG by 35%."
+  },
+  "pieces": [
+    {
+      "id": "gladiator-flower",
+      "name": "Gladiator's Nostalgia",
+      "type": "flower",
+      "rarity": 5,
+      "lore": "A flower that bloomed on the battlefield, nourished by the blood of warriors."
+    },
+    {
+      "id": "gladiator-feather",
+      "name": "Gladiator's Destiny",
+      "type": "feather",
+      "rarity": 5,
+      "lore": "A feather from the helmet of the legendary gladiator."
+    }
+  ]
+} 
