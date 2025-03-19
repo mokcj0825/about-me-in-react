@@ -1,9 +1,12 @@
-import { HexCoordinate, createHexCoordinate, getNeighbors } from "../types/HexCoordinate";
+import { HexCoordinate, getNeighbors } from "../types/HexCoordinate";
 import { UnitData, MovementType } from "../types/UnitData";
 import { MovementRule } from "./types";
 import { ZoneOfControl } from "../zoc/types";
 import { movementCostRegistry } from './registry/MovementCostRegistry';
 import { buffRegistry } from '../buffs/registry/BuffRegistry';
+import {AirMovement} from "./rules/AirMovement";
+import {GroundMovement} from "./rules/GroundMovement";
+import {StandardZOC} from "../zoc/rules/StandardZOC";
 
 /**
  * Defines movement costs for different terrain types and movement types
@@ -19,6 +22,18 @@ export interface MovementCost {
     };
 }
 
+export const getMoveableGrids = (unit: UnitData, units: UnitData[]): HexCoordinate[] => {
+    const calculator = getMovementCalculator(unit);
+    return calculator.getMoveableGrids(unit.position, unit.movement, units);
+};
+
+export const getMovementCalculator = (unit: UnitData) => {
+    if (unit.movementType === 'flying') {
+        return airMovementCalculator; // Air units ignore ZOC
+    } else {
+        return groundMovementCalculator;
+    }
+}
 
 /**
  * MovementCalculator class - Handles movement calculations and pathfinding
@@ -228,4 +243,7 @@ export class MovementCalculator {
         return uniqueZocHexes;
     }
 
-} 
+}
+
+const airMovementCalculator = new MovementCalculator(new AirMovement(), []);
+const groundMovementCalculator = new MovementCalculator(new GroundMovement(), [new StandardZOC()]);
