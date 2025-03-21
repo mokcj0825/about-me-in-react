@@ -65,8 +65,7 @@ export class GroundMovement implements MovementRule {
      * @param from - Starting hex coordinate
      * @param to - Destination hex coordinate
      * @returns number - Movement cost (currently simplified to 1)
-     * 
-     * TODO: Implement terrain-based movement costs:
+     *
      * - Plains: 1 movement point
      * - Forest: 2 movement points
      * - Mountains: 3 movement points

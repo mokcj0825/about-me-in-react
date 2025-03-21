@@ -1,186 +1,252 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { HexCoordinate } from "./types/HexCoordinate";
-import { UnitData, initialUnits } from "./types/UnitData";
-import { HexCell } from "./components/HexaGrids/HexCell";
-import {getMoveableGrids, MovementCalculator} from "./movement/MovementCalculator";
-import { GroundMovement } from "./movement/rules/GroundMovement";
-import { AirMovement } from "./movement/rules/AirMovement";
-import { StandardZOC } from "./zoc/rules/StandardZOC";
+import { getMoveableGrids } from "./movement/MovementCalculator";
 import mapData from './data/map-data.json'
 import type { TerrainType } from './movement/types'
 import { UnitInfoDisplay } from "./components/DisplayPanel/UnitInfoDisplay";
 import { TerrainInfoDisplay } from './components/DisplayPanel/TerrainInfoDisplay';
 import { UnitSelectionModal } from './components/DisplayPanel/UnitSelectionModal';
-import { hasCharacteristic } from "./types/Characteristics";
 import { TerrainDetailDisplay } from './components/DisplayPanel/TerrainDetailDisplay';
-import { UIModalState } from './types/UIState';
 import { ControlHints } from './components/DisplayPanel/ControlHints';
 import { TurnDisplay } from './components/TurnDisplay';
-import { TurnState } from './types/TurnState';
-import { advanceTurn, DayNightCycle, handleFactionTurn, handlePhaseEvent, TurnPhase } from './systems/TurnSystem';
+import { handlePhaseEvent } from './systems/TurnSystem';
 import { GameMenu } from './components/GameMenu/GameMenu';
 import stageData from './data/stage-data.json';
-import { getAnnouncementMessage, TurnAnnouncement } from './components/TurnAnnouncement';
+import { TurnAnnouncement } from './components/TurnAnnouncement';
 import { ActionMenu } from './components/ActionMenu/ActionMenu';
-import { onUnitSelected } from './events/RendererEvents';
 import { initMovementCosts } from './movement/initMovementCosts';
 import { initBuffs } from './buffs/initBuffs';
-import {DEBUGGING_MODE} from "./config";
-import { ShapeCalculator, ShapeConfig, ShapeType } from './weapon/ShapeCalculator';
+import { DEBUGGING_MODE } from "./config";
 import { WeaponSelectionPanel } from './components/DisplayPanel/WeaponSelectionPanel';
-import weaponData from './data/weapon-data.json';
 import { GameActionState } from './types/GameState';
-import {generateGrid} from "./rendererUtils/GenerateGrid";
-import {GridLayout} from "./constants/GridLayout";
-import {ScrollConfig} from "./constants/ScrollConfig";
-
+import { generateGrid } from "./rendererUtils/GenerateGrid";
+import { GridLayout } from "./constants/GridLayout";
+import { ScrollConfig } from "./constants/ScrollConfig";
+import { GridRenderer } from './components/Renderer/GridRenderer';
+import { useUnitState } from './hooks/useUnitState';
+import { useMapInteraction } from './hooks/useMapInteraction';
+import { useCombatState } from './hooks/useCombatState';
+import { useTurnSystem } from './hooks/useTurnSystem';
+import { useUIState } from './hooks/useUIState';
 
 /**
  * Main game board renderer component
- * Handles:
- * - Grid generation and layout
- * - Unit movement and selection
- * - Mouse interaction and scrolling
- * - Visual state management
+ * 
+ * TODO: Break down into smaller components and hooks:
+ * 
+ * Custom Hooks:
+ * - ✓ useUnitState: unit selection, movement, and management
+ * - ✓ useMapInteraction: mouse, wheel, and scroll handling
+ * - ✓ useCombatState: weapon selection and combat management
+ * - ✓ useTurnSystem: turn management, phase changes
+ * - ✓ useUIState: modals, menus, announcements
+ * 
+ * Components to Extract:
+ * - MapContainer: handle the main map div and its events
+ * - UIOverlay: manage all UI elements (menus, modals, announcements)
+ * - CombatUI: weapon selection and combat-related UI
+ * 
+ * Utility Files:
+ * - unitMovementHandlers.ts: unit movement logic
+ * - actionHandlers.ts: game action handlers
+ * - gridUtils.ts: grid-related calculations
  * 
  * @component
  */
 export const GameRenderer: React.FC = () => {
-  // Use map dimensions directly from map data
   const { width, height } = mapData;
 
-  // TODO: Extract unit-related state management to a custom hook (useUnitState)
-  const [units, setUnits] = useState<UnitData[]>(initialUnits);
-  const [moveableGrids, setMoveableGrids] = useState<HexCoordinate[]>([]);
-  const [selectedUnitPosition, setSelectedUnitPosition] = useState<HexCoordinate | null>(null);
-  const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
-  const [multipleUnits, setMultipleUnits] = useState<UnitData[] | null>(null);
-
-  // TODO: Extract mouse/scroll handling to a custom hook (useMapInteraction)
-  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startDrag, setStartDrag] = useState({ x: 0, y: 0 });
-  const [scrollPosition, setScrollPosition] = useState({ x: 0, y: 0 });
-
-  // Refs for DOM elements and intervals
-  const mapRef = useRef<HTMLDivElement>(null);
-  const scrollIntervalRef = useRef<number | null>(null);
-
-  // Add state for hovered terrain
-  const [hoveredTerrain, setHoveredTerrain] = useState<TerrainType | null>(null);
-
-  // Replace separate modal states with single UI state
-  const [uiModal, setUiModal] = useState<UIModalState>({ type: null });
-
-  const [turnState, setTurnState] = useState<TurnState>({
-    number: stageData.initialState.turnNumber,
-    cycle: stageData.initialState.startCycle as DayNightCycle,
-    phase: stageData.initialState.startPhase as TurnPhase
+  const {
+    units,
+    moveableGrids,
+    selectedUnitPosition,
+    selectedUnit,
+    multipleUnits,
+    lastMovePosition,
+    setUnits,
+    setSelectedUnit,
+    setSelectedUnitPosition,
+    setMoveableGrids,
+    setMultipleUnits,
+    setLastMovePosition,
+    findUnitAtPosition,
+    findUnitsAtPosition,
+    handleUnitMove,
+    isMoveableCell,
+    handleUnitSelection,
+    calculateMoveableGrids,
+    handleCancelMove,
+    handleStandby,
+  } = useUnitState({
+    onUnitMoved: (unit, newPosition) => {
+      // Show action menu at mouse position
+      if (mousePosition && mapRef.current) {
+        const rect = mapRef.current.getBoundingClientRect();
+        const scrollLeft = mapRef.current.scrollLeft;
+        const scrollTop = mapRef.current.scrollTop;
+        
+        handleActionMenuShow({ 
+          x: mousePosition.x + scrollLeft - rect.left,
+          y: mousePosition.y + scrollTop - rect.top
+        });
+      }
+    },
+    onStandby: () => {
+      setActionState('idle');
+      handleActionMenuHide();
+    }
   });
 
-  // Add state for game menu
-  const [isGameMenuOpen, setIsGameMenuOpen] = useState(false);
+  const {
+    mousePosition,
+    scrollPosition,
+    isDragging,
+    mapRef,
+    handleMouseDown,
+    handleMouseMove,
+    handleMouseUp,
+    handleMouseLeave,
+  } = useMapInteraction({
+    onMousePositionChange: (position) => {
+      // Update hover states when mouse position changes
+      if (!position) {
+        handleTerrainHover(null, null);
+      }
+    }
+  });
 
-  const [announcement, setAnnouncement] = useState<string | null>(null);
+  const {
+    selectedWeapon,
+    selectionArea,
+    showWeaponPanel,
+    handleWeaponSelect,
+    handleCombatAction,
+    resetCombatState,
+    setShowWeaponPanel
+  } = useCombatState({
+    onWeaponSelect: (weaponId, area) => {
+      setActionState('targetSelection');
+    },
+    onCombatExecute: (attacker, weaponId, target) => {
+      // Mark the unit as moved
+      setUnits(prevUnits => prevUnits.map(u => 
+        u.id === selectedUnit?.id 
+          ? { ...u, hasMoved: true }
+          : u
+      ));
+      
+      // Reset selection
+      setSelectedUnit(null);
+      setSelectedUnitPosition(null);
+      setMoveableGrids([]);
+      setLastMovePosition(null);
+      
+      setActionState('idle');
+    },
+    onCombatCancel: () => {
+      // Return to action menu state
+      setActionState('unitMoved');
+      if (mousePosition && mapRef.current) {
+        const rect = mapRef.current.getBoundingClientRect();
+        const scrollLeft = mapRef.current.scrollLeft;
+        const scrollTop = mapRef.current.scrollTop;
+        
+        handleActionMenuShow({ 
+          x: mousePosition.x + scrollLeft - rect.left,
+          y: mousePosition.y + scrollTop - rect.top
+        });
+      }
+    }
+  });
 
-  // Add new state near the top with other state declarations
-  const [isAITurnActive, setIsAITurnActive] = useState(false);
+  const {
+    turnState,
+    isAITurnActive,
+    handleEndTurn,
+    setTurnState
+  } = useTurnSystem({
+    onUnitsUpdate: (updater) => {
+      setUnits(updater);
+    },
+    onAITurnStart: () => {
+      // Block user interactions during AI turns
+      setActionState('aiTurn');
+    },
+    onAITurnEnd: () => {
+      // Re-enable user interactions
+      setActionState('idle');
+    },
+    onAnnouncementChange: (message) => {
+      setAnnouncement(message);
+    }
+  });
 
-  const [showActionMenu, setShowActionMenu] = useState<{ x: number; y: number } | null>(null);
-  const [lastMovePosition, setLastMovePosition] = useState<HexCoordinate | null>(null);
-
-  // TODO: Extract weapon/combat state to a custom hook (useCombatState)
-  const [selectedWeapon, setSelectedWeapon] = useState<string | null>(null);
-  const [selectionArea, setSelectionArea] = useState<HexCoordinate[]>([]);
-  const [showWeaponPanel, setShowWeaponPanel] = useState(false);
-  const shapeCalculator = new ShapeCalculator();
+  const {
+    hoveredTerrain,
+    hoveredCoord,
+    uiModal,
+    isGameMenuOpen,
+    announcement,
+    showActionMenu,
+    handleTerrainHover,
+    handleModalToggle,
+    handleMenuToggle,
+    handleActionMenuShow,
+    handleActionMenuHide,
+    setAnnouncement
+  } = useUIState({
+    onModalClose: () => {
+      if (multipleUnits) {
+        setMultipleUnits(null);
+      }
+    },
+    onMenuClose: () => {
+      handleEndTurn();
+    }
+  });
 
   // Replace multiple state booleans with single action state
   const [actionState, setActionState] = useState<GameActionState>('idle');
 
-  // Add state for hovered coordinates near other state declarations
-  const [hoveredCoord, setHoveredCoord] = useState<HexCoordinate | null>(null);
-
-  // Initialize movement costs once when component mounts
+  // Game initialization effects
   useEffect(() => {
+    // Initialize game systems
     initMovementCosts();
     initBuffs();
-  }, []);
 
-  /**
-   * Finds a unit at a specific coordinate
-   * @param {HexCoordinate} coord - Position to check
-   * @returns {UnitData | undefined} Unit at position if found
-   */
-  const findUnitAtPosition = (coord: HexCoordinate): UnitData | undefined => {
-    return units.find(unit => 
-      unit.position.x === coord.x && unit.position.y === coord.y
-    );
-  };
-
-  // Mouse movement tracking
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!mapRef.current) return;
-      const rect = mapRef.current.getBoundingClientRect();
-      setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      });
-    };
-
-    const handleMouseLeave = () => {
-      setMousePosition(null);
-    };
-
-    mapRef.current?.addEventListener('mousemove', handleMouseMove);
-    mapRef.current?.addEventListener('mouseleave', handleMouseLeave);
-
-    return () => {
-      mapRef.current?.removeEventListener('mousemove', handleMouseMove);
-      mapRef.current?.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, []);
-
-  // Edge scrolling
-  useEffect(() => {
-    if (!mousePosition || !mapRef.current) {
-      if (scrollIntervalRef.current) {
-        window.clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-      return;
-    }
-
-    const container = mapRef.current;
-    const { width: containerWidth, height: containerHeight } = container.getBoundingClientRect();
-
-    scrollIntervalRef.current = window.setInterval(() => {
-      const scrollLeft = mousePosition.x < ScrollConfig.SCROLL_THRESHOLD ? -ScrollConfig.SCROLL_SPEED :
-                        mousePosition.x > containerWidth - ScrollConfig.SCROLL_THRESHOLD ? ScrollConfig.SCROLL_SPEED : 0;
-      
-      const scrollTop = mousePosition.y < ScrollConfig.SCROLL_THRESHOLD ? -ScrollConfig.SCROLL_SPEED :
-                       mousePosition.y > containerHeight - ScrollConfig.SCROLL_THRESHOLD ? ScrollConfig.SCROLL_SPEED : 0;
-
-      if (scrollLeft) container.scrollLeft += scrollLeft;
-      if (scrollTop) container.scrollTop += scrollTop;
-    }, 16);
-
-    return () => {
-      if (scrollIntervalRef.current) {
-        window.clearInterval(scrollIntervalRef.current);
-        scrollIntervalRef.current = null;
-      }
-    };
-  }, [mousePosition]);
-
-  // Initial scroll position
-  useEffect(() => {
+    // Set initial scroll position
     if (mapRef.current) {
       mapRef.current.scrollLeft = ScrollConfig.PADDING;
       mapRef.current.scrollTop = ScrollConfig.PADDING;
     }
-  }, []);
+
+    // Apply initial day/night effects
+    if (stageData.initialState.startCycle === 'day') {
+      setUnits(units => handlePhaseEvent(units, 'onDayStart'));
+    } else {
+      setUnits(units => handlePhaseEvent(units, 'onNightStart'));
+    }
+  }, []); // All initialization effects run once on mount
+
+  // #region MapContainer component
+  const renderGrid = () => {
+    // ... existing code ...
+  };
+
+  const renderUnits = () => {
+    // ... existing code ...
+  };
+  // #endregion
+
+  // #region UIOverlay component
+  const renderUI = () => {
+    return (
+      <>
+        {/* ... existing UI elements ... */}
+      </>
+    );
+  };
+  // #endregion
 
   const grid = generateGrid(width, height);
 
@@ -189,16 +255,16 @@ export const GameRenderer: React.FC = () => {
    * Shows moveable grids for any unit being hovered
    */
   const handleCellHover = (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => {
-    setHoveredTerrain(mapData.terrain[coord.y][coord.x] as TerrainType);
-    setHoveredCoord(isHovering ? coord : null);
+    handleTerrainHover(
+      isHovering ? mapData.terrain[coord.y][coord.x] as TerrainType : null,
+      isHovering ? coord : null
+    );
 
     // If a unit is already selected, don't show hover movement range
     if (selectedUnit) return;
 
     if (isHovering && isUnit) {
-      const unitsAtPosition = units.filter(unit => 
-        unit.position.x === coord.x && unit.position.y === coord.y
-      );
+      const unitsAtPosition = findUnitsAtPosition(coord);
 
       if (unitsAtPosition.length > 1) {
         // For multiple units, don't show movement range
@@ -206,104 +272,13 @@ export const GameRenderer: React.FC = () => {
         setMultipleUnits(unitsAtPosition);
       } else if (unitsAtPosition.length === 1) {
         const unit = unitsAtPosition[0];
-        const moveableGrids = getMoveableGrids(unit, units);
-        setMoveableGrids(moveableGrids);
+        calculateMoveableGrids(unit, coord);
         setMultipleUnits(null);
       }
     } else {
       setMoveableGrids([]);
       setMultipleUnits(null);
     }
-  };
-
-  // TODO: Extract unit movement logic to a separate file (unitMovementHandlers.ts)
-  const handleUnitMove = (unit: UnitData, newPosition: HexCoordinate) => {
-    // Only allow movement if unit hasn't moved this turn
-    if (unit.hasMoved) return;
-
-    const updatedUnits = units.map(u => 
-      u.id === unit.id 
-        ? { ...u, position: newPosition }
-        : u
-    );
-    
-    setUnits(updatedUnits);
-    setLastMovePosition(newPosition);
-    
-    // Show action menu at mouse position
-    if (mousePosition && mapRef.current) {
-      const rect = mapRef.current.getBoundingClientRect();
-      const scrollLeft = mapRef.current.scrollLeft;
-      const scrollTop = mapRef.current.scrollTop;
-      
-      setShowActionMenu({ 
-        x: mousePosition.x + scrollLeft - rect.left,
-        y: mousePosition.y + scrollTop - rect.top
-      });
-    }
-  };
-
-  // TODO: Extract action handlers to a separate file (actionHandlers.ts)
-  const handleStandby = () => {
-    if (!selectedUnit || !lastMovePosition) return;
-    
-    setUnits(prevUnits => prevUnits.map(u => 
-      u.id === selectedUnit.id 
-        ? { ...u, hasMoved: true }
-        : u
-    ));
-    
-    setSelectedUnit(null);
-    setSelectedUnitPosition(null);
-    setMoveableGrids([]);
-    setShowActionMenu(null);
-    setLastMovePosition(null);
-    setActionState('idle');
-  };
-
-  const handleCancelMove = () => {
-    if (!selectedUnit || !lastMovePosition) return;
-
-    // Revert the unit's position
-    setUnits(prevUnits => prevUnits.map(u => 
-      u.id === selectedUnit.id 
-        ? { ...u, position: selectedUnitPosition! }
-        : u
-    ));
-    
-    setShowActionMenu(null);
-    setLastMovePosition(null);
-  };
-
-  const handleAttackAction = () => {
-    setActionState('weaponSelection');
-    setShowActionMenu(null);
-  };
-
-  const handleWeaponSelect = (weaponId: string, unit: UnitData) => {
-    setSelectedWeapon(weaponId);
-    setActionState('targetSelection');
-    
-    const weapon = weaponData[weaponId as keyof typeof weaponData];
-    if (!weapon) return;
-
-    // Get weapon config from weapon data
-    const weaponConfig: ShapeConfig = {
-      type: weapon.selectionType as ShapeType,
-      minRange: weapon.minSelectionRange,
-      maxRange: weapon.maxSelectionRange,
-      minEffectRange: weapon.minEffectRange,
-      maxEffectRange: weapon.maxEffectRange
-    };
-
-    // Use lastMovePosition if it exists, otherwise use unit's original position
-    const position = lastMovePosition || unit.position;
-    
-    const selectionArea = shapeCalculator.getSelectableArea(
-      position,
-      weaponConfig
-    );
-    setSelectionArea(selectionArea);
   };
 
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
@@ -313,7 +288,7 @@ export const GameRenderer: React.FC = () => {
     // If any modal is shown, only handle closing actions
     if (uiModal.type) {
       if (isRightClick) {
-        setUiModal({type: null});
+        handleModalToggle(null);
       }
       return;
     }
@@ -322,20 +297,17 @@ export const GameRenderer: React.FC = () => {
     if (isRightClick) {
       switch (actionState) {
         case 'targetSelection':
-          setSelectedWeapon(null);
-          setSelectionArea([]);
-          setActionState('weaponSelection');
+          resetCombatState();
           return;
         case 'weaponSelection':
-          // Return to action menu instead of unit moved state
           setActionState('unitMoved');
-          // Restore action menu at mouse position
+          resetCombatState();
           if (mousePosition && mapRef.current) {
             const rect = mapRef.current.getBoundingClientRect();
             const scrollLeft = mapRef.current.scrollLeft;
             const scrollTop = mapRef.current.scrollTop;
             
-            setShowActionMenu({ 
+            handleActionMenuShow({ 
               x: mousePosition.x + scrollLeft - rect.left,
               y: mousePosition.y + scrollTop - rect.top
             });
@@ -344,13 +316,14 @@ export const GameRenderer: React.FC = () => {
         case 'unitMoved':
           handleCancelMove();
           setActionState('unitSelected');
+          handleActionMenuHide();
           return;
         case 'unitSelected':
           setSelectedUnit(null);
           setSelectedUnitPosition(null);
           setMoveableGrids([]);
           setActionState('idle');
-          setShowActionMenu(null);
+          handleActionMenuHide();
           return;
       }
       return;
@@ -361,22 +334,7 @@ export const GameRenderer: React.FC = () => {
       case 'idle':
         const unitAtPosition = findUnitAtPosition(coord);
         if (unitAtPosition) {
-          const rendererState = {
-            units,
-            setUnits,
-            selectedUnit,
-            setSelectedUnit,
-            setSelectedUnitPosition,
-            setMoveableGrids,
-            setUiModal,
-            mousePosition,
-            movementCalculator: new MovementCalculator(
-              unitAtPosition.movementType === 'flying' ? new AirMovement() : new GroundMovement(),
-              unitAtPosition.movementType === 'flying' ? [] : [new StandardZOC()]
-            ),
-            moveableGrids
-          };
-          onUnitSelected(coord, rendererState);
+          handleUnitSelection(coord);
           setActionState('unitSelected');
         }
         break;
@@ -389,229 +347,64 @@ export const GameRenderer: React.FC = () => {
         break;
 
       case 'targetSelection':
-        // Handle weapon target selection
+        const targetUnit = findUnitAtPosition(coord);
+        if (handleCombatAction(coord, targetUnit)) {
+          setActionState('idle');
+        }
         break;
     }
   };
 
-  const isMoveableCell = (coord: HexCoordinate): boolean => {
-    if (!selectedUnitPosition) return false;
-    const unit = selectedUnit || findUnitAtPosition(selectedUnitPosition);
-    if (!unit) return false;
-
-    const isValidMove = moveableGrids.some(grid =>
-      grid.x === coord.x && grid.y === coord.y
-    );
-
-    if (!isValidMove) return false;
-
-    const unitsAtTarget = units.filter(u =>
-      u.position.x === coord.x && u.position.y === coord.y
-    );
-
-    if (unitsAtTarget.length === 0) return true;
-
-    const isMovingUnitFlying = hasCharacteristic(
-      unit.characteristics,
-      unit.buffs || [],
-      'flying'
-    );
-
-    const hasTargetFlying = unitsAtTarget.some(u =>
-      hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
-    );
-
-    return isMovingUnitFlying ? !hasTargetFlying : unitsAtTarget.every(u =>
-      hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
-    );
-  };
-
-  /**
-   * Finds all units at a specific coordinate
-   * @param {HexCoordinate} coord - Position to check
-   * @returns {UnitData[]} Array of units at position
-   */
-  const findUnitsAtPosition = (coord: HexCoordinate): UnitData[] => {
-    return units.filter(unit => 
-      unit.position.x === coord.x && unit.position.y === coord.y
-    );
-  };
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button === 1) { // Only middle click for dragging
-      e.preventDefault();
-      setIsDragging(true);
-      setStartDrag({ x: e.clientX - scrollPosition.x, y: e.clientY - scrollPosition.y });
-    }
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && mapRef.current) {
-      const newX = e.clientX - startDrag.x;
-      const newY = e.clientY - startDrag.y;
-      mapRef.current.scrollLeft = -newX;
-      mapRef.current.scrollTop = -newY;
-      setScrollPosition({ x: -newX, y: -newY });
-    }
-  };
-
-  const handleMouseUp = (e: React.MouseEvent) => {
-    if (e.button === 1) { // Only respond to middle button release
-      setIsDragging(false);
-    }
-  };
-
-  // Handle wheel scrolling
-  const handleWheel = (e: WheelEvent) => {
-    if (mapRef.current) {
-      e.preventDefault();
-      mapRef.current.scrollLeft += e.deltaX;
-      mapRef.current.scrollTop += e.deltaY;
-      setScrollPosition({
-        x: -mapRef.current.scrollLeft,
-        y: -mapRef.current.scrollTop
-      });
-    }
-  };
-
-  useEffect(() => {
-    const mapElement = mapRef.current;
-    if (mapElement) {
-      mapElement.addEventListener('wheel', handleWheel, { passive: false });
-    }
-    return () => {
-      if (mapElement) {
-        mapElement.removeEventListener('wheel', handleWheel);
-      }
-    };
-  }, []);
-
-  const handleMouseLeave = (e: React.MouseEvent) => {
-    handleMouseUp(e);
-    setHoveredTerrain(null);
-  };
-
-  // Update keyboard handler to respect modal states
+  // Combined keyboard handlers
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (isAITurnActive) return; // Block keyboard shortcuts during AI turns
+      // Block keyboard shortcuts during AI turns
+      if (isAITurnActive && !DEBUGGING_MODE) return;
 
-      if (e.key.toLowerCase() === 't') {
-        setUiModal(current => 
-          current.type ? { type: null } : { 
-            type: 'terrain', 
-            data: { terrain: hoveredTerrain || undefined } 
+      switch (e.key) {
+        case 'Enter':
+          handleEndTurn();
+          break;
+        case 't':
+        case 'T':
+          handleModalToggle('terrain', { terrain: hoveredTerrain });
+          break;
+        case 'Escape':
+          if (uiModal.type) {
+            handleModalToggle(uiModal.type);
+          } else {
+            handleMenuToggle();
           }
-        );
-      } else if (e.key === 'Escape') {
-        if (uiModal.type) {
-          setUiModal({ type: null });
-        } else {
-          setIsGameMenuOpen(current => !current);
-        }
+          break;
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [hoveredTerrain, uiModal.type, isAITurnActive]);
+  }, [hoveredTerrain, uiModal.type, isAITurnActive, handleEndTurn]);
 
-  // Update effect to monitor turn state changes
-  useEffect(() => {
-    console.log('Turn state changed:', turnState);
-    
-    if (turnState.phase === 'ally' || turnState.phase === 'enemy') {
-      setIsAITurnActive(true); // Lock player actions
-      const message = getAnnouncementMessage(turnState);
-      setAnnouncement(message);
-      
-      setTimeout(() => {
-        if (turnState.phase === 'enemy' && turnState.cycle === 'day') {
-          setUnits(units => {
-            let updatedUnits = handlePhaseEvent(units, 'onDayEnd');
-            return handlePhaseEvent(updatedUnits, 'onNightStart');
-          });
-        }
-        setAnnouncement(null);
-        setIsAITurnActive(false); // Unlock player actions
-        setTurnState(prevTurn => advanceTurn(prevTurn));
-      }, 1000);
-    }
-  }, [turnState]);
-
-  // TODO: Extract turn management to a custom hook (useTurnSystem)
-  const handleEndTurn = () => {
-    if (turnState.cycle === 'day') {
-      setTurnState(prevTurn => advanceTurn(prevTurn));
-      setUnits(prevUnits => handleFactionTurn(prevUnits, 'player'));
-    } else {
-      // Night ends, day starts - immediate transition
-      console.log('Transitioning: Night -> Day');
-      setUnits(units => {
-        let updatedUnits = handlePhaseEvent(units, 'onNightEnd');
-        return handlePhaseEvent(updatedUnits, 'onDayStart');
-      });
-      setTurnState(prevTurn => advanceTurn(prevTurn));
-      setUnits(prevUnits => 
-        prevUnits.map(unit => ({ ...unit, hasMoved: false }))
-      );
-    }
-    setIsGameMenuOpen(false);
-  };
-
-  // Add keyboard handler for turn advancement
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        handleEndTurn();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
-  // Apply initial day/night effects
-  useEffect(() => {
-    if (stageData.initialState.startCycle === 'day') {
-      setUnits(units => handlePhaseEvent(units, 'onDayStart'));
-    } else {
-      setUnits(units => handlePhaseEvent(units, 'onNightStart'));
-    }
-  }, []); // Run once on component mount
-
-  // Remove or modify the existing announcement effect
-  useEffect(() => {
-    const message = getAnnouncementMessage(turnState);
-    if (message && turnState.phase === 'player') {  // Only handle player phase here
-      setAnnouncement(message);
-      setTimeout(() => setAnnouncement(null), 1100);
-    }
-  }, [turnState]);
-
-  // TODO: Extract cell rendering logic to a separate component (GridRenderer)
+  // Replace the renderHex function with this simpler version
   const renderHex = (coord: HexCoordinate) => {
-    const isInSelectionArea = selectionArea.some(
-      area => area.x === coord.x && area.y === coord.y
-    );
-
     return (
-      <HexCell 
-        key={`${coord.x},${coord.y}`} 
-        coordinate={coord}
+      <GridRenderer
+        coord={coord}
         units={findUnitsAtPosition(coord)}
         terrain={mapData.terrain[coord.y][coord.x] as TerrainType}
-        isMoveable={!selectedWeapon && isMoveableCell(coord)}  // Only show moveable when not selecting weapon
+        isMoveable={!selectedWeapon && isMoveableCell(coord)}
+        selectedUnitPosition={selectedUnitPosition}
+        selectedUnit={selectedUnit}
+        findUnitAtPosition={findUnitAtPosition}
+        selectionArea={selectionArea}
         onHover={(coord, isHovering, isUnit) => handleCellHover(coord, isHovering, isUnit)}
         onClick={handleCellClick}
-        unitPosition={selectedUnitPosition}
-        findUnitAtPosition={findUnitAtPosition}
-        isSelected={selectedUnit !== null && 
-          coord.x === selectedUnitPosition?.x && 
-          coord.y === selectedUnitPosition?.y}
-        highlight={isInSelectionArea ? 'selection' : undefined}
       />
     );
+  };
+
+  const handleAttackAction = () => {
+    setShowWeaponPanel(true);
+    setActionState('weaponSelection');
+    handleActionMenuHide();
   };
 
   return (
@@ -634,7 +427,7 @@ export const GameRenderer: React.FC = () => {
         e.preventDefault();
         if (multipleUnits) {
           setMultipleUnits(null);
-          setUiModal({ type: null });
+          handleModalToggle(null);
         }
       }}
     >
@@ -647,9 +440,9 @@ export const GameRenderer: React.FC = () => {
           turn={turnState}
           onEndTurn={() => {
             handleEndTurn();
-            setIsGameMenuOpen(false);
+            handleMenuToggle();
           }}
-          onClose={() => setIsGameMenuOpen(false)}
+          onClose={handleMenuToggle}
         />
       )}
       
@@ -673,7 +466,7 @@ export const GameRenderer: React.FC = () => {
         <TerrainDetailDisplay
           visible={true}
           terrain={uiModal.data.terrain}
-          onClose={() => setUiModal({ type: null })}
+          onClose={() => handleModalToggle(null)}
         />
       )}
       
@@ -685,9 +478,9 @@ export const GameRenderer: React.FC = () => {
             setSelectedUnit(unit);
             setSelectedUnitPosition(unit.position);
             setMoveableGrids(getMoveableGrids(unit, units));
-            setUiModal({ type: null });
+            handleModalToggle(null);
           }}
-          onClose={() => setUiModal({ type: null })}
+          onClose={() => handleModalToggle(null)}
         />
       )}
       
@@ -737,13 +530,13 @@ export const GameRenderer: React.FC = () => {
         />
       )}
 
-      {actionState === 'weaponSelection' && selectedUnit && (
+      {showWeaponPanel && selectedUnit && (
         <WeaponSelectionPanel
           unit={selectedUnit}
-          onWeaponSelect={handleWeaponSelect}
+          onWeaponSelect={(weaponId) => handleWeaponSelect(weaponId, lastMovePosition || selectedUnit.position)}
           onClose={() => {
             setActionState('idle');
-            setSelectedWeapon(null);
+            resetCombatState();
           }}
           style={{
             position: 'absolute',

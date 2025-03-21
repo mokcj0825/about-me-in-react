@@ -1,0 +1,46 @@
+{
+  "id": "independence-legacy",
+  "name": "独立者的遗泽",
+  "description": "",
+  "bonuses": {
+    "twoPiece": "还没想好",
+    "fourPiece": "我还没想好。"
+  },
+  "pieces": [
+    {
+      "id": "independence-legacy-flower",
+      "name": "含苞待放的四照花",
+      "type": "flower",
+      "rarity": 5,
+      "lore": "黄绿色的花瓣托住娇嫩的花蕊，再过不久就能看到枣红色的果实。"
+    },
+    {
+      "id": "independeence-legacy-feather",
+      "name": "盟约协定的羽毛笔",
+      "type": "feather",
+      "rarity": 5,
+      "lore": "从白头鹰的羽毛上剪下的笔尖，笔尖上还残留着未干的墨迹。"
+    },
+    {
+      "id": "independence-legacy-sands",
+      "name": "城市钟的微缩模型",
+      "type": "sands",
+      "rarity": 5,
+      "lore": "连同裂缝也一起仿造的模型，上面铸着许以自由的承诺。"
+    },
+    {
+      "id": "independence-legacy-cup",
+      "name": "朴素的红陶茶杯",
+      "type": "cup",
+      "rarity": 5,
+      "lore": "朴素的红陶茶杯，带着一点白桦树的余韵。"
+    },
+    {
+      "id": "independence-legacy-circlet",
+      "name": "发明家的圆框眼镜",
+      "type": "circlet",
+      "rarity": 5,
+      "lore": "镜片早已不知去向的圆框眼镜，其主人的发明却成为了文明的燃料。"
+    }
+  ]
+} 

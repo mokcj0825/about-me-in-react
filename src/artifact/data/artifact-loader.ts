@@ -1,11 +1,13 @@
 import { ArtifactSet, Artifact } from '../types/ArtifactTypes';
 import gladiatorSet from './sets/gladiator-finale.json';
 import wandererSet from './sets/wanderer-troupe.json';
+import independenceSet from './sets/independence-legacy.json';
 
 // Add new sets here as they are created
 const artifactSetFiles = [
   gladiatorSet,
-  wandererSet
+  wandererSet,
+  independenceSet
 ];
 
 // Type assertion for imported JSON
