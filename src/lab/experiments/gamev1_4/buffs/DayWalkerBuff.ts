@@ -1,5 +1,6 @@
-import { BuffProvider, BuffEffect } from './types';
+import { BuffEffect } from './BuffEffect';
 import { UnitData } from '../types/UnitData';
+import {BuffProvider} from "./BuffProvider";
 
 export class DayWalkerBuff implements BuffProvider {
   id = 'dayWalkerBuff';

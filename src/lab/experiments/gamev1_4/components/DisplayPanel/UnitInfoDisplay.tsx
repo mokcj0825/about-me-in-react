@@ -19,7 +19,6 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, units, mousePosition, i
   const MIDDLE_BUFFER = 100; // pixels from center where we'll force a side
   const screenMiddle = window.innerWidth / 2;
   const isLeftSide = mousePosition.x < (screenMiddle - MIDDLE_BUFFER);
-  const isRightSide = mousePosition.x > (screenMiddle + MIDDLE_BUFFER);
   
   // If in buffer zone, default to right side
   const displaySide = isLeftSide ? 'right' : 'left';
@@ -70,22 +69,39 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, units, mousePosition, i
       <div style={sectionStyle}>
         <div style={{ fontSize: '14px', marginBottom: '4px' }}>属性数据</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
-          <StateRow label={'生命值'} value={`${unit?.hitpoint}`} />
-          <StateRow label={'攻击力'} value={`${unit?.attack}`} />
-          <StateRow label={'防御力'} value={`${unit?.defense}`} />
-          <StateRow label={'敏捷'} value={`${unit?.agility}`} />
-          <StateRow label={'朝向'} value={`${unit?.direction}`} />
+          <StateRow 
+            label={'生命值'} 
+            value={`${unit?.currentHitpoint || 0}/${unit?.maxHitpoint || 0} (${unit?.baseMaxHitpoint || 0})`} 
+          />
+          <StateRow 
+            label={'攻击力'} 
+            value={`${unit?.attack || 0} (${unit?.baseAttack || 0})`} 
+          />
+          <StateRow 
+            label={'防御力'} 
+            value={`${unit?.defense || 0} (${unit?.baseDefense || 0})`} 
+          />
+          <StateRow 
+            label={'移动力'} 
+            value={`${unit?.movement || 0} (${unit?.baseMovement || 0})`} 
+          />
+          <StateRow 
+            label={'朝向'} 
+            value={`${unit?.direction || 'none'}`} 
+          />
         </div>
       </div>
 
       {/* Movement Section */}
       <div style={sectionStyle}>
         <StateRow 
-          label={'移动速度'} 
-          value={`${unit?.movement || 0} (${unit?.baseMovement || 0}) ${unit?.movementType ? MOVEMENT_TYPE_LABELS[unit.movementType] : ''}`} 
+          label={'移动类型'} 
+          value={`${unit?.movementType ? MOVEMENT_TYPE_LABELS[unit.movementType] : ''}`} 
         />
-        <StateRow label={'朝向'} value={`${unit?.direction}`} />
-        <StateRow label={'坐标'} value={`x: ${unit?.position.x}, y: ${unit?.position.y}`} />
+        <StateRow 
+          label={'坐标'} 
+          value={`x: ${unit?.position.x || 0}, y: ${unit?.position.y || 0}`} 
+        />
       </div>
 
       {/* Critical & Effect Stats */}

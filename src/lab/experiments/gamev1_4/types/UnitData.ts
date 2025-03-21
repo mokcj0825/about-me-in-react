@@ -23,9 +23,17 @@ export interface UnitData {
   // Core Combat Stats
   attack: number;
   defense: number;
-  hitpoint: number;
-  agility: number;
   movement: number;
+  
+  // Base Stats
+  baseAttack: number;
+  baseDefense: number;
+  baseMovement: number;
+  baseMaxHitpoint: number;
+  
+  // Hitpoint System
+  maxHitpoint: number;    // Current maximum HP (can be modified by buffs)
+  currentHitpoint: number; // Current HP value
   
   // Critical System
   critRate: number;      // Percentage (0-100)
@@ -53,7 +61,7 @@ export interface UnitData {
   
   // Combat Role
   power: number;         // Overall power rating
-  aggro: number;         // Target priority (0-100)
+  aggro: number;        // Target priority (0-100)
   damageType: DamageType;
   role: UnitRole;
   
@@ -67,13 +75,8 @@ export interface UnitData {
   // Movement System
   movementType: MovementType;
   
-  // New properties
+  // State
   hasMoved: boolean;
-  
-  // Base stats
-  baseMovement: number;
-  baseAttack: number;
-  baseDefense: number;
   weapon: string[];
 }
 
@@ -86,3 +89,10 @@ export const initialUnits: UnitData[] = (demoData.initialUnits as any[]).map(uni
   position: createHexCoordinate(unit.position.x, unit.position.y),
   hasMoved: false
 })) as UnitData[]; 
+
+export interface CharacteristicEffect {
+  modifyMovement?: (unit: UnitData, movement: number) => number;
+  modifyAttack?: (unit: UnitData, attack: number) => number;
+  modifyDefense?: (unit: UnitData, defense: number) => number;
+  modifyMaxHitpoint?: (unit: UnitData, maxHitpoint: number) => number;
+} 

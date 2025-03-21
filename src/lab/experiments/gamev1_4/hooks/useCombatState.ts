@@ -3,7 +3,6 @@ import { HexCoordinate } from '../types/HexCoordinate';
 import { UnitData } from '../types/UnitData';
 import { ShapeCalculator, ShapeConfig, ShapeType } from '../weapon/ShapeCalculator';
 import weaponData from '../data/weapon-data.json';
-import { GameActionState } from '../types/GameState';
 
 interface UseCombatStateProps {
   onWeaponSelect?: (weaponId: string, selectionArea: HexCoordinate[]) => void;

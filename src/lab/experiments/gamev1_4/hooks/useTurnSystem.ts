@@ -42,6 +42,29 @@ export const useTurnSystem = ({
   
   const [isAITurnActive, setIsAITurnActive] = useState(false);
 
+  const handleEndTurn = () => {
+    if (turnState.cycle === 'day') {
+      // Reset player movement
+      onUnitsUpdate(prevUnits => handleFactionTurn(prevUnits, 'player'));
+      
+      // Start ally phase
+      setTurnState(prevTurn => ({ ...prevTurn, phase: 'ally' }));
+    } else {
+      // Night ends, transition to day
+      console.log('Transitioning: Night -> Day');
+      onUnitsUpdate(units => {
+        let updatedUnits = handlePhaseEvent(units, 'onNightEnd');
+        updatedUnits = handlePhaseEvent(updatedUnits, 'onDayStart');
+        return handleFactionTurn(updatedUnits, 'player'); // Reset player movement for new day
+      });
+      setTurnState(prevTurn => ({
+        number: prevTurn.number + 1,
+        cycle: 'day',
+        phase: 'player'
+      }));
+    }
+  };
+
   // Handle turn state changes and announcements
   useEffect(() => {
     console.log('Turn state changed:', turnState);
@@ -53,41 +76,44 @@ export const useTurnSystem = ({
       onAnnouncementChange?.(message);
       onAITurnStart?.();
       
+      console.log(`${turnState.phase === 'ally' ? 'Allies' : 'Enemy'} thinking...`);
+      
+      // Simulate AI turn - this will be replaced with actual AI logic
       setTimeout(() => {
-        if (turnState.phase === 'enemy' && turnState.cycle === 'day') {
-          onUnitsUpdate(units => {
-            let updatedUnits = handlePhaseEvent(units, 'onDayEnd');
-            return handlePhaseEvent(updatedUnits, 'onNightStart');
-          });
-        }
+        // Reset movement for AI faction
+        onUnitsUpdate(units => handleFactionTurn(units, turnState.phase));
+        
+        console.log(`${turnState.phase === 'ally' ? 'Allies' : 'Enemy'} finished their turn`);
+        
         onAnnouncementChange?.(null);
         setIsAITurnActive(false);
         onAITurnEnd?.();
-        setTurnState(prevTurn => advanceTurn(prevTurn));
+        
+        // If this is the enemy phase and we're in day cycle, handle night transition
+        if (turnState.phase === 'enemy' && turnState.cycle === 'day') {
+          console.log('Transitioning: Day -> Night');
+          onUnitsUpdate(units => {
+            let updatedUnits = handlePhaseEvent(units, 'onDayEnd');
+            updatedUnits = handlePhaseEvent(updatedUnits, 'onNightStart');
+            return handleFactionTurn(updatedUnits, 'player'); // Reset player movement for night turn
+          });
+          // Transition to night player phase
+          setTurnState(prevTurn => ({
+            ...prevTurn,
+            cycle: 'night',
+            phase: 'player'
+          }));
+        } else if (turnState.phase === 'ally') {
+          // After ally phase, start enemy phase
+          setTurnState(prevTurn => ({ ...prevTurn, phase: 'enemy' }));
+        }
       }, 1000);
     } else if (message && turnState.phase === 'player') {
+      console.log('Player phase started');
       onAnnouncementChange?.(message);
       setTimeout(() => onAnnouncementChange?.(null), 1100);
     }
   }, [turnState]);
-
-  const handleEndTurn = () => {
-    if (turnState.cycle === 'day') {
-      setTurnState(prevTurn => advanceTurn(prevTurn));
-      onUnitsUpdate(prevUnits => handleFactionTurn(prevUnits, 'player'));
-    } else {
-      // Night ends, day starts - immediate transition
-      console.log('Transitioning: Night -> Day');
-      onUnitsUpdate(units => {
-        let updatedUnits = handlePhaseEvent(units, 'onNightEnd');
-        return handlePhaseEvent(updatedUnits, 'onDayStart');
-      });
-      setTurnState(prevTurn => advanceTurn(prevTurn));
-      onUnitsUpdate(prevUnits => 
-        prevUnits.map(unit => ({ ...unit, hasMoved: false }))
-      );
-    }
-  };
 
   return {
     turnState,
