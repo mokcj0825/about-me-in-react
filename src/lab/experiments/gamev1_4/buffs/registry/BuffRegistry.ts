@@ -1,8 +1,10 @@
-import { BuffProvider, BuffEffect } from '../types';
+import {  BuffEffect } from '../BuffEffect';
 import { Buff, UnitData } from '../../types/UnitData';
 import { characteristicRegistry } from '../../characteristics/registry/CharacteristicRegistry';
+import { CharacteristicEffect } from '../../characteristics/types';
 import { DayWalkerBuff } from '../DayWalkerBuff';
 import { NightPhobicDebuff } from '../NightPhobicDebuff';
+import {BuffProvider} from "../BuffProvider";
 
 class BuffRegistry {
   private providers: Map<string, BuffProvider> = new Map();
@@ -27,6 +29,7 @@ class BuffRegistry {
     let movement = unit.baseMovement;
     let attack = unit.baseAttack;
     let defense = unit.baseDefense;
+    let maxHitpoint = unit.baseMaxHitpoint;
 
     // Apply characteristic modifiers first
     unit.characteristics.forEach((charId: string) => {
@@ -35,6 +38,7 @@ class BuffRegistry {
         if (effect.modifyMovement) movement = effect.modifyMovement(unit, movement);
         if (effect.modifyAttack) attack = effect.modifyAttack(unit, attack);
         if (effect.modifyDefense) defense = effect.modifyDefense(unit, defense);
+        if (effect.modifyMaxHitpoint) maxHitpoint = effect.modifyMaxHitpoint(unit, maxHitpoint);
       }
     });
 
@@ -45,6 +49,7 @@ class BuffRegistry {
         if (effect.modifyMovement) movement = effect.modifyMovement(unit, movement);
         if (effect.modifyAttack) attack = effect.modifyAttack(unit, attack);
         if (effect.modifyDefense) defense = effect.modifyDefense(unit, defense);
+        if (effect.modifyMaxHitpoint) maxHitpoint = effect.modifyMaxHitpoint(unit, maxHitpoint);
       }
     });
 
@@ -52,44 +57,35 @@ class BuffRegistry {
     unit.movement = movement;
     unit.attack = attack;
     unit.defense = defense;
-  }
+    unit.maxHitpoint = maxHitpoint;
 
-  // Handle turn end for buffs
-  processTurnEnd(unit: UnitData): void {
-    const remainingBuffs: Buff[] = [];
-
-    unit.buffs?.forEach((buff: Buff) => {
-      const effect = this.getEffect(buff.id);
-      if (effect) {
-        if (effect.duration > 0) {
-          buff.duration--;
-          if (buff.duration > 0) {
-            remainingBuffs.push(buff);
-          } else if (effect.onRemove) {
-            effect.onRemove(unit);
-          }
-        } else if (effect.duration === -1) {
-          // Permanent buff
-          remainingBuffs.push(buff);
-        }
-
-        if (effect.onTurnEnd) {
-          effect.onTurnEnd(unit);
-        }
-      }
-    });
-
-    unit.buffs = remainingBuffs;
-    this.calculateStats(unit);
+    // Ensure current HP doesn't exceed max HP
+    if (unit.currentHitpoint > unit.maxHitpoint) {
+      unit.currentHitpoint = unit.maxHitpoint;
+    }
   }
 
   applyEffects(event: string, unit: UnitData): void {
-    unit.buffs?.forEach((buff: Buff) => {
-      const effect = this.getEffect(buff.id);
-      if (effect && effect[event as keyof BuffEffect]) {
-        (effect[event as keyof BuffEffect] as Function)(unit);
+    // First apply characteristic effects
+    unit.characteristics?.forEach((charId: string) => {
+      const effect = characteristicRegistry.getEffect(charId);
+      if (effect && typeof effect[event as keyof CharacteristicEffect] === 'function') {
+        // Apply characteristic effect which may add/remove buffs
+        const handler = effect[event as keyof CharacteristicEffect] as (unit: UnitData) => void;
+        handler(unit);
       }
     });
+
+    // Then apply buff effects on the updated buffs
+    unit.buffs?.forEach((buff: Buff) => {
+      const effect = this.getEffect(buff.id);
+      if (effect && typeof effect[event as keyof BuffEffect] === 'function') {
+        const handler = effect[event as keyof BuffEffect] as (unit: UnitData) => void;
+        handler(unit);
+      }
+    });
+    
+    // Finally, recalculate stats with all effects applied
     this.calculateStats(unit);
   }
 }

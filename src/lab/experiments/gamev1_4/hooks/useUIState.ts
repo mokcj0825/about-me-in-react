@@ -58,13 +58,7 @@ export const useUIState = ({
   };
 
   const handleMenuToggle = () => {
-    setIsGameMenuOpen(current => {
-      const newState = !current;
-      if (!newState) {
-        onMenuClose?.();
-      }
-      return newState;
-    });
+    setIsGameMenuOpen(current => !current);
   };
 
   const handleActionMenuShow = (position: { x: number; y: number }) => {

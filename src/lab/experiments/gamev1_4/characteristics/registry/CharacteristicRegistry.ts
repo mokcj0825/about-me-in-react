@@ -1,13 +1,15 @@
 import { CharacteristicProvider } from '../types';
 import { UnitData } from '../../types/UnitData';
 import { DayWalkerCharacteristic } from '../DayWalkerCharacteristic';
+import { NightPhobicCharacteristic } from '../NightPhobicCharacteristic';
 
 class CharacteristicRegistry {
   private providers: Map<string, CharacteristicProvider> = new Map();
 
   constructor() {
-    // Register DayWalkerCharacteristic
+    // Register characteristics
     this.register(new DayWalkerCharacteristic());
+    this.register(new NightPhobicCharacteristic());
   }
 
   register(provider: CharacteristicProvider) {
@@ -21,7 +23,6 @@ class CharacteristicRegistry {
   onDayStart(unit: UnitData) {
     console.log('Checking characteristics for unit:', unit);
     unit.characteristics?.forEach(characteristicId => {
-      console.log('Applying characteristic:', characteristicId);
       const effect = this.getEffect(characteristicId);
       if (effect?.onDayStart) {
         effect.onDayStart(unit);

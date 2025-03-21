@@ -15,6 +15,7 @@ export interface CharacteristicEffect {
   modifyMovement?: (unit: UnitData, currentMovement: number) => number;
   modifyDefense?: (unit: UnitData, currentDefense: number) => number;
   modifyAttack?: (unit: UnitData, currentAttack: number) => number;
+  modifyMaxHitpoint?: (unit: UnitData, currentMaxHitpoint: number) => number;
 }
 
 export interface CharacteristicProvider {

@@ -199,9 +199,6 @@ export const GameRenderer: React.FC = () => {
       if (multipleUnits) {
         setMultipleUnits(null);
       }
-    },
-    onMenuClose: () => {
-      handleEndTurn();
     }
   });
 
