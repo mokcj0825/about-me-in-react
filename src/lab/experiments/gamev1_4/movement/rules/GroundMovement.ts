@@ -60,23 +60,6 @@ export class GroundMovement implements MovementRule {
     }
 
     /**
-     * Calculates the movement cost for moving between hexes
-     * 
-     * @param from - Starting hex coordinate
-     * @param to - Destination hex coordinate
-     * @returns number - Movement cost (currently simplified to 1)
-     * 
-     * TODO: Implement terrain-based movement costs:
-     * - Plains: 1 movement point
-     * - Forest: 2 movement points
-     * - Mountains: 3 movement points
-     * - Roads: 0.5 movement points
-     */
-    calculateMovementCost(from: HexCoordinate, to: HexCoordinate): number {
-        return 1; // Basic implementation for now
-    }
-
-    /**
      * Gets the terrain type at a specific coordinate
      * 
      * @param coord - The coordinate to check

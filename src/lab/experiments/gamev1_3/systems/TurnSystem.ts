@@ -62,12 +62,10 @@ export function handleFactionTurn(units: UnitData[], faction: UnitFaction): Unit
   }));
 }
 
-// TODO: Implement AI movement for ally and enemy units
 export function handleAITurn(units: UnitData[], faction: UnitFaction): UnitData[] {
   // First, reset movement for units of the current faction
   const resetUnits = handleFactionTurn(units, faction);
-  
-  // TODO: Add AI logic for unit movement
+
   // - Path finding
   // - Target selection
   // - Combat decisions

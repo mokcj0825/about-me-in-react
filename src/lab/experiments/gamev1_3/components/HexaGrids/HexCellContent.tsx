@@ -50,7 +50,6 @@ export const HexCellContent: React.FC<HexCellContentProps> = ({
   >
     {unit && (
       <>
-        {/* TODO: Replace with sprite implementation */}
         {/* Example structure for sprite-based units: */}
         {/*
         <div className="unit-sprite-container">
