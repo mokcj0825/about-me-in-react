@@ -33,6 +33,7 @@ import { GameActionState } from './types/GameState';
 import {generateGrid} from "./rendererUtils/GenerateGrid";
 import {GridLayout} from "./constants/GridLayout";
 import {ScrollConfig} from "./constants/ScrollConfig";
+import { GridRenderer } from './components/Renderer/GridRenderer';
 
 
 /**
@@ -101,11 +102,35 @@ export const GameRenderer: React.FC = () => {
   // Add state for hovered coordinates near other state declarations
   const [hoveredCoord, setHoveredCoord] = useState<HexCoordinate | null>(null);
 
-  // Initialize movement costs once when component mounts
+  // Combine initialization effects
   useEffect(() => {
+    // Initialize game systems
     initMovementCosts();
     initBuffs();
-  }, []);
+
+    // Set initial scroll position
+    if (mapRef.current) {
+      mapRef.current.scrollLeft = ScrollConfig.PADDING;
+      mapRef.current.scrollTop = ScrollConfig.PADDING;
+    }
+
+    // Apply initial day/night effects
+    if (stageData.initialState.startCycle === 'day') {
+      setUnits(units => handlePhaseEvent(units, 'onDayStart'));
+    } else {
+      setUnits(units => handlePhaseEvent(units, 'onNightStart'));
+    }
+
+    // Add keyboard handler for turn advancement
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleEndTurn();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []); // All initialization effects run once on mount
 
   /**
    * Finds a unit at a specific coordinate
@@ -559,27 +584,6 @@ export const GameRenderer: React.FC = () => {
     setIsGameMenuOpen(false);
   };
 
-  // Add keyboard handler for turn advancement
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'Enter') {
-        handleEndTurn();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
-  // Apply initial day/night effects
-  useEffect(() => {
-    if (stageData.initialState.startCycle === 'day') {
-      setUnits(units => handlePhaseEvent(units, 'onDayStart'));
-    } else {
-      setUnits(units => handlePhaseEvent(units, 'onNightStart'));
-    }
-  }, []); // Run once on component mount
-
   // Remove or modify the existing announcement effect
   useEffect(() => {
     const message = getAnnouncementMessage(turnState);
@@ -589,27 +593,20 @@ export const GameRenderer: React.FC = () => {
     }
   }, [turnState]);
 
-  // TODO: Extract cell rendering logic to a separate component (GridRenderer)
+  // Replace the renderHex function with this simpler version
   const renderHex = (coord: HexCoordinate) => {
-    const isInSelectionArea = selectionArea.some(
-      area => area.x === coord.x && area.y === coord.y
-    );
-
     return (
-      <HexCell 
-        key={`${coord.x},${coord.y}`} 
-        coordinate={coord}
+      <GridRenderer
+        coord={coord}
         units={findUnitsAtPosition(coord)}
         terrain={mapData.terrain[coord.y][coord.x] as TerrainType}
-        isMoveable={!selectedWeapon && isMoveableCell(coord)}  // Only show moveable when not selecting weapon
+        isMoveable={!selectedWeapon && isMoveableCell(coord)}
+        selectedUnitPosition={selectedUnitPosition}
+        selectedUnit={selectedUnit}
+        findUnitAtPosition={findUnitAtPosition}
+        selectionArea={selectionArea}
         onHover={(coord, isHovering, isUnit) => handleCellHover(coord, isHovering, isUnit)}
         onClick={handleCellClick}
-        unitPosition={selectedUnitPosition}
-        findUnitAtPosition={findUnitAtPosition}
-        isSelected={selectedUnit !== null && 
-          coord.x === selectedUnitPosition?.x && 
-          coord.y === selectedUnitPosition?.y}
-        highlight={isInSelectionArea ? 'selection' : undefined}
       />
     );
   };
