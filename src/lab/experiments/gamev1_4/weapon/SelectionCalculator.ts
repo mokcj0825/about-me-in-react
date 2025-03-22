@@ -8,23 +8,23 @@ export class SelectionCalculator {
 			coord.y >= 0 && coord.y < mapData.height;
 	}
 
-	getAreaSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-		console.log('Calculating area selection from', origin, 'range:', minRange, '-', maxRange);
-		const result: HexCoordinate[] = [];
+	private getGridsWithinRange(origin: HexCoordinate, range: number): HexCoordinate[] {
+		// Return empty array for negative range
+		if (range < 0) return [];
 
-		// Start with origin and expand outward
+		const result: HexCoordinate[] = [];
 		let currentLayer = [origin];
 		let currentDistance = 0;
 
-		while (currentDistance <= maxRange) {
+		while (currentDistance <= range) {
 			const nextLayer: HexCoordinate[] = [];
 
 			currentLayer.forEach(hex => {
-				if (currentDistance >= minRange && this.isValidCoordinate(hex)) {
+				if (this.isValidCoordinate(hex)) {
 					result.push(hex);
 				}
 
-				if (currentDistance < maxRange) {
+				if (currentDistance < range) {
 					ALL_DIRECTIONS.forEach(direction => {
 						const neighbor = getNextCoordinate(hex, direction);
 						if (!result.some(r => r.x === neighbor.x && r.y === neighbor.y)) {
@@ -41,8 +41,39 @@ export class SelectionCalculator {
 		return result;
 	}
 
+	getRoundSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
+		console.log('Calculating round selection from', origin, 'range:', minRange, '-', maxRange);
+		
+		// Return empty array if either range is negative or maxRange is less than minRange
+		if (minRange < 0 || maxRange < 0 || maxRange < minRange) {
+			return [];
+		}
+		
+		// Get all grids within maxRange
+		const maxRangeGrids = this.getGridsWithinRange(origin, maxRange);
+		
+		// If minRange is 0 or 1, return all grids within maxRange
+		if (minRange <= 1) {
+			return maxRangeGrids;
+		}
+
+		// Get all grids within (minRange - 1)
+		const innerGrids = this.getGridsWithinRange(origin, minRange - 1);
+
+		// Return grids that are in maxRangeGrids but not in innerGrids
+		return maxRangeGrids.filter(grid => 
+			!innerGrids.some(inner => inner.x === grid.x && inner.y === grid.y)
+		);
+	}
+
 	getLineSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
 		console.log('Calculating line selection from', origin, 'range:', minRange, '-', maxRange);
+		
+		// Return empty array if either range is negative or maxRange is less than minRange
+		if (minRange < 0 || maxRange < 0 || maxRange < minRange) {
+			return [];
+		}
+
 		const result: HexCoordinate[] = [];
 
 		ALL_DIRECTIONS.forEach(direction => {
@@ -64,10 +95,16 @@ export class SelectionCalculator {
 
 	getFanSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
 		console.log('Calculating fan selection from', origin, 'range:', minRange, '-', maxRange);
+		
+		// Return empty array if either range is negative or maxRange is less than minRange
+		if (minRange < 0 || maxRange < 0 || maxRange < minRange) {
+			return [];
+		}
+
 		const result: HexCoordinate[] = [];
 
 		// Get all hexes within range
-		const allHexes = this.getAreaSelection(origin, minRange, maxRange);
+		const allHexes = this.getRoundSelection(origin, minRange, maxRange);
 
 		ALL_DIRECTIONS.forEach(direction => {
 			const fanCenter = getNextCoordinate(origin, direction);
@@ -91,10 +128,5 @@ export class SelectionCalculator {
 		});
 
 		return result;
-	}
-
-	getRoundSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-		console.log('Calculating round selection from', origin, 'range:', minRange, '-', maxRange);
-		return this.getAreaSelection(origin, minRange, maxRange);
 	}
 }

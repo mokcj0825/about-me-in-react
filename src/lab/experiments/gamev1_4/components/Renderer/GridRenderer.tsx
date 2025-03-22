@@ -21,6 +21,8 @@ interface GridRendererProps {
   findUnitAtPosition: (coord: HexCoordinate) => UnitData | undefined;
   /** Selection area coordinates */
   selectionArea: HexCoordinate[];
+  /** Effect preview area coordinates */
+  effectPreviewArea: HexCoordinate[];
   /** Hover handler */
   onHover: (coord: HexCoordinate, isHovering: boolean, isUnit: boolean) => void;
   /** Click handler */
@@ -41,10 +43,15 @@ export const GridRenderer: React.FC<GridRendererProps> = ({
   selectedUnit,
   findUnitAtPosition,
   selectionArea,
+  effectPreviewArea,
   onHover,
   onClick
 }) => {
   const isInSelectionArea = selectionArea.some(
+    area => area.x === coord.x && area.y === coord.y
+  );
+
+  const isInEffectArea = effectPreviewArea.some(
     area => area.x === coord.x && area.y === coord.y
   );
 
@@ -62,7 +69,7 @@ export const GridRenderer: React.FC<GridRendererProps> = ({
       isSelected={selectedUnit !== null && 
         coord.x === selectedUnitPosition?.x && 
         coord.y === selectedUnitPosition?.y}
-      highlight={isInSelectionArea ? 'selection' : undefined}
+      highlight={isInEffectArea ? 'effect' : isInSelectionArea ? 'selection' : undefined}
     />
   );
 }; 
