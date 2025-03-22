@@ -119,8 +119,10 @@ export const GameRenderer: React.FC = () => {
     selectedWeapon,
     selectionArea,
     showWeaponPanel,
+    effectPreviewArea,
     handleWeaponSelect,
     handleCombatAction,
+    handleTargetHover,
     resetCombatState,
     setShowWeaponPanel
   } = useCombatState({
@@ -257,6 +259,12 @@ export const GameRenderer: React.FC = () => {
       isHovering ? coord : null
     );
 
+    // Handle effect preview during combat
+    if (actionState === 'targetSelection') {
+      handleTargetHover(isHovering ? coord : null);
+      return;
+    }
+
     // If a unit is already selected, don't show hover movement range
     if (selectedUnit) return;
 
@@ -392,6 +400,7 @@ export const GameRenderer: React.FC = () => {
         selectedUnit={selectedUnit}
         findUnitAtPosition={findUnitAtPosition}
         selectionArea={selectionArea}
+        effectPreviewArea={effectPreviewArea}
         onHover={(coord, isHovering, isUnit) => handleCellHover(coord, isHovering, isUnit)}
         onClick={handleCellClick}
       />
