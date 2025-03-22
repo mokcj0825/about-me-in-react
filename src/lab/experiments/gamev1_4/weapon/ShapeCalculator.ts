@@ -2,7 +2,7 @@ import { areCoordinatesEqual, getNeighbors, getNextCoordinate, HexCoordinate } f
 import mapData from '../data/map-data.json';
 import { DirectionData } from '../types/DirectionData';
 import {SelectionCalculator} from "./SelectionCalculator";
-export type ShapeType = 'area' | 'line' | 'fan' | 'round';
+export type ShapeType = 'line' | 'fan' | 'round';
 
 export interface ShapeConfig {
   type: ShapeType;
@@ -24,8 +24,6 @@ export class ShapeCalculator {
   // Get selectable area based on weapon configuration
   getSelectableArea(origin: HexCoordinate, config: ShapeConfig): HexCoordinate[] {
     switch (config.type) {
-      case 'area':
-        return this.selectionCalculator.getAreaSelection(origin, config.minRange, config.maxRange);
       case 'line':
         return this.selectionCalculator.getLineSelection(origin, config.minRange, config.maxRange);
       case 'fan':
@@ -40,8 +38,6 @@ export class ShapeCalculator {
   // Get effect area based on selected target and weapon configuration
   getEffectArea(target: HexCoordinate, direction: DirectionData, config: ShapeConfig): HexCoordinate[] {
     switch (config.type) {
-      case 'area':
-        return this.getAreaEffect(target, config.minEffectRange, config.maxEffectRange);
       case 'line':
         return this.getLineEffect(target, direction, config.minEffectRange, config.maxEffectRange);
       case 'fan':
