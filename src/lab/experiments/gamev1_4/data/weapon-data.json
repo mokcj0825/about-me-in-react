@@ -95,7 +95,7 @@
     "applyBuffToTarget": []
   },
   "00006": {
-    "id": "00005",
+    "id": "00006",
     "name": "火焰弹",
     "description": "向前方1-2格进行范围魔法攻击",
     "type": "magic",
@@ -114,7 +114,7 @@
     "applyBuffToTarget": []
   },
   "00007": {
-    "id": "00004",
+    "id": "00007",
     "name": "狙击",
     "description": "向前方3-5格进行直线攻击。",
     "type": "physical",

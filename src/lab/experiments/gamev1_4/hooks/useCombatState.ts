@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { HexCoordinate } from '../types/HexCoordinate';
 import { UnitData } from '../types/UnitData';
 import { ShapeCalculator, ShapeConfig, ShapeType } from '../weapon/ShapeCalculator';
+import { EffectCalculator } from '../weapon/EffectCalculator';
 import weaponData from '../data/weapon-data.json';
 
 interface UseCombatStateProps {
@@ -20,7 +21,7 @@ interface UseCombatStateReturn {
   effectPreviewArea: HexCoordinate[];
   
   // Actions
-  handleWeaponSelect: (weaponId: string, position: HexCoordinate) => void;
+  handleWeaponSelect: (weaponId: string, position: HexCoordinate, unit: UnitData) => void;
   handleCombatAction: (coord: HexCoordinate, targetUnit: UnitData | undefined) => boolean;
   handleTargetHover: (coord: HexCoordinate | null) => void;
   resetCombatState: () => void;
@@ -41,14 +42,16 @@ export const useCombatState = ({
   const [selectedWeapon, setSelectedWeapon] = useState<string | null>(null);
   const [selectionArea, setSelectionArea] = useState<HexCoordinate[]>([]);
   const [showWeaponPanel, setShowWeaponPanel] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
   
   // New state for effect preview
   const [effectPreviewArea, setEffectPreviewArea] = useState<HexCoordinate[]>([]);
   
   const shapeCalculator = new ShapeCalculator();
 
-  const handleWeaponSelect = (weaponId: string, position: HexCoordinate) => {
+  const handleWeaponSelect = (weaponId: string, position: HexCoordinate, unit: UnitData) => {
     setSelectedWeapon(weaponId);
+    setSelectedUnit(unit);
     setShowWeaponPanel(false); // Hide weapon panel after selection
     
     const weapon = weaponData[weaponId as keyof typeof weaponData];
@@ -77,7 +80,7 @@ export const useCombatState = ({
   };
 
   const handleCombatAction = (coord: HexCoordinate, targetUnit: UnitData | undefined): boolean => {
-    if (!selectedWeapon) return false;
+    if (!selectedWeapon || !selectedUnit) return false;
 
     // Check if the clicked coordinate is in the selection area
     const isValidTarget = selectionArea.some(pos => 
@@ -89,7 +92,7 @@ export const useCombatState = ({
       if (!weapon) return false;
 
       onCombatExecute?.(
-        targetUnit!,
+        selectedUnit,
         selectedWeapon,
         targetUnit || coord
       );
@@ -102,13 +105,17 @@ export const useCombatState = ({
   };
 
   const handleTargetHover = (coord: HexCoordinate | null) => {
-    if (!selectedWeapon || !coord) {
+    console.log('handleTargetHover called with:', { coord, selectedWeapon, selectedUnit });
+    
+    if (!selectedWeapon || !selectedUnit || !coord) {
+      console.log('Missing required data:', { selectedWeapon, selectedUnit, coord });
       setEffectPreviewArea([]);
       return;
     }
 
     const weapon = weaponData[selectedWeapon as keyof typeof weaponData];
     if (!weapon) {
+      console.log('Weapon not found:', selectedWeapon);
       setEffectPreviewArea([]);
       return;
     }
@@ -117,23 +124,31 @@ export const useCombatState = ({
     const isValidTarget = selectionArea.some(pos => 
       pos.x === coord.x && pos.y === coord.y
     );
+    console.log('Target validation:', { isValidTarget, coord, selectionArea });
 
     if (isValidTarget) {
-      // Calculate effect area using the same shape calculator
+      // Calculate effect area using EffectCalculator
       const effectConfig: ShapeConfig = {
-        type: weapon.effectType as ShapeType,
+        type: weapon.effectType.toLowerCase() as ShapeType,
         minRange: weapon.minEffectRange,
         maxRange: weapon.maxEffectRange,
-        minEffectRange: 0,
-        maxEffectRange: 0
+        minEffectRange: weapon.minEffectRange,
+        maxEffectRange: weapon.maxEffectRange
       };
+      console.log('Calculating effect area with:', { 
+        unitPosition: selectedUnit.position, 
+        targetPosition: coord, 
+        config: effectConfig 
+      });
+      
       const startTime = new Date();
-      const newEffectArea = shapeCalculator.getSelectableArea(
-        coord,
-        effectConfig
-      );
+      const newEffectArea = EffectCalculator.getEffectArea(selectedUnit.position, coord, effectConfig);
       const cost = new Date().getTime() - startTime.getTime();
-      console.log('Computation time', cost);
+      console.log('Effect area calculation result:', { 
+        newEffectArea, 
+        cost,
+        effectConfig
+      });
 
       setEffectPreviewArea(newEffectArea);
     } else {
@@ -143,6 +158,7 @@ export const useCombatState = ({
 
   const resetCombatState = () => {
     setSelectedWeapon(null);
+    setSelectedUnit(null);
     setSelectionArea([]);
     setEffectPreviewArea([]);
     setShowWeaponPanel(false);
