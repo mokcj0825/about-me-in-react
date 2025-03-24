@@ -16,11 +16,6 @@ export class ShapeCalculator {
 
   private selectionCalculator = new SelectionCalculator();
 
-  private isValidCoordinate(coord: HexCoordinate): boolean {
-    return coord.x >= 0 && coord.x < mapData.width && 
-           coord.y >= 0 && coord.y < mapData.height;
-  }
-
   // Get selectable area based on weapon configuration
   getSelectableArea(origin: HexCoordinate, config: ShapeConfig): HexCoordinate[] {
     switch (config.type) {
@@ -49,13 +44,6 @@ export class ShapeCalculator {
     }
   }
 
-
-  // Effect shape implementations
-  private getAreaEffect(target: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-    // Return area effect hexes
-    console.log('Calculating area effect at', target, 'range:', minRange, '-', maxRange);
-    return [];  // TODO: Implement
-  }
 
   private getLineEffect(target: HexCoordinate, direction: DirectionData, minRange: number, maxRange: number): HexCoordinate[] {
     // Return line effect hexes

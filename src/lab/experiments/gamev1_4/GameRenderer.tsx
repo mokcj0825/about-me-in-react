@@ -108,8 +108,8 @@ export const GameRenderer: React.FC = () => {
     handleMouseLeave,
   } = useMapInteraction({
     onMousePositionChange: (position) => {
-      // Update hover states when mouse position changes
-      if (!position) {
+      // Only clear hover state when not dragging
+      if (!position && !isDragging) {
         handleTerrainHover(null, null);
       }
     }
@@ -539,7 +539,7 @@ export const GameRenderer: React.FC = () => {
       {showWeaponPanel && selectedUnit && (
         <WeaponSelectionPanel
           unit={selectedUnit}
-          onWeaponSelect={(weaponId) => handleWeaponSelect(weaponId, lastMovePosition || selectedUnit.position)}
+          onWeaponSelect={(weaponId) => handleWeaponSelect(weaponId, lastMovePosition || selectedUnit.position, selectedUnit)}
           onClose={() => {
             setActionState('idle');
             resetCombatState();
