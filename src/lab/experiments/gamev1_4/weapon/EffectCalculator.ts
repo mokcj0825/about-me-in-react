@@ -1,7 +1,7 @@
 import { HexCoordinate, createHexCoordinate, getNextCoordinate } from "../types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
-import { DirectionData, ALL_DIRECTIONS } from "../types/DirectionData";
-import { ShapeCalculator, ShapeConfig, ShapeType } from "./ShapeCalculator";
+import { DirectionData } from "../types/DirectionData";
+import { ShapeCalculator, ShapeConfig } from "./ShapeCalculator";
 import mapData from '../data/map-data.json';
 
 export class EffectCalculator extends ShapeCalculator {
@@ -86,44 +86,61 @@ export class EffectCalculator extends ShapeCalculator {
   ): HexCoordinate[] {
     const result: HexCoordinate[] = [];
     
-    // Calculate direction from unit to target
+    // Calculate relative position
     const dx = targetPosition.x - unitPosition.x;
     const dy = targetPosition.y - unitPosition.y;
+    const isUnitYEven = unitPosition.y % 2 === 0;
     
-    // Find the closest hex direction
-    let closestDirection = ALL_DIRECTIONS[0];
-    let minAngleDiff = Infinity;
+    console.log('unit', unitPosition, 'target', targetPosition);
+    console.log('dx', dx, 'dy', dy, 'isUnitYEven', isUnitYEven);
     
-    ALL_DIRECTIONS.forEach(direction => {
-      // Get next coordinate to determine direction vector
-      const nextCoord = getNextCoordinate(unitPosition, direction);
-      const dirX = nextCoord.x - unitPosition.x;
-      const dirY = nextCoord.y - unitPosition.y;
-      
-      // Calculate angle difference using dot product
-      const dot = dx * dirX + dy * dirY;
-      const lenSq = Math.sqrt((dx * dx + dy * dy) * (dirX * dirX + dirY * dirY));
-      const angleDiff = Math.acos(dot / lenSq);
-      
-      if (angleDiff < minAngleDiff) {
-        minAngleDiff = angleDiff;
-        closestDirection = direction;
+    // Determine direction based on how target relates to unit using getNextCoordinate rules
+    let direction: DirectionData;
+    
+    if (dy === 0) {
+      // Horizontal movement: x+1 for right, x-1 for left
+      direction = dx > 0 ? 'right' : 'left';
+      console.log('horizontal movement, dx > 0:', dx > 0);
+    } else if (dy > 0) {
+      // Moving up: For odd y, top-left is (x-1,y+1) and top-right is (x+0,y+1)
+      if (isUnitYEven) {
+        direction = dx > 0 ? 'top-right' : 'top-left';
+        console.log('moving up from even row, dx > 0:', dx > 0);
+      } else {
+        direction = dx >= 0 ? 'top-right' : 'top-left';
+        console.log('moving up from odd row, dx >= 0:', dx >= 0);
       }
-    });
-
-    // Generate line in the closest direction
-    let current = targetPosition;
-    let distance = 0;
-
-    while (distance <= maxRange) {
-      if (distance >= minRange && this.isValidCoordinate(current)) {
-        result.push(current);
+    } else {
+      // Moving down: For odd y, bottom-left is (x-1,y-1) and bottom-right is (x+0,y-1)
+      if (isUnitYEven) {
+        direction = dx > 0 ? 'bottom-right' : 'bottom-left';
+        console.log('moving down from even row, dx > 0:', dx > 0);
+      } else {
+        direction = dx >= 0 ? 'bottom-right' : 'bottom-left';
+        console.log('moving down from odd row, dx >= 0:', dx >= 0);
       }
-      current = getNextCoordinate(current, closestDirection);
-      distance++;
     }
 
-    return result;
+    console.log('final direction:', direction);
+
+    // Start from target and extend in that direction
+    let current = targetPosition;
+    
+    // Add target position
+    if (this.isValidCoordinate(current)) {
+      result.push(current);
+    }
+
+    // Continue in the same direction
+    for (let i = 1; i < maxRange; i++) {
+      current = getNextCoordinate(current, direction);
+      if (this.isValidCoordinate(current)) {
+        result.push(current);
+      }
+    }
+
+    // Filter results based on minRange
+    return result.filter((_, index) => index >= minRange - 1);
   }
 
   /**
@@ -176,3 +193,4 @@ export class EffectCalculator extends ShapeCalculator {
     );
   }
 }
+
