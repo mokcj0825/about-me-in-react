@@ -43,6 +43,7 @@ export const useCombatState = ({
   const [selectionArea, setSelectionArea] = useState<HexCoordinate[]>([]);
   const [showWeaponPanel, setShowWeaponPanel] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<UnitData | null>(null);
+  const [lastMovePosition, setLastMovePosition] = useState<HexCoordinate | null>(null);
   
   // New state for effect preview
   const [effectPreviewArea, setEffectPreviewArea] = useState<HexCoordinate[]>([]);
@@ -52,6 +53,7 @@ export const useCombatState = ({
   const handleWeaponSelect = (weaponId: string, position: HexCoordinate, unit: UnitData) => {
     setSelectedWeapon(weaponId);
     setSelectedUnit(unit);
+    setLastMovePosition(position);
     setShowWeaponPanel(false); // Hide weapon panel after selection
     
     const weapon = weaponData[weaponId as keyof typeof weaponData];
@@ -136,13 +138,17 @@ export const useCombatState = ({
         maxEffectRange: weapon.maxEffectRange
       };
       console.log('Calculating effect area with:', { 
-        unitPosition: selectedUnit.position, 
+        unitPosition: lastMovePosition || selectedUnit.position, 
         targetPosition: coord, 
         config: effectConfig 
       });
       
       const startTime = new Date();
-      const newEffectArea = EffectCalculator.getEffectArea(selectedUnit.position, coord, effectConfig);
+      const newEffectArea = EffectCalculator.getEffectArea(
+        lastMovePosition || selectedUnit.position,
+        coord, 
+        effectConfig
+      );
       const cost = new Date().getTime() - startTime.getTime();
       console.log('Effect area calculation result:', { 
         newEffectArea, 
@@ -162,6 +168,7 @@ export const useCombatState = ({
     setSelectionArea([]);
     setEffectPreviewArea([]);
     setShowWeaponPanel(false);
+    setLastMovePosition(null);
     onCombatCancel?.();
   };
 
