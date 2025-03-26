@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { HexCoordinate } from '../types/HexCoordinate';
 import { UnitData } from '../types/UnitData';
 import { ShapeCalculator, ShapeConfig, ShapeType } from '../weapon/ShapeCalculator';
@@ -107,17 +107,14 @@ export const useCombatState = ({
   };
 
   const handleTargetHover = (coord: HexCoordinate | null) => {
-    console.log('handleTargetHover called with:', { coord, selectedWeapon, selectedUnit });
-    
+    const startTime = new Date();
     if (!selectedWeapon || !selectedUnit || !coord) {
-      console.log('Missing required data:', { selectedWeapon, selectedUnit, coord });
       setEffectPreviewArea([]);
       return;
     }
 
     const weapon = weaponData[selectedWeapon as keyof typeof weaponData];
     if (!weapon) {
-      console.log('Weapon not found:', selectedWeapon);
       setEffectPreviewArea([]);
       return;
     }
@@ -126,7 +123,6 @@ export const useCombatState = ({
     const isValidTarget = selectionArea.some(pos => 
       pos.x === coord.x && pos.y === coord.y
     );
-    console.log('Target validation:', { isValidTarget, coord, selectionArea });
 
     if (isValidTarget) {
       // Calculate effect area using EffectCalculator
@@ -137,26 +133,16 @@ export const useCombatState = ({
         minEffectRange: weapon.minEffectRange,
         maxEffectRange: weapon.maxEffectRange
       };
-      console.log('Calculating effect area with:', { 
-        unitPosition: lastMovePosition || selectedUnit.position, 
-        targetPosition: coord, 
-        config: effectConfig 
-      });
-      
-      const startTime = new Date();
+
       const newEffectArea = EffectCalculator.getEffectArea(
         lastMovePosition || selectedUnit.position,
         coord, 
         effectConfig
       );
-      const cost = new Date().getTime() - startTime.getTime();
-      console.log('Effect area calculation result:', { 
-        newEffectArea, 
-        cost,
-        effectConfig
-      });
 
       setEffectPreviewArea(newEffectArea);
+      const cost = new Date().getTime() - startTime.getTime();
+      console.log('Effect area calculation time:', cost);
     } else {
       setEffectPreviewArea([]);
     }

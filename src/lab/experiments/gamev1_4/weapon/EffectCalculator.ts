@@ -1,7 +1,7 @@
-import { HexCoordinate, createHexCoordinate, getNextCoordinate } from "../types/HexCoordinate";
+import { HexCoordinate, createHexCoordinate, getNextCoordinate, getDistance } from "../types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
-import { DirectionData } from "../types/DirectionData";
-import { ShapeCalculator, ShapeConfig } from "./ShapeCalculator";
+import { DirectionData, ALL_DIRECTIONS } from "../types/DirectionData";
+import { ShapeCalculator, ShapeConfig, ShapeType } from "./ShapeCalculator";
 import mapData from '../data/map-data.json';
 
 export class EffectCalculator extends ShapeCalculator {
@@ -24,7 +24,6 @@ export class EffectCalculator extends ShapeCalculator {
     targetPosition: HexCoordinate,
     config: ShapeConfig
   ): HexCoordinate[] {
-    console.log('effectConfig', config);
 
     switch (config.type) {
       case 'round':
@@ -76,6 +75,31 @@ export class EffectCalculator extends ShapeCalculator {
   }
 
   /**
+   * Helper to determine direction based on relative position
+   */
+  private static getDirectionFromDelta(
+    dx: number,
+    dy: number,
+    isUnitYEven: boolean
+  ): DirectionData {
+    if (dy === 0) {
+      return dx > 0 ? 'right' : 'left';
+    } else if (dy > 0) {
+      if (isUnitYEven) {
+        return dx > 0 ? 'top-right' : 'top-left';
+      } else {
+        return dx >= 0 ? 'top-right' : 'top-left';
+      }
+    } else {
+      if (isUnitYEven) {
+        return dx > 0 ? 'bottom-right' : 'bottom-left';
+      } else {
+        return dx >= 0 ? 'bottom-right' : 'bottom-left';
+      }
+    }
+  }
+
+  /**
    * Get line effect area
    */
   private static getLineEffect(
@@ -90,40 +114,9 @@ export class EffectCalculator extends ShapeCalculator {
     const dx = targetPosition.x - unitPosition.x;
     const dy = targetPosition.y - unitPosition.y;
     const isUnitYEven = unitPosition.y % 2 === 0;
-    
-    console.log('unit', unitPosition, 'target', targetPosition);
-    console.log('dx', dx, 'dy', dy, 'isUnitYEven', isUnitYEven);
-    
-    // Determine direction based on how target relates to unit using getNextCoordinate rules
-    let direction: DirectionData;
-    
-    if (dy === 0) {
-      // Horizontal movement: x+1 for right, x-1 for left
-      direction = dx > 0 ? 'right' : 'left';
-      console.log('horizontal movement, dx > 0:', dx > 0);
-    } else if (dy > 0) {
-      // Moving up: For odd y, top-left is (x-1,y+1) and top-right is (x+0,y+1)
-      if (isUnitYEven) {
-        direction = dx > 0 ? 'top-right' : 'top-left';
-        console.log('moving up from even row, dx > 0:', dx > 0);
-      } else {
-        direction = dx >= 0 ? 'top-right' : 'top-left';
-        console.log('moving up from odd row, dx >= 0:', dx >= 0);
-      }
-    } else {
-      // Moving down: For odd y, bottom-left is (x-1,y-1) and bottom-right is (x+0,y-1)
-      if (isUnitYEven) {
-        direction = dx > 0 ? 'bottom-right' : 'bottom-left';
-        console.log('moving down from even row, dx > 0:', dx > 0);
-      } else {
-        direction = dx >= 0 ? 'bottom-right' : 'bottom-left';
-        console.log('moving down from odd row, dx >= 0:', dx >= 0);
-      }
-    }
 
-    console.log('final direction:', direction);
+    const direction = this.getDirectionFromDelta(dx, dy, isUnitYEven);
 
-    // Start from target and extend in that direction
     let current = targetPosition;
     
     // Add target position
@@ -152,27 +145,99 @@ export class EffectCalculator extends ShapeCalculator {
     minRange: number,
     maxRange: number
   ): HexCoordinate[] {
-    const result: HexCoordinate[] = [];
-    const allHexes = this.getGridsWithinRange(targetPosition, minRange, maxRange);
-
-    // Calculate direction from unit to target
+    const result: Set<string> = new Set(); // Use Set to handle duplicates
+    
+    // Calculate relative position
     const dx = targetPosition.x - unitPosition.x;
     const dy = targetPosition.y - unitPosition.y;
-
-    allHexes.forEach(hex => {
-      const relativeX = hex.x - targetPosition.x;
-      const relativeY = hex.y - targetPosition.y;
-
-      // Use dot product to check if hex is within 120-degree arc relative to the unit-target direction
-      const dot = dx * relativeX + dy * relativeY;
-      const lenSq = Math.sqrt((dx * dx + dy * dy) * (relativeX * relativeX + relativeY * relativeY));
-
-      if (dot / lenSq >= -0.5) { // cos(120) = -0.5
-        result.push(hex);
-      }
+    const isUnitYEven = unitPosition.y % 2 === 0;
+    
+    // Define directions in clockwise order
+    const DIRECTIONS: DirectionData[] = [
+      'right',
+      'bottom-right',
+      'bottom-left',
+      'left',
+      'top-left',
+      'top-right'
+    ];
+    
+    // Determine main direction based on how target relates to unit
+    const mainDirection = this.getDirectionFromDelta(dx, dy, isUnitYEven);
+    
+    // Find the index of main direction
+    const mainIndex = DIRECTIONS.indexOf(mainDirection);
+    
+    // Get side directions using circular array
+    const leftSide = DIRECTIONS[(mainIndex + 5) % 6]; // +5 is same as -1
+    const rightSide = DIRECTIONS[(mainIndex + 1) % 6];
+    
+    console.log('Directions:', {
+      main: mainDirection,
+      left: leftSide,
+      right: rightSide
     });
 
-    return result;
+    // Helper function to add a coordinate to result if valid
+    const addCoord = (coord: HexCoordinate) => {
+      if (this.isValidCoordinate(coord)) {
+        result.add(`${coord.x},${coord.y}`);
+      }
+    };
+
+    // Helper function to get next hex in a direction
+    const getNextHex = (pos: HexCoordinate, dir: DirectionData): HexCoordinate => {
+      return getNextCoordinate(pos, dir);
+    };
+
+    // Range 1: Add target position
+    addCoord(targetPosition);
+    let currentHexes = [targetPosition];
+
+    // For each range step
+    for (let range = minRange; range < maxRange; range++) {
+      const nextHexes: HexCoordinate[] = [];
+
+      // For each current hex
+      for (const hex of currentHexes) {
+        // For each direction
+        [mainDirection, leftSide, rightSide].forEach(dir => {
+          const nextHex = getNextHex(hex, dir);
+          if (this.isValidCoordinate(nextHex)) {
+            addCoord(nextHex);
+            nextHexes.push(nextHex);
+          }
+        });
+      }
+
+      currentHexes = nextHexes;
+    }
+    
+    // Convert coordinates back to HexCoordinate objects
+    const finalResult = Array.from(result).map(coord => {
+      const [x, y] = coord.split(',').map(Number);
+      return createHexCoordinate(x, y);
+    });
+
+    // Filter by minimum range if needed
+    if (minRange > 1) {
+      return finalResult.filter(coord => 
+        getDistance(targetPosition, coord) >= minRange - 1
+      );
+    }
+    
+    return finalResult;
+  }
+  
+  /**
+   * Helper to follow a direction for a number of steps
+   */
+  private static followDirection(start: HexCoordinate, direction: DirectionData, steps: number): HexCoordinate {
+    let current = start;
+    for (let i = 0; i < steps; i++) {
+      current = getNextCoordinate(current, direction);
+    }
+    return current;
   }
 
   /**
