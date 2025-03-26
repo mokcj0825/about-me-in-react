@@ -46,7 +46,8 @@ export class SelectionCalculator {
 			return [];
 		}
 
-		const maxRangeGrids = this.getGridsWithinRange(origin, maxRange);
+		const maxRangeGrids = this.getGridsWithinRange(origin, maxRange)
+			.filter(hex => !(hex.x === origin.x && hex.y === origin.y)); // Exclude origin position
 
 		if (minRange <= 1) {
 			return maxRangeGrids;
@@ -90,8 +91,9 @@ export class SelectionCalculator {
 
 		const result: HexCoordinate[] = [];
 
-		// Get all hexes within range
-		const allHexes = this.getRoundSelection(origin, minRange, maxRange);
+		// Get all hexes within range, excluding origin
+		const allHexes = this.getRoundSelection(origin, minRange, maxRange)
+			.filter(hex => !(hex.x === origin.x && hex.y === origin.y));
 
 		ALL_DIRECTIONS.forEach(direction => {
 			const fanCenter = getNextCoordinate(origin, direction);
