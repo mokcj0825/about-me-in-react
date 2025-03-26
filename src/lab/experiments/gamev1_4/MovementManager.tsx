@@ -44,20 +44,6 @@ export const MovementManager = () => {
     const movingUnit = findUnitAtPosition(startCoord);
     if (!movingUnit) return [];
 
-    // Calculate opposing units' Zone of Control
-    const opposingZOC = units
-      .filter(u => {
-        if (movingUnit.faction === 'enemy') {
-          return u.faction === 'player' || u.faction === 'ally';
-        } else if (movingUnit.faction === 'player' || movingUnit.faction === 'ally') {
-          return u.faction === 'enemy';
-        }
-        return false;
-      })
-      .flatMap(u => getZoneOfControl(u.position));
-
-    // ... rest of the movement calculation logic ...
-
     return Array.from(result).map(key => {
       const [x, y] = key.split(',').map(Number);
       return createHexCoordinate(x, y);

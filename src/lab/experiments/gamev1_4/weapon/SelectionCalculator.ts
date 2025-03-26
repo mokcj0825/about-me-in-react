@@ -42,34 +42,24 @@ export class SelectionCalculator {
 	}
 
 	getRoundSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-		console.log('Calculating round selection from', origin, 'range:', minRange, '-', maxRange);
-		
-		// Return empty array if either range is negative or maxRange is less than minRange
 		if (minRange < 0 || maxRange < 0 || maxRange < minRange) {
 			return [];
 		}
-		
-		// Get all grids within maxRange
+
 		const maxRangeGrids = this.getGridsWithinRange(origin, maxRange);
-		
-		// If minRange is 0 or 1, return all grids within maxRange
+
 		if (minRange <= 1) {
 			return maxRangeGrids;
 		}
 
-		// Get all grids within (minRange - 1)
 		const innerGrids = this.getGridsWithinRange(origin, minRange - 1);
 
-		// Return grids that are in maxRangeGrids but not in innerGrids
 		return maxRangeGrids.filter(grid => 
 			!innerGrids.some(inner => inner.x === grid.x && inner.y === grid.y)
 		);
 	}
 
 	getLineSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-		console.log('Calculating line selection from', origin, 'range:', minRange, '-', maxRange);
-		
-		// Return empty array if either range is negative or maxRange is less than minRange
 		if (minRange < 0 || maxRange < 0 || maxRange < minRange) {
 			return [];
 		}
@@ -94,9 +84,6 @@ export class SelectionCalculator {
 	}
 
 	getFanSelection(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-		console.log('Calculating fan selection from', origin, 'range:', minRange, '-', maxRange);
-		
-		// Return empty array if either range is negative or maxRange is less than minRange
 		if (minRange < 0 || maxRange < 0 || maxRange < minRange) {
 			return [];
 		}

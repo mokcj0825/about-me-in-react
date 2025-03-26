@@ -1,6 +1,4 @@
-import { areCoordinatesEqual, getNeighbors, getNextCoordinate, HexCoordinate } from '../types/HexCoordinate';
-import mapData from '../data/map-data.json';
-import { DirectionData } from '../types/DirectionData';
+import { HexCoordinate } from '../types/HexCoordinate';
 import {SelectionCalculator} from "./SelectionCalculator";
 export type ShapeType = 'line' | 'fan' | 'round';
 
@@ -16,7 +14,6 @@ export class ShapeCalculator {
 
   private selectionCalculator = new SelectionCalculator();
 
-  // Get selectable area based on weapon configuration
   getSelectableArea(origin: HexCoordinate, config: ShapeConfig): HexCoordinate[] {
     switch (config.type) {
       case 'line':
@@ -30,36 +27,4 @@ export class ShapeCalculator {
     }
   }
 
-  // Get effect area based on selected target and weapon configuration
-  getEffectArea(target: HexCoordinate, direction: DirectionData, config: ShapeConfig): HexCoordinate[] {
-    switch (config.type) {
-      case 'line':
-        return this.getLineEffect(target, direction, config.minEffectRange, config.maxEffectRange);
-      case 'fan':
-        return this.getFanEffect(target, direction, config.minEffectRange, config.maxEffectRange);
-      case 'round':
-        return this.getRoundEffect(target, config.minEffectRange, config.maxEffectRange);
-      default:
-        return [];
-    }
-  }
-
-
-  private getLineEffect(target: HexCoordinate, direction: DirectionData, minRange: number, maxRange: number): HexCoordinate[] {
-    // Return line effect hexes
-    console.log('Calculating line effect from', target, 'direction:', direction, 'range:', minRange, '-', maxRange);
-    return [];  // TODO: Implement
-  }
-
-  private getFanEffect(target: HexCoordinate, direction: DirectionData, minRange: number, maxRange: number): HexCoordinate[] {
-    // Return fan effect hexes
-    console.log('Calculating fan effect from', target, 'direction:', direction, 'range:', minRange, '-', maxRange);
-    return [];  // TODO: Implement
-  }
-
-  private getRoundEffect(target: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-    // Return circular effect hexes
-    console.log('Calculating round effect at', target, 'range:', minRange, '-', maxRange);
-    return [];  // TODO: Implement
-  }
 }

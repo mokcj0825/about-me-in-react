@@ -126,7 +126,7 @@
     "minSelectionRange": 3,
     "maxSelectionRange": 5,
     "minEffectRange": 1,
-    "maxEffectRange": 1,
+    "maxEffectRange": 2,
     "ammo": 5,
     "friendlyFire": false,
     "applyBuffToSelf": [],
