@@ -43,34 +43,64 @@ export class EffectCalculator extends ShapeCalculator {
   private static getGridsWithinRange(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
     if (minRange < 0 || maxRange < 0 || maxRange < minRange) return [];
 
-    const result: HexCoordinate[] = [];
-    for (let q = -maxRange; q <= maxRange; q++) {
-      for (let r = Math.max(-maxRange, -q - maxRange); r <= Math.min(maxRange, -q + maxRange); r++) {
-        const coord = createHexCoordinate(origin.x + q, origin.y + r);
-        if (this.isValidCoordinate(coord)) {
-          result.push(coord);
+    const result: Set<string> = new Set();
+    const visited: Set<string> = new Set();
+
+    // Helper to add a coordinate if valid
+    const addCoord = (coord: HexCoordinate, distance: number) => {
+      const key = `${coord.x},${coord.y}`;
+      if (!visited.has(key) && this.isValidCoordinate(coord)) {
+        visited.add(key);
+        if (distance >= minRange && distance <= maxRange) {
+          result.add(key);
         }
       }
+    };
+
+    // Start with origin
+    let currentRing: HexCoordinate[] = [origin];
+    let distance = 0;
+
+    // Process each ring
+    while (distance <= maxRange) {
+      const nextRing: HexCoordinate[] = [];
+
+      // Process current ring
+      for (const coord of currentRing) {
+        addCoord(coord, distance);
+
+        // If we haven't reached maxRange, add adjacent hexes to next ring
+        if (distance < maxRange) {
+          for (const dir of ALL_DIRECTIONS) {
+            const next = getNextCoordinate(coord, dir);
+            const key = `${next.x},${next.y}`;
+            if (!visited.has(key)) {
+              nextRing.push(next);
+            }
+          }
+        }
+      }
+
+      currentRing = nextRing;
+      distance++;
     }
 
-    // If minRange is 0 or 1, return all grids within maxRange
-    if (minRange <= 1) {
-      return result;
-    }
-
-    // Get all grids within (minRange - 1)
-    const innerGrids = this.getGridsWithinRange(origin, 0, minRange - 1);
-
-    // Return grids that are in maxRangeGrids but not in innerGrids
-    return result.filter(grid => 
-      !innerGrids.some(inner => inner.x === grid.x && inner.y === grid.y)
-    );
+    // Convert back to coordinates
+    return Array.from(result).map(key => {
+      const [x, y] = key.split(',').map(Number);
+      return createHexCoordinate(x, y);
+    });
   }
 
   /**
    * Get round effect area
    */
   private static getRoundEffect(target: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
+    // Special case for single target
+    if (minRange === 1 && maxRange === 1) {
+      return [target];
+    }
+
     return this.getGridsWithinRange(target, minRange, maxRange);
   }
 

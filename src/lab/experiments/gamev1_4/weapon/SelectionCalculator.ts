@@ -46,8 +46,13 @@ export class SelectionCalculator {
 			return [];
 		}
 
+		// For self-targeting weapons (minRange=1, maxRange=1), include origin
+		if (minRange === 0 && maxRange === 0) {
+			return [origin];
+		}
+
 		const maxRangeGrids = this.getGridsWithinRange(origin, maxRange)
-			.filter(hex => !(hex.x === origin.x && hex.y === origin.y)); // Exclude origin position
+			.filter(hex => !(hex.x === origin.x && hex.y === origin.y)); // Exclude origin position for non-self-targeting
 
 		if (minRange <= 1) {
 			return maxRangeGrids;
