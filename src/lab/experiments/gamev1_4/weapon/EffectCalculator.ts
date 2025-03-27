@@ -1,17 +1,10 @@
-import { HexCoordinate, createHexCoordinate, getNextCoordinate, getDistance } from "../types/HexCoordinate";
-import { UnitData } from "../types/UnitData";
-import { DirectionData, ALL_DIRECTIONS } from "../types/DirectionData";
-import { ShapeCalculator, ShapeConfig, ShapeType } from "./ShapeCalculator";
-import mapData from '../data/map-data.json';
+import { HexCoordinate } from "../types/HexCoordinate";
+import { ShapeCalculator, ShapeConfig } from "./ShapeCalculator";
+import { RoundEffect } from "./effect/RoundEffect";
+import { LineEffect } from "./effect/LineEffect";
+import { FanEffect } from "./effect/FanEffect";
 
 export class EffectCalculator extends ShapeCalculator {
-  /**
-   * Check if a coordinate is within map boundaries
-   */
-  private static isValidCoordinate(coord: HexCoordinate): boolean {
-    return coord.x >= 0 && coord.x < mapData.width &&
-      coord.y >= 0 && coord.y < mapData.height;
-  }
 
   /**
    * Get all coordinates affected by a weapon effect from a target position
@@ -24,238 +17,17 @@ export class EffectCalculator extends ShapeCalculator {
     targetPosition: HexCoordinate,
     config: ShapeConfig
   ): HexCoordinate[] {
-
     switch (config.type) {
       case 'round':
-        return this.getRoundEffect(targetPosition, config.minEffectRange, config.maxEffectRange);
+        return RoundEffect.getEffectArea(unitPosition, targetPosition, config.minEffectRange, config.maxEffectRange);
       case 'line':
-        return this.getLineEffect(unitPosition, targetPosition, config.minEffectRange, config.maxEffectRange);
+        return LineEffect.getEffectArea(unitPosition, targetPosition, config.minEffectRange, config.maxEffectRange);
       case 'fan':
-        return this.getFanEffect(unitPosition, targetPosition, config.minEffectRange, config.maxEffectRange);
+        return FanEffect.getEffectArea(unitPosition, targetPosition, config.minEffectRange, config.maxEffectRange);
       default:
         return [];
     }
   }
 
-  /**
-   * Get all coordinates within a circular range
-   */
-  private static getGridsWithinRange(origin: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-    if (minRange < 0 || maxRange < 0 || maxRange < minRange) return [];
-
-    const result: HexCoordinate[] = [];
-    for (let q = -maxRange; q <= maxRange; q++) {
-      for (let r = Math.max(-maxRange, -q - maxRange); r <= Math.min(maxRange, -q + maxRange); r++) {
-        const coord = createHexCoordinate(origin.x + q, origin.y + r);
-        if (this.isValidCoordinate(coord)) {
-          result.push(coord);
-        }
-      }
-    }
-
-    // If minRange is 0 or 1, return all grids within maxRange
-    if (minRange <= 1) {
-      return result;
-    }
-
-    // Get all grids within (minRange - 1)
-    const innerGrids = this.getGridsWithinRange(origin, 0, minRange - 1);
-
-    // Return grids that are in maxRangeGrids but not in innerGrids
-    return result.filter(grid => 
-      !innerGrids.some(inner => inner.x === grid.x && inner.y === grid.y)
-    );
-  }
-
-  /**
-   * Get round effect area
-   */
-  private static getRoundEffect(target: HexCoordinate, minRange: number, maxRange: number): HexCoordinate[] {
-    return this.getGridsWithinRange(target, minRange, maxRange);
-  }
-
-  /**
-   * Helper to determine direction based on relative position
-   */
-  private static getDirectionFromDelta(
-    dx: number,
-    dy: number,
-    isUnitYEven: boolean
-  ): DirectionData {
-    if (dy === 0) {
-      return dx > 0 ? 'right' : 'left';
-    } else if (dy > 0) {
-      if (isUnitYEven) {
-        return dx > 0 ? 'top-right' : 'top-left';
-      } else {
-        return dx >= 0 ? 'top-right' : 'top-left';
-      }
-    } else {
-      if (isUnitYEven) {
-        return dx > 0 ? 'bottom-right' : 'bottom-left';
-      } else {
-        return dx >= 0 ? 'bottom-right' : 'bottom-left';
-      }
-    }
-  }
-
-  /**
-   * Get line effect area
-   */
-  private static getLineEffect(
-    unitPosition: HexCoordinate,
-    targetPosition: HexCoordinate,
-    minRange: number,
-    maxRange: number
-  ): HexCoordinate[] {
-    const result: HexCoordinate[] = [];
-    
-    // Calculate relative position
-    const dx = targetPosition.x - unitPosition.x;
-    const dy = targetPosition.y - unitPosition.y;
-    const isUnitYEven = unitPosition.y % 2 === 0;
-
-    const direction = this.getDirectionFromDelta(dx, dy, isUnitYEven);
-
-    let current = targetPosition;
-    
-    // Add target position
-    if (this.isValidCoordinate(current)) {
-      result.push(current);
-    }
-
-    // Continue in the same direction
-    for (let i = 1; i < maxRange; i++) {
-      current = getNextCoordinate(current, direction);
-      if (this.isValidCoordinate(current)) {
-        result.push(current);
-      }
-    }
-
-    // Filter results based on minRange
-    return result.filter((_, index) => index >= minRange - 1);
-  }
-
-  /**
-   * Get fan effect area
-   */
-  private static getFanEffect(
-    unitPosition: HexCoordinate,
-    targetPosition: HexCoordinate,
-    minRange: number,
-    maxRange: number
-  ): HexCoordinate[] {
-    const result: Set<string> = new Set(); // Use Set to handle duplicates
-    
-    // Calculate relative position
-    const dx = targetPosition.x - unitPosition.x;
-    const dy = targetPosition.y - unitPosition.y;
-    const isUnitYEven = unitPosition.y % 2 === 0;
-    
-    // Define directions in clockwise order
-    const DIRECTIONS: DirectionData[] = [
-      'right',
-      'bottom-right',
-      'bottom-left',
-      'left',
-      'top-left',
-      'top-right'
-    ];
-    
-    // Determine main direction based on how target relates to unit
-    const mainDirection = this.getDirectionFromDelta(dx, dy, isUnitYEven);
-    
-    // Find the index of main direction
-    const mainIndex = DIRECTIONS.indexOf(mainDirection);
-    
-    // Get side directions using circular array
-    const leftSide = DIRECTIONS[(mainIndex + 5) % 6]; // +5 is same as -1
-    const rightSide = DIRECTIONS[(mainIndex + 1) % 6];
-    
-    console.log('Directions:', {
-      main: mainDirection,
-      left: leftSide,
-      right: rightSide
-    });
-
-    // Helper function to add a coordinate to result if valid
-    const addCoord = (coord: HexCoordinate) => {
-      if (this.isValidCoordinate(coord)) {
-        result.add(`${coord.x},${coord.y}`);
-      }
-    };
-
-    // Helper function to get next hex in a direction
-    const getNextHex = (pos: HexCoordinate, dir: DirectionData): HexCoordinate => {
-      return getNextCoordinate(pos, dir);
-    };
-
-    // Range 1: Add target position
-    addCoord(targetPosition);
-    let currentHexes = [targetPosition];
-
-    // For each range step
-    for (let range = minRange; range < maxRange; range++) {
-      const nextHexes: HexCoordinate[] = [];
-
-      // For each current hex
-      for (const hex of currentHexes) {
-        // For each direction
-        [mainDirection, leftSide, rightSide].forEach(dir => {
-          const nextHex = getNextHex(hex, dir);
-          if (this.isValidCoordinate(nextHex)) {
-            addCoord(nextHex);
-            nextHexes.push(nextHex);
-          }
-        });
-      }
-
-      currentHexes = nextHexes;
-    }
-    
-    // Convert coordinates back to HexCoordinate objects
-    const finalResult = Array.from(result).map(coord => {
-      const [x, y] = coord.split(',').map(Number);
-      return createHexCoordinate(x, y);
-    });
-
-    // Filter by minimum range if needed
-    if (minRange > 1) {
-      return finalResult.filter(coord => 
-        getDistance(targetPosition, coord) >= minRange - 1
-      );
-    }
-    
-    return finalResult;
-  }
-  
-  /**
-   * Helper to follow a direction for a number of steps
-   */
-  private static followDirection(start: HexCoordinate, direction: DirectionData, steps: number): HexCoordinate {
-    let current = start;
-    for (let i = 0; i < steps; i++) {
-      current = getNextCoordinate(current, direction);
-    }
-    return current;
-  }
-
-  /**
-   * Get all units affected by a weapon effect
-   */
-  static getAffectedUnits(
-    unitPosition: HexCoordinate,
-    targetPosition: HexCoordinate,
-    config: ShapeConfig,
-    units: UnitData[]
-  ): UnitData[] {
-    const affectedArea = this.getEffectArea(unitPosition, targetPosition, config);
-    
-    return units.filter(unit => 
-      affectedArea.some(coord => 
-        coord.x === unit.position.x && coord.y === unit.position.y
-      )
-    );
-  }
 }
 

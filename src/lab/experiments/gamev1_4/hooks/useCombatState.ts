@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { HexCoordinate } from '../types/HexCoordinate';
 import { UnitData } from '../types/UnitData';
-import { ShapeCalculator, ShapeConfig, ShapeType } from '../weapon/ShapeCalculator';
+import { ShapeConfig } from '../weapon/ShapeCalculator';
 import { EffectCalculator } from '../weapon/EffectCalculator';
+import { SelectionCalculator } from '../weapon/SelectionCalculator';
 import weaponData from '../data/weapon-data.json';
 
 interface UseCombatStateProps {
@@ -48,13 +49,11 @@ export const useCombatState = ({
   // New state for effect preview
   const [effectPreviewArea, setEffectPreviewArea] = useState<HexCoordinate[]>([]);
   
-  const shapeCalculator = new ShapeCalculator();
-
   const handleWeaponSelect = (weaponId: string, position: HexCoordinate, unit: UnitData) => {
     setSelectedWeapon(weaponId);
     setSelectedUnit(unit);
     setLastMovePosition(position);
-    setShowWeaponPanel(false); // Hide weapon panel after selection
+    setShowWeaponPanel(false);
     
     const weapon = weaponData[weaponId as keyof typeof weaponData];
     if (!weapon) {
@@ -63,16 +62,15 @@ export const useCombatState = ({
       return;
     }
 
-    // Get weapon config from weapon data
     const weaponConfig: ShapeConfig = {
-      type: weapon.selectionType as ShapeType,
-      minRange: weapon.minSelectionRange,
-      maxRange: weapon.maxSelectionRange,
+      type: weapon.selectionType as 'round' | 'line' | 'fan',
+      minSelectRange: weapon.minSelectionRange,
+      maxSelectRange: weapon.maxSelectionRange,
       minEffectRange: weapon.minEffectRange,
       maxEffectRange: weapon.maxEffectRange
     };
     
-    const newSelectionArea = shapeCalculator.getSelectableArea(
+    const newSelectionArea = SelectionCalculator.getSelectionArea(
       position,
       weaponConfig
     );
@@ -127,9 +125,9 @@ export const useCombatState = ({
     if (isValidTarget) {
       // Calculate effect area using EffectCalculator
       const effectConfig: ShapeConfig = {
-        type: weapon.effectType.toLowerCase() as ShapeType,
-        minRange: weapon.minEffectRange,
-        maxRange: weapon.maxEffectRange,
+        type: weapon.effectType.toLowerCase() as 'round' | 'line' | 'fan',
+        minSelectRange: weapon.minSelectionRange,
+        maxSelectRange: weapon.maxSelectionRange,
         minEffectRange: weapon.minEffectRange,
         maxEffectRange: weapon.maxEffectRange
       };
