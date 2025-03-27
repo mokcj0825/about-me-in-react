@@ -1,7 +1,7 @@
 import { HexCoordinate, createHexCoordinate, getNextCoordinate, getDistance } from "../types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
-import { DirectionData, ALL_DIRECTIONS } from "../types/DirectionData";
-import { ShapeCalculator, ShapeConfig, ShapeType } from "../weapon/ShapeCalculator";
+import { DirectionData } from "../types/DirectionData";
+import { ShapeCalculator, ShapeConfig } from "../weapon/ShapeCalculator";
 import mapData from '../data/map-data.json';
 
 /**

@@ -1,30 +1,29 @@
 import { HexCoordinate } from '../types/HexCoordinate';
-import {SelectionCalculator} from "./SelectionCalculator";
-export type ShapeType = 'line' | 'fan' | 'round';
 
+/**
+ * Configuration for shape calculations
+ */
 export interface ShapeConfig {
-  type: ShapeType;
-  minRange: number;
-  maxRange: number;
+  type: 'round' | 'line' | 'fan';
   minEffectRange: number;
   maxEffectRange: number;
+  minSelectRange: number;
+  maxSelectRange: number;
 }
 
-export class ShapeCalculator {
-
-  private selectionCalculator = new SelectionCalculator();
-
-  getSelectableArea(origin: HexCoordinate, config: ShapeConfig): HexCoordinate[] {
-    switch (config.type) {
-      case 'line':
-        return this.selectionCalculator.getLineSelection(origin, config.minRange, config.maxRange);
-      case 'fan':
-        return this.selectionCalculator.getFanSelection(origin, config.minRange, config.maxRange);
-      case 'round':
-        return this.selectionCalculator.getRoundSelection(origin, config.minRange, config.maxRange);
-      default:
-        return [];
-    }
+/**
+ * Base class for shape calculations
+ */
+export abstract class ShapeCalculator {
+  /**
+   * Get all coordinates that can be selected for a weapon
+   * @param unitPosition - Position of the unit using the weapon
+   * @param config - Weapon selection configuration
+   */
+  public static getArea(
+    unitPosition: HexCoordinate,
+    config: ShapeConfig
+  ): HexCoordinate[] {
+    throw new Error('getArea must be implemented by derived classes');
   }
-
 }
