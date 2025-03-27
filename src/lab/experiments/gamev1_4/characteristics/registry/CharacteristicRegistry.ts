@@ -21,7 +21,7 @@ class CharacteristicRegistry {
   }
 
   onDayStart(unit: UnitData) {
-    console.log('Checking characteristics for unit:', unit);
+    //console.log('Checking characteristics for unit:', unit);
     unit.characteristics?.forEach(characteristicId => {
       const effect = this.getEffect(characteristicId);
       if (effect?.onDayStart) {

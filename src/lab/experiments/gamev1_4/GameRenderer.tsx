@@ -130,18 +130,19 @@ export const GameRenderer: React.FC = () => {
       setActionState('targetSelection');
     },
     onCombatExecute: (attacker, weaponId, target) => {
-      // Mark the unit as moved
+      // Mark the unit as moved and used
       setUnits(prevUnits => prevUnits.map(u => 
         u.id === selectedUnit?.id 
-          ? { ...u, hasMoved: true }
+          ? { ...u, hasMoved: true, hasActed: true }
           : u
       ));
       
-      // Reset selection
+      // Reset selection without showing action menu
       setSelectedUnit(null);
       setSelectedUnitPosition(null);
       setMoveableGrids([]);
       setLastMovePosition(null);
+      handleActionMenuHide(); // Ensure action menu is hidden
       
       setActionState('idle');
     },
@@ -158,7 +159,8 @@ export const GameRenderer: React.FC = () => {
           y: mousePosition.y + scrollTop - rect.top
         });
       }
-    }
+    },
+    findUnitsAtPosition
   });
 
   const {

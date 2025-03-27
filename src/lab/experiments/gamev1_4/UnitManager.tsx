@@ -8,11 +8,11 @@ export const UnitManager = () => {
 
   useEffect(() => {
     const handleCycleChanged = ({ type }: { type: 'onDayStart' | 'onNightStart' }) => {
-      console.log('Cycle changed:', type);
-      console.log('Current units:', units);
+      //console.log('Cycle changed:', type);
+      //console.log('Current units:', units);
       
       units.forEach(unit => {
-        console.log('Processing unit:', unit);
+        //console.log('Processing unit:', unit);
         if (type === 'onDayStart') {
           characteristicRegistry.onDayStart(unit);
         } else {
