@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { HexCoordinate } from "./types/HexCoordinate";
+import { UnitData } from "./types/UnitData";
 import { getMoveableGrids } from "./movement/MovementCalculator";
 import mapData from './data/map-data.json'
 import type { TerrainType } from './movement/types'
@@ -274,9 +275,9 @@ export const GameRenderer: React.FC = () => {
       const unitsAtPosition = findUnitsAtPosition(coord);
 
       if (unitsAtPosition.length > 1) {
-        // For multiple units, don't show movement range
+        // For multiple units, don't show anything on hover
         setMoveableGrids([]);
-        setMultipleUnits(unitsAtPosition);
+        setMultipleUnits(null);
       } else if (unitsAtPosition.length === 1) {
         const unit = unitsAtPosition[0];
         calculateMoveableGrids(unit, coord);
@@ -325,12 +326,22 @@ export const GameRenderer: React.FC = () => {
           setActionState('unitSelected');
           handleActionMenuHide();
           return;
-        case 'unitSelected':
+        case 'unitSelected': {
+          // Clear all selection states
           setSelectedUnit(null);
           setSelectedUnitPosition(null);
           setMoveableGrids([]);
+          setMultipleUnits(null);
+          setLastMovePosition(null);
+          handleModalToggle(null);
           setActionState('idle');
           handleActionMenuHide();
+          return;
+        }
+        case 'multipleUnitPick':
+          setMultipleUnits(null);
+          handleModalToggle(null);
+          setActionState('idle');
           return;
       }
       return;
@@ -338,20 +349,49 @@ export const GameRenderer: React.FC = () => {
 
     // Handle left-click based on current state
     switch (actionState) {
-      case 'idle':
-        const unitAtPosition = findUnitAtPosition(coord);
-        if (unitAtPosition) {
-          handleUnitSelection(coord);
-          setActionState('unitSelected');
-        }
-        break;
+      case 'idle': {
+        const unitsAtPosition = findUnitsAtPosition(coord);
+        if (unitsAtPosition.length === 0) return;
 
-      case 'unitSelected':
+        // If multiple units, show selection modal
+        if (unitsAtPosition.length > 1) {
+          setMultipleUnits(unitsAtPosition);
+          setActionState('multipleUnitPick');
+          if (mousePosition) {
+            handleModalToggle('unitSelection', {
+              units: unitsAtPosition,
+              position: mousePosition,
+              onSelect: (unit: UnitData) => {
+                if (unit.hasMoved || (unit.faction !== 'player' && unit.faction !== 'ally')) return;
+                // Select the unit and show its movement range
+                setSelectedUnit(unit);
+                setSelectedUnitPosition(unit.position);
+                setMoveableGrids(getMoveableGrids(unit, units));
+                setActionState('unitSelected');
+                handleModalToggle(null);
+              }
+            });
+          }
+          return;
+        }
+
+        // If single unit, check if it's selectable
+        const unit = unitsAtPosition[0];
+        if (unit.hasMoved || (unit.faction !== 'player' && unit.faction !== 'ally')) return;
+
+        handleUnitSelection(coord);
+        setActionState('unitSelected');
+        break;
+      }
+
+      case 'unitSelected': {
+        // Check if this is a valid move
         if (isMoveableCell(coord)) {
           handleUnitMove(selectedUnit!, coord);
           setActionState('unitMoved');
         }
         break;
+      }
 
       case 'targetSelection':
         const targetUnit = findUnitAtPosition(coord);
@@ -483,12 +523,17 @@ export const GameRenderer: React.FC = () => {
           units={uiModal.data.units}
           position={uiModal.data.position}
           onSelect={(unit) => {
+            // When selecting a unit from the modal, directly select it
             setSelectedUnit(unit);
             setSelectedUnitPosition(unit.position);
             setMoveableGrids(getMoveableGrids(unit, units));
+            setActionState('unitSelected');
             handleModalToggle(null);
           }}
-          onClose={() => handleModalToggle(null)}
+          onClose={() => {
+            handleModalToggle(null);
+            setActionState('idle');
+          }}
         />
       )}
       

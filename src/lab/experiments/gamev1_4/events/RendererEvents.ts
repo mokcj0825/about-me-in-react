@@ -54,6 +54,7 @@ export const onUnitSelected = (
       state.setSelectedUnit(unit);
       state.setSelectedUnitPosition(coord);
       const moveableGrids = state.movementCalculator.getMoveableGrids(coord, unit.movement, state.units);
+      console.log('Moveable grids', moveableGrids);
       state.setMoveableGrids(moveableGrids);
     }
     // If no player units, do nothing (can't select enemy/ally units)

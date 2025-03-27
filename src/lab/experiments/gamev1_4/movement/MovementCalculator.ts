@@ -24,7 +24,7 @@ export interface MovementCost {
 
 export const getMoveableGrids = (unit: UnitData, units: UnitData[]): HexCoordinate[] => {
     const calculator = getMovementCalculator(unit);
-    return calculator.getMoveableGrids(unit.position, unit.movement, units);
+    return calculator.getMoveableGrids(unit.position, unit.movement, units, unit.id);
 };
 
 export const getMovementCalculator = (unit: UnitData) => {
@@ -70,18 +70,25 @@ export class MovementCalculator {
     getMoveableGrids(
         position: HexCoordinate,
         movement: number,
-        units: UnitData[]
+        units: UnitData[],
+        movingUnitId?: string
     ): HexCoordinate[] {
-        const moveableGrids: HexCoordinate[] = [{
-            x: position.x,
-            y: position.y,
-            z: position.z
-        }];
+        const moveableGrids: HexCoordinate[] = [];
         
-        const movingUnit = units.find(u => 
-            u.position.x === position.x && 
-            u.position.y === position.y
-        )!;
+        // First try to find by ID if provided
+        const movingUnit = movingUnitId 
+            ? units.find(u => u.id === movingUnitId)
+            : units.find(u => u.position.x === position.x && u.position.y === position.y);
+
+        if (!movingUnit) return moveableGrids;
+
+        // Helper function to check if units can stack
+        const canUnitsStack = (existingUnits: UnitData[], movingUnit: UnitData): boolean => {
+            return existingUnits.length === 0 || existingUnits.every(u => 
+                // Same faction and different movement type can stack
+                u.faction === movingUnit.faction && u.movementType !== movingUnit.movementType
+            );
+        };
 
         if (movingUnit.movementType === 'flying') {
             const visited = new Set<string>();
@@ -94,8 +101,15 @@ export class MovementCalculator {
                 if (visited.has(key)) continue;
                 visited.add(key);
 
-                if (current.x !== position.x || current.y !== position.y) {
-                    moveableGrids.push(current);
+                // Check stacking rules for current position
+                const unitsAtCurrent = units.filter(u => 
+                    u.position.x === current.x && 
+                    u.position.y === current.y && 
+                    u.id !== movingUnit.id
+                );
+
+                if (canUnitsStack(unitsAtCurrent, movingUnit)) {
+                    moveableGrids.push({ ...current });
                 }
 
                 if (remainingMovement <= 0) continue;
@@ -128,6 +142,17 @@ export class MovementCalculator {
             const visited = new Set<string>();
             visited.add(`${position.x},${position.y}`);
             
+            // Check stacking rules for starting position
+            const unitsAtStart = units.filter(u => 
+                u.position.x === position.x && 
+                u.position.y === position.y && 
+                u.id !== movingUnit.id
+            );
+
+            if (canUnitsStack(unitsAtStart, movingUnit)) {
+                moveableGrids.push({ ...position });
+            }
+            
             const queue: [HexCoordinate, number][] = [[position, movement]];
             
             while (queue.length > 0) {
@@ -158,24 +183,15 @@ export class MovementCalculator {
                         newRemainingMovement = 0;
                     }
 
-                    // Check stacking rules
-                    const unitsAtTarget = units.filter(u => 
+                    // Check stacking rules for neighbor position
+                    const unitsAtNeighbor = units.filter(u => 
                         u.position.x === neighbor.x && 
-                        u.position.y === neighbor.y &&
+                        u.position.y === neighbor.y && 
                         u.id !== movingUnit.id
                     );
 
-                    const canStop = unitsAtTarget.every(u => 
-                        (movingUnit.movementType === 'flying' && u.movementType !== 'flying') || 
-                        (movingUnit.movementType !== 'flying' && u.movementType === 'flying')
-                    );
-
-                    if (canStop) {
-                        moveableGrids.push({
-                            x: neighbor.x,
-                            y: neighbor.y,
-                            z: neighbor.z
-                        });
+                    if (canUnitsStack(unitsAtNeighbor, movingUnit)) {
+                        moveableGrids.push({ ...neighbor });
                     }
                     
                     visited.add(neighborKey);
@@ -186,13 +202,6 @@ export class MovementCalculator {
                 }
             }
         }
-
-        moveableGrids.push({
-            x: position.x,
-            y: position.y,
-            z: position.z
-        });
-        //console.log('Moveable grids:', moveableGrids);
 
         return moveableGrids;
     }
