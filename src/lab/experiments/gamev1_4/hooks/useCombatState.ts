@@ -5,7 +5,6 @@ import { ShapeConfig } from '../weapon/ShapeCalculator';
 import { EffectCalculator } from '../weapon/EffectCalculator';
 import { SelectionCalculator } from '../weapon/SelectionCalculator';
 import weaponData from '../data/weapon-data.json';
-import {find} from "lodash";
 
 interface UseCombatStateProps {
   onWeaponSelect?: (weaponId: string, selectionArea: HexCoordinate[]) => void;
