@@ -9,7 +9,7 @@ export class NightPhobicCharacteristic implements CharacteristicProvider {
     return {
       id: this.id,
       onNightStart: (unit: UnitData) => {
-        console.log('NightPhobicCharacteristic - onNightStart called for unit:', unit);
+        //console.log('NightPhobicCharacteristic - onNightStart called for unit:', unit);
         unit.buffs = unit.buffs || [];
         
         // Check if unit already has the debuff
@@ -20,13 +20,13 @@ export class NightPhobicCharacteristic implements CharacteristicProvider {
             id: 'nightPhobicDebuff',
             duration: -1  // Permanent until day
           });
-          console.log('NightPhobicCharacteristic - Added nightPhobicDebuff to unit:', unit);
+          //console.log('NightPhobicCharacteristic - Added nightPhobicDebuff to unit:', unit);
         }
       },
       onDayStart: (unit: UnitData) => {
-        console.log('NightPhobicCharacteristic - onDayStart called for unit:', unit);
+        //console.log('NightPhobicCharacteristic - onDayStart called for unit:', unit);
         unit.buffs = (unit.buffs || []).filter(buff => buff.id !== 'nightPhobicDebuff');
-        console.log('NightPhobicCharacteristic - Removed nightPhobicDebuff from unit:', unit);
+        //console.log('NightPhobicCharacteristic - Removed nightPhobicDebuff from unit:', unit);
       }
     };
   }

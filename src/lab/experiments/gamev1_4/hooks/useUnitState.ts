@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { HexCoordinate } from '../types/HexCoordinate';
 import { UnitData, initialUnits } from '../types/UnitData';
 import { getMoveableGrids, MovementCalculator } from '../movement/MovementCalculator';
@@ -86,6 +86,7 @@ export const useUnitState = ({ onUnitMoved, onStandby }: UseUnitStateProps = {})
     setUnits(updatedUnits);
     setLastMovePosition(newPosition);
     
+    // Always trigger onUnitMoved, even for same position
     onUnitMoved?.(unit, newPosition);
   };
 
@@ -97,6 +98,23 @@ export const useUnitState = ({ onUnitMoved, onStandby }: UseUnitStateProps = {})
     const unit = selectedUnit || findUnitAtPosition(selectedUnitPosition);
     if (!unit) return false;
 
+    // Check if this is the current position
+    const isCurrentPosition = coord.x === unit.position.x && coord.y === unit.position.y;
+    
+    // Always allow current position if stacking rules permit
+    if (isCurrentPosition) {
+      const unitsAtPosition = findUnitsAtPosition(coord).filter(u => u.id !== unit.id);
+      return unitsAtPosition.length === 0 || unitsAtPosition.every(u => 
+        // First check if they're allies
+        ((u.faction === 'player' && unit.faction === 'player') ||
+         (u.faction === 'ally' && (unit.faction === 'player' || unit.faction === 'ally')) ||
+         (u.faction === 'player' && unit.faction === 'ally')) &&
+        // Then check movement type compatibility
+        ((unit.movementType === 'flying' && u.movementType !== 'flying') || 
+         (unit.movementType !== 'flying' && u.movementType === 'flying'))
+      );
+    }
+
     const isValidMove = moveableGrids.some(grid =>
       grid.x === coord.x && grid.y === coord.y
     );
@@ -107,18 +125,20 @@ export const useUnitState = ({ onUnitMoved, onStandby }: UseUnitStateProps = {})
 
     if (unitsAtTarget.length === 0) return true;
 
-    const isMovingUnitFlying = hasCharacteristic(
-      unit.characteristics,
-      unit.buffs || [],
-      'flying'
+    // Check faction compatibility first
+    const areAlliesAtTarget = unitsAtTarget.every(u =>
+      (u.faction === 'player' && unit.faction === 'player') ||
+      (u.faction === 'ally' && (unit.faction === 'player' || unit.faction === 'ally')) ||
+      (u.faction === 'player' && unit.faction === 'ally')
     );
 
-    const hasTargetFlying = unitsAtTarget.some(u =>
-      hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
-    );
+    if (!areAlliesAtTarget) return false;
 
-    return isMovingUnitFlying ? !hasTargetFlying : unitsAtTarget.every(u =>
-      hasCharacteristic(u.characteristics, u.buffs || [], 'flying')
+    // Then check movement type compatibility
+    const isMovingUnitFlying = unit.movementType === 'flying';
+    return unitsAtTarget.every(u => 
+      (isMovingUnitFlying && u.movementType !== 'flying') || 
+      (!isMovingUnitFlying && u.movementType === 'flying')
     );
   };
 
@@ -126,8 +146,21 @@ export const useUnitState = ({ onUnitMoved, onStandby }: UseUnitStateProps = {})
    * Handles unit selection at a position
    */
   const handleUnitSelection = (position: HexCoordinate) => {
-    const unit = findUnitAtPosition(position);
+    const unitsAtPosition = findUnitsAtPosition(position);
+    if (unitsAtPosition.length === 0) return;
+
+    // If there are multiple units at the position, show selection modal
+    if (unitsAtPosition.length > 1) {
+      setMultipleUnits(unitsAtPosition);
+      return;
+    }
+
+    // If only one unit, select it directly
+    const unit = unitsAtPosition[0];
     if (!unit) return;
+
+    // Only proceed with selection if it's a player/ally unit that hasn't moved
+    if (unit.hasMoved || (unit.faction !== 'player' && unit.faction !== 'ally')) return;
 
     setSelectedUnit(unit);
     setSelectedUnitPosition(position);
@@ -143,7 +176,28 @@ export const useUnitState = ({ onUnitMoved, onStandby }: UseUnitStateProps = {})
       unit.movementType === 'flying' ? [] : [new StandardZOC()]
     );
     
-    const moveableGrids = getMoveableGrids(unit, units);
+    // Get all moveable grids including the current position if valid
+    const moveableGrids = movementCalculator.getMoveableGrids(position, unit.movement, units);
+
+    // Ensure the current position is included if stacking rules allow it
+    const unitsAtCurrentPos = units.filter(u => 
+      u.position.x === position.x && 
+      u.position.y === position.y && 
+      u.id !== unit.id
+    );
+
+    const canStayAtCurrentPos = unitsAtCurrentPos.length === 0 || unitsAtCurrentPos.every(u => 
+      (unit.movementType === 'flying' && u.movementType !== 'flying') || 
+      (unit.movementType !== 'flying' && u.movementType === 'flying')
+    );
+
+    const isCurrentPosIncluded = moveableGrids.some(grid => 
+      grid.x === position.x && grid.y === position.y
+    );
+
+    if (canStayAtCurrentPos && !isCurrentPosIncluded) {
+      moveableGrids.push({ ...position });
+    }
     setMoveableGrids(moveableGrids);
   };
 

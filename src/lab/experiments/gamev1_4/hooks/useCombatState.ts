@@ -10,6 +10,7 @@ interface UseCombatStateProps {
   onWeaponSelect?: (weaponId: string, selectionArea: HexCoordinate[]) => void;
   onCombatExecute?: (attacker: UnitData, weaponId: string, target: UnitData | HexCoordinate) => void;
   onCombatCancel?: () => void;
+  findUnitsAtPosition?: (coord: HexCoordinate) => UnitData[];
 }
 
 interface UseCombatStateReturn {
@@ -25,7 +26,7 @@ interface UseCombatStateReturn {
   handleWeaponSelect: (weaponId: string, position: HexCoordinate, unit: UnitData) => void;
   handleCombatAction: (coord: HexCoordinate, targetUnit: UnitData | undefined) => boolean;
   handleTargetHover: (coord: HexCoordinate | null) => void;
-  resetCombatState: () => void;
+  resetCombatState: (shouldTriggerCancel?: boolean) => void;
   
   // Setters
   setShowWeaponPanel: React.Dispatch<React.SetStateAction<boolean>>;
@@ -38,7 +39,8 @@ interface UseCombatStateReturn {
 export const useCombatState = ({
   onWeaponSelect,
   onCombatExecute,
-  onCombatCancel
+  onCombatCancel,
+  findUnitsAtPosition
 }: UseCombatStateProps = {}): UseCombatStateReturn => {
   const [selectedWeapon, setSelectedWeapon] = useState<string | null>(null);
   const [selectionArea, setSelectionArea] = useState<HexCoordinate[]>([]);
@@ -91,21 +93,67 @@ export const useCombatState = ({
       const weapon = weaponData[selectedWeapon as keyof typeof weaponData];
       if (!weapon) return false;
 
-      onCombatExecute?.(
-        selectedUnit,
-        selectedWeapon,
-        targetUnit || coord
+      // Calculate effect area and find affected units
+      const effectConfig: ShapeConfig = {
+        type: weapon.effectType.toLowerCase() as 'round' | 'line' | 'fan',
+        minSelectRange: weapon.minSelectionRange,
+        maxSelectRange: weapon.maxSelectionRange,
+        minEffectRange: weapon.minEffectRange,
+        maxEffectRange: weapon.maxEffectRange
+      };
+
+      const effectArea = EffectCalculator.getEffectArea(
+        lastMovePosition || selectedUnit.position,
+        coord, 
+        effectConfig
       );
 
-      resetCombatState();
-      return true;
+      // Use the provided findUnitsAtPosition function
+      const affectedUnits: UnitData[] = [];
+      effectArea.forEach(pos => {
+        if (findUnitsAtPosition) {  // Only call if function is provided
+          const unitsAtPosition = findUnitsAtPosition(pos);
+          affectedUnits.push(...unitsAtPosition);
+        }
+      });
+
+      // Log affected units and simulate combat calculations
+      if (affectedUnits.length > 0) {
+        console.log('Units affected by attack:', affectedUnits.map(unit => ({
+          id: unit.id,
+          faction: unit.faction,
+          position: unit.position
+        })));
+        
+        // Simulate combat calculations
+        console.log('Calculating damage for each affected unit...');
+        affectedUnits.forEach(unit => {
+          console.log(`Would deal damage to unit ${unit.id} at position (${unit.position.x}, ${unit.position.y})`);
+        });
+
+        // Execute combat without showing action menu
+        onCombatExecute?.(
+          selectedUnit,
+          selectedWeapon,
+          targetUnit || coord
+        );
+
+        // Reset state without triggering cancel callback
+        resetCombatState(false);
+        return true;
+      } else {
+        // No units affected - provide feedback but maintain state
+        console.log('No units affected by attack');
+        console.log('Maintaining selection state for retry');
+        // TODO: Play invalid sound effect
+        return false;
+      }
     }
 
     return false;
   };
 
   const handleTargetHover = (coord: HexCoordinate | null) => {
-    const startTime = new Date();
     if (!selectedWeapon || !selectedUnit || !coord) {
       setEffectPreviewArea([]);
       return;
@@ -139,21 +187,21 @@ export const useCombatState = ({
       );
 
       setEffectPreviewArea(newEffectArea);
-      const cost = new Date().getTime() - startTime.getTime();
-      console.log('Effect area calculation time:', cost);
     } else {
       setEffectPreviewArea([]);
     }
   };
 
-  const resetCombatState = () => {
+  const resetCombatState = (shouldTriggerCancel: boolean = true) => {
     setSelectedWeapon(null);
     setSelectedUnit(null);
     setSelectionArea([]);
     setEffectPreviewArea([]);
     setShowWeaponPanel(false);
     setLastMovePosition(null);
-    onCombatCancel?.();
+    if (shouldTriggerCancel) {
+      onCombatCancel?.();
+    }
   };
 
   return {

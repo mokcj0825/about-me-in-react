@@ -9,7 +9,7 @@ export class DayWalkerCharacteristic implements CharacteristicProvider {
     return {
       id: this.id,
       onDayStart: (unit: UnitData) => {
-        console.log('DayWalkerCharacteristic - onDayStart called for unit:', unit);
+        //console.log('DayWalkerCharacteristic - onDayStart called for unit:', unit);
         unit.buffs = unit.buffs || [];
         
         // Check if unit already has the buff
@@ -20,13 +20,13 @@ export class DayWalkerCharacteristic implements CharacteristicProvider {
             id: 'dayWalkerBuff',
             duration: -1  // Permanent until night
           });
-          console.log('DayWalkerCharacteristic - Added dayWalkerBuff to unit:', unit);
+          //console.log('DayWalkerCharacteristic - Added dayWalkerBuff to unit:', unit);
         }
       },
       onNightStart: (unit: UnitData) => {
-        console.log('DayWalkerCharacteristic - onNightStart called for unit:', unit);
+        //console.log('DayWalkerCharacteristic - onNightStart called for unit:', unit);
         unit.buffs = (unit.buffs || []).filter(buff => buff.id !== 'dayWalkerBuff');
-        console.log('DayWalkerCharacteristic - Removed dayWalkerBuff from unit:', unit);
+        //console.log('DayWalkerCharacteristic - Removed dayWalkerBuff from unit:', unit);
       }
     };
   }

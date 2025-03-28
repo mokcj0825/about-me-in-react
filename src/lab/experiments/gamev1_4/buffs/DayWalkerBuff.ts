@@ -10,7 +10,7 @@ export class DayWalkerBuff implements BuffProvider {
       id: this.id,
       duration: -1,
       onApply: (unit: UnitData) => {
-        console.log('DayWalkerBuff applied to unit:', unit);
+        //console.log('DayWalkerBuff applied to unit:', unit);
         unit.movement += 1;
       },
       onRemove: (unit: UnitData) => {

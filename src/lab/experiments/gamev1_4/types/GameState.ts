@@ -4,4 +4,5 @@ export type GameActionState =
   | 'unitMoved'         // Unit has moved, showing action menu
   | 'weaponSelection'    // Selecting weapon from panel
   | 'targetSelection'    // Weapon selected, selecting target
-  | 'aiTurn';           // AI turn in progress 
+  | 'aiTurn'            // AI turn in progress
+  | 'multipleUnitPick'; // Multiple units at position, showing selection modal 
