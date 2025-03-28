@@ -1,0 +1,79 @@
+{
+  "id": "wreath_of_interlaced_pipes_test",
+  "name": "Wreath of Interlaced Pipes Survival Test",
+  "description": "Demonstrates the survival mechanism of Wreath of Interlaced Pipes blessing",
+  "setup": {
+    "blessings": ["wreath_of_interlaced_pipes"],
+    "player_units": [
+      {
+        "id": "player_1",
+        "name": "Test Subject A",
+        "hp": 1000,
+        "maxHp": 1000,
+        "energy": 200,
+        "maxEnergy": 200
+      },
+      {
+        "id": "player_2",
+        "name": "Test Subject B",
+        "hp": 1000,
+        "maxHp": 1000,
+        "energy": 200,
+        "maxEnergy": 200
+      }
+    ],
+    "enemy_units": [
+      {
+        "id": "enemy_1",
+        "name": "Damage Dealer A",
+        "attack": 99999,
+        "target_type": "single"
+      },
+      {
+        "id": "enemy_2",
+        "name": "Damage Dealer B",
+        "attack": 99999,
+        "target_type": "single"
+      }
+    ]
+  },
+  "test_sequence": [
+    {
+      "step": 1,
+      "action": {
+        "actor": "enemy_1",
+        "type": "attack",
+        "description": "Enemy A deals fatal damage to a random player unit",
+        "expected_result": [
+          "Target unit should not be knocked out",
+          "Target unit's energy should be consumed",
+          "Target unit should recover HP equal to 50% of consumed energy",
+          "Blessing effect should be marked as used for the team"
+        ]
+      }
+    },
+    {
+      "step": 2,
+      "action": {
+        "actor": "enemy_2",
+        "type": "attack",
+        "description": "Enemy B deals fatal damage to random player unit",
+        "expected_result": [
+          "Target unit should be knocked out (blessing already used)",
+          "No energy consumption or HP recovery should occur"
+        ]
+      }
+    }
+  ],
+  "validation": {
+    "success_conditions": [
+      "First player unit survives with HP = (consumed_energy * 0.5)",
+      "Second player unit is knocked out",
+      "Blessing effect is consumed"
+    ],
+    "edge_cases": [
+      "If both units are hit simultaneously, only one should receive the blessing effect",
+      "The blessing effect should not trigger again in the same battle"
+    ]
+  }
+}

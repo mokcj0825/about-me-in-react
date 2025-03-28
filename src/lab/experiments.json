@@ -58,6 +58,18 @@
           "url": "/labs/game-theater-v1_4"
         }
       ]
+    },
+    {
+      "title": "Design Pattern Test",
+      "experiments": [
+        {
+          "id": "DPT-1",
+          "name": "Design pattern setup",
+          "description": "Design pattern",
+          "status": "in-progress",
+          "url": "/labs/dpt"
+        }
+      ]
     }
   ]
 } 

@@ -1,0 +1,54 @@
+{
+  "id": "garment_of_coiled_wires_test",
+  "name": "Garment of Coiled Wires Recovery Test",
+  "description": "Demonstrates the HP recovery mechanism of Garment of Coiled Wires blessing after ultimate cast",
+  "setup": {
+    "blessings": ["garment_of_coiled_wires"],
+    "player_units": [
+      {
+        "id": "player_1",
+        "name": "Test Subject A",
+        "hp": 400,
+        "maxHp": 1000,
+        "energy": 120,
+        "maxEnergy": 120
+      }
+    ],
+    "enemy_units": [
+      {
+        "id": "enemy_1",
+        "name": "Target Dummy",
+        "hp": 1000,
+        "maxHp": 1000
+      }
+    ]
+  },
+  "test_sequence": [
+    {
+      "step": 1,
+      "action": {
+        "actor": "player_1",
+        "type": "ultimate",
+        "description": "Test Subject A casts ultimate ability",
+        "expected_result": [
+          "Ultimate should consume all energy (120)",
+          "Blessing should trigger after ultimate cast",
+          "Unit should recover HP equal to 16% of max HP (160 HP)",
+          "Final HP should be 560 (400 + 160)"
+        ]
+      }
+    }
+  ],
+  "validation": {
+    "success_conditions": [
+      "Player unit's energy is fully consumed (0/120)",
+      "Player unit's HP increases by 16% of max HP",
+      "Blessing effect triggers immediately after ultimate cast"
+    ],
+    "edge_cases": [
+      "Blessing should trigger even if unit is at full HP",
+      "HP recovery should not exceed maxHp",
+      "HP recovery amount is based on maxHp, not current HP"
+    ]
+  }
+}

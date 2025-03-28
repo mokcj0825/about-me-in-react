@@ -1,0 +1,30 @@
+{
+  "id": "wreath_of_interlaced_pipes",
+  "name": "Wreath of Interlaced Pipes",
+  "path": "erudition",
+  "target": "player",
+  "type": "survival",
+  "trigger": {
+    "type": "on_fatal_damage",
+    "conditions": ["hp_zero"],
+    "usage": "once_per_battle_team"
+  },
+  "effects": [
+    {
+      "type": "prevent_knockout",
+      "duration": "instant"
+    },
+    {
+      "type": "consume_resource",
+      "resource": "energy",
+      "amount": "all"
+    },
+    {
+      "type": "heal",
+      "value": {
+        "base": "consumed_energy",
+        "multiplier": 0.5
+      }
+    }
+  ]
+}
