@@ -1,0 +1,21 @@
+{
+  "id": "garment_of_coiled_wires",
+  "name": "Garment of Coiled Wires",
+  "path": "erudition",
+  "target": "player",
+  "type": "recovery",
+  "trigger": {
+    "type": "after_ultimate",
+    "conditions": ["energy_consumed"],
+    "usage": "always"
+  },
+  "effects": [
+    {
+      "type": "heal",
+      "value": {
+        "base": "max_hp",
+        "multiplier": 0.16
+      }
+    }
+  ]
+}
