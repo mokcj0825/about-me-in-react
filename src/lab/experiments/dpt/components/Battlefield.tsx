@@ -9,7 +9,7 @@ import { processBlessingEffects } from '../mechanism/blessing/handler';
 import { loadBlessing } from '../mechanism/blessing/loader';
 import { loadInstruction } from '../mechanism/instruction/loader';
 import { Blessing } from '../mechanism/blessing/types';
-import { loadScript, executeScriptLine, ScriptLine } from '../mechanism/script/loader';
+import { loadScript, executeScriptLine, ScriptLine, ScriptData, createInitialContext } from '../mechanism/script/loader';
 
 interface BattlefieldProps {
   blessingId?: string;
@@ -117,24 +117,18 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
   };
 
   const runScript = async () => {
-    if (!instruction) return;
+    if (!blessingId) return;
     
-    const initialContext: ScriptContext = {
-      playerUnits: instruction.setup.player_units || [],
-      enemyUnits: instruction.setup.enemy_units || [],
-      blessings: instruction.setup.blessings || [],
-      currentLine: 0
-    };
-
     try {
       // Reset instruction and load script
-      const [resetInstruction, scriptLines] = await Promise.all([
-        loadInstruction(blessingId || ''),
-        loadScript(blessingId || '')
+      const [resetInstruction, scriptData] = await Promise.all([
+        loadInstruction(blessingId),
+        loadScript(blessingId)
       ]);
       
       setInstruction(resetInstruction);
-      setScriptLines(scriptLines);
+      setScriptLines(scriptData.scriptLines);
+      const initialContext = createInitialContext(scriptData.initialSetup);
       setScriptContext(initialContext);
       setCurrentScriptLine(0);
       
@@ -168,7 +162,9 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
 
         if (isMounted) {
           setInstruction(instructionData);
-          setScriptLines(scriptData);
+          setScriptLines(scriptData.scriptLines);
+          const initialContext = createInitialContext(scriptData.initialSetup);
+          setScriptContext(initialContext);
         }
       } catch (err) {
         if (isMounted) {

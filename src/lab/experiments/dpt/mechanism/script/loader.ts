@@ -40,16 +40,18 @@ function normalizeUnit(unit: Unit): Unit {
 /**
  * Executes a script action based on its type
  */
-async function executeAction(action: ScriptAction, context: ScriptContext): Promise<ScriptContext> {
+async function executeAction(action: ScriptAction, context: ScriptContext): Promise<{ context: ScriptContext; descriptions: string[] }> {
+  const descriptions: string[] = [];
+  
   switch (action.type) {
     case 'attack': {
       const attacker = findUnitById(context, action.target) || { id: '', name: 'Unknown', attack: 0 };
       const targetIndex = Math.floor(Math.random() * context.playerUnits.length);
       const targetUnit = context.playerUnits[targetIndex] || null;
-      if (!targetUnit) return context;
+      if (!targetUnit) return { context, descriptions };
 
       const attackDamage = attacker.attack || 0;
-      console.log(`${attacker.name} attacks ${targetUnit.name} with ${attackDamage} damage`);
+      descriptions.push(`${attacker.name} attacks ${targetUnit.name} with ${attackDamage} damage`);
       
       let updatedUnit = normalizeUnit({ 
         ...targetUnit, 
@@ -67,6 +69,7 @@ async function executeAction(action: ScriptAction, context: ScriptContext): Prom
           
           const result = await processBlessingEffects(updatedUnit, blessingData, battleContext) as EffectResult;
           updatedUnit = normalizeUnit(result.updatedUnit);
+          descriptions.push(...result.descriptions);
             
           if (updatedUnit.hp > 0) {
             context = {
@@ -79,15 +82,19 @@ async function executeAction(action: ScriptAction, context: ScriptContext): Prom
         }
       }
 
-      return updateUnitInContext(context, updatedUnit);
+      return { 
+        context: updateUnitInContext(context, updatedUnit),
+        descriptions
+      };
     }
     case 'ultimate':
     case 'cast_ultimate': {
       const unit = findUnitById(context, action.target);
-      if (!unit) return context;
+      if (!unit) return { context, descriptions };
 
       const energyConsumed = unit.energy || 0;
       let updatedUnit = normalizeUnit({ ...unit, energy: 0 });
+      descriptions.push(`${unit.name} casts ultimate, consuming ${energyConsumed} energy`);
 
       if (context.blessings.length > 0) {
         try {
@@ -97,18 +104,25 @@ async function executeAction(action: ScriptAction, context: ScriptContext): Prom
           };
           const result = await processBlessingEffects(updatedUnit, blessingData, battleContext) as EffectResult;
           updatedUnit = normalizeUnit(result.updatedUnit);
-          return updateUnitInContext(context, updatedUnit);
+          descriptions.push(...result.descriptions);
+          return { 
+            context: updateUnitInContext(context, updatedUnit),
+            descriptions
+          };
         } catch (error) {
           console.error('Error processing blessing:', error);
         }
       }
 
-      return updateUnitInContext(context, updatedUnit);
+      return { 
+        context: updateUnitInContext(context, updatedUnit),
+        descriptions
+      };
     }
     // Add more action types as needed
     default:
       console.warn(`Unknown action type: ${action.type}`);
-      return context;
+      return { context, descriptions };
   }
 }
 
@@ -132,12 +146,25 @@ function updateUnitInContext(context: ScriptContext, updatedUnit: Unit): ScriptC
   };
 }
 
-export async function loadScript(scriptId: string): Promise<ScriptLine[]> {
+export interface ScriptData {
+  scriptLines: ScriptLine[];
+  initialSetup: {
+    player_units: Unit[];
+    enemy_units: Unit[];
+    blessings: string[];
+  };
+}
+
+export async function loadScript(scriptId: string): Promise<ScriptData> {
   try {
     const instructionData = await import(`../../instructions/${scriptId}.json`);
-    return instructionData.default.test_sequence.map((step: any, index: number) => ({
+    const testSequence = Array.isArray(instructionData.default.test_sequence) 
+      ? instructionData.default.test_sequence 
+      : [];
+
+    const scriptLines = testSequence.map((step: any) => ({
       id: step.step,
-      description: step.action.description,
+      description: step.action.description || '',
       action: {
         type: step.action.type,
         target: step.action.actor,
@@ -146,9 +173,28 @@ export async function loadScript(scriptId: string): Promise<ScriptLine[]> {
         }
       }
     }));
+
+    // Deep clone the initial setup to prevent reference issues
+    const initialSetup = {
+      player_units: (instructionData.default.setup.player_units || []).map((unit: Unit) => ({...unit})),
+      enemy_units: (instructionData.default.setup.enemy_units || []).map((unit: Unit) => ({...unit})),
+      blessings: [...(instructionData.default.setup.blessings || [])]
+    };
+
+    return {
+      scriptLines,
+      initialSetup
+    };
   } catch (error) {
     console.error('Error loading script:', error);
-    return [];
+    return {
+      scriptLines: [],
+      initialSetup: {
+        player_units: [],
+        enemy_units: [],
+        blessings: []
+      }
+    };
   }
 }
 
@@ -156,7 +202,18 @@ export async function executeScriptLine(
   line: ScriptLine, 
   context: ScriptContext
 ): Promise<{ updatedContext: ScriptContext; descriptions: string[] }> {
-  const descriptions: string[] = [];
-  const updatedContext = await executeAction(line.action, context);
-  return { updatedContext, descriptions };
+  const result = await executeAction(line.action, context);
+  return { 
+    updatedContext: result.context,
+    descriptions: result.descriptions
+  };
+}
+
+export function createInitialContext(setup: ScriptData['initialSetup']): ScriptContext {
+  return {
+    playerUnits: setup.player_units.map(unit => normalizeUnit({...unit})),
+    enemyUnits: setup.enemy_units.map(unit => normalizeUnit({...unit})),
+    blessings: [...setup.blessings],
+    currentLine: 0
+  };
 } 
