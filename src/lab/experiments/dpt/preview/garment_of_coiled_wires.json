@@ -1,6 +1,6 @@
 {
-    "id": "garment_of_coiled_wires.json",
+    "id": "garment_of_coiled_wires",
     "name": "Garment of Coiled Wires",
     "path": "erudition",
-    "description": "After characters use their Ultimate, they restore HP equal to 16.0% of their Max HP"
+    "description": "When struck with a killing blow, characters will not be knocked down and will instead consume all their Energy, then restore HP equal to 50.0% of the consumed Energy. This effect can only be triggered once per battle for the whole team."
   }
