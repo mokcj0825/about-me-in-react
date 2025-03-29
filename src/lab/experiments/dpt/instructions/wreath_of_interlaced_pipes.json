@@ -26,12 +26,16 @@
       {
         "id": "enemy_1",
         "name": "Damage Dealer A",
+        "hp": 1000,
+        "maxHp": 1000,
         "attack": 99999,
         "target_type": "single"
       },
       {
         "id": "enemy_2",
         "name": "Damage Dealer B",
+        "hp": 1000,
+        "maxHp": 1000,
         "attack": 99999,
         "target_type": "single"
       }

@@ -35,6 +35,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [scriptContext, setScriptContext] = useState<ScriptContext | null>(null);
   const [currentScriptLine, setCurrentScriptLine] = useState<number>(0);
+  const [showTestSequence, setShowTestSequence] = useState<boolean>(false);
 
   // Helper to add logs
   const addLog = (message: string) => {
@@ -42,6 +43,10 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
       message,
       timestamp: Date.now()
     }]);
+  };
+
+  const clearLogs = () => {
+    setLogs([]);
   };
 
   // Event handlers
@@ -134,6 +139,20 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
     const line = scriptLines[currentScriptLine];
     const updatedContext = await line.execute(scriptContext);
     
+    // Update instruction setup with the latest unit states
+    if (instruction) {
+      const updatedInstruction = {
+        ...instruction,
+        setup: {
+          ...instruction.setup,
+          player_units: updatedContext.playerUnits,
+          enemy_units: updatedContext.enemyUnits,
+          blessings: updatedContext.blessings
+        }
+      };
+      setInstruction(updatedInstruction);
+    }
+    
     setScriptContext(updatedContext);
     setCurrentScriptLine(prev => prev + 1);
   };
@@ -145,6 +164,12 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
       blessings: instruction?.setup.blessings || [],
       currentLine: 0
     };
+
+    // Reset instruction to initial state when resetting script
+    if (instruction) {
+      const resetInstruction = await import(/* webpackMode: "eager" */ `../instructions/${blessingId}.json`);
+      setInstruction(resetInstruction.default);
+    }
 
     setScriptContext(initialContext);
     setCurrentScriptLine(0);
@@ -200,7 +225,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
           <h3>Player Units</h3>
           <div style={styles.unitList}>
             {instruction.setup.player_units.map((unit, index) => (
-              <UnitCard key={`player-${index}`} unit={unit} />
+              <UnitCard key={`player-${index}`} unit={unit} isPlayerUnit={true} />
             ))}
           </div>
         </div>
@@ -209,19 +234,47 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
           <h3>Enemy Units</h3>
           <div style={styles.unitList}>
             {instruction.setup.enemy_units.map((unit, index) => (
-              <UnitCard key={`enemy-${index}`} unit={unit} />
+              <UnitCard key={`enemy-${index}`} unit={unit} isPlayerUnit={false} />
             ))}
           </div>
         </div>
       </div>
 
-      <div style={styles.testSequenceContainer}>
-        <TestSequence steps={instruction.test_sequence} />
-      </div>
-
       <div style={styles.container}>
         <div style={styles.header}>
-          <h3>Script Execution</h3>
+          <div style={styles.headerLeft}>
+            <h3>Script Execution</h3>
+            <div 
+              style={{
+                ...styles.infoIcon,
+                background: showTestSequence ? '#e3f2fd' : 'transparent'
+              }}
+              onClick={() => setShowTestSequence(!showTestSequence)}
+              role="button"
+              tabIndex={0}
+            >
+              ℹ️
+              {showTestSequence && (
+                <div 
+                  style={styles.testSequencePopup}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div style={styles.popupHeader}>
+                    <h4 style={{ margin: 0 }}>Test Sequence</h4>
+                    <button
+                      onClick={() => setShowTestSequence(false)}
+                      style={styles.closeButton}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div style={styles.popupContent}>
+                    <TestSequence steps={instruction.test_sequence} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           <div style={styles.controls}>
             <button 
               onClick={runScript} 
@@ -240,6 +293,16 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
               disabled={!scriptContext || currentScriptLine >= scriptLines.length}
             >
               Next Line
+            </button>
+            <button
+              onClick={clearLogs}
+              style={{
+                ...styles.button,
+                marginLeft: '10px',
+                background: '#757575'
+              }}
+            >
+              Clear Log
             </button>
           </div>
         </div>
@@ -304,13 +367,6 @@ const styles = {
     borderRadius: '4px',
     flex: 1
   },
-  testSequenceContainer: {
-    maxHeight: '20vh',
-    overflowY: 'auto' as const,
-    background: '#fff',
-    padding: '10px',
-    borderRadius: '4px'
-  },
   container: {
     display: 'flex',
     flexDirection: 'column' as const,
@@ -327,6 +383,11 @@ const styles = {
     alignItems: 'center',
     marginBottom: '20px',
     flexShrink: 0 // Prevent header from shrinking
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px'
   },
   controls: {
     display: 'flex',
@@ -383,6 +444,62 @@ const styles = {
   logEntry: {
     margin: '5px 0',
     whiteSpace: 'pre-wrap' as const
+  },
+  infoIcon: {
+    position: 'relative' as const,
+    cursor: 'pointer',
+    fontSize: '18px',
+    width: '32px',
+    height: '32px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '50%',
+    transition: 'all 0.2s ease',
+    ':hover': {
+      background: '#f5f5f5'
+    },
+    outline: 'none'
+  },
+  testSequencePopup: {
+    position: 'absolute' as const,
+    top: 'calc(100% + 5px)',
+    left: '0',
+    transform: 'translateX(-50%)',
+    background: 'white',
+    borderRadius: '8px',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
+    zIndex: 1000,
+    minWidth: '300px',
+    maxWidth: '400px',
+    display: 'flex',
+    flexDirection: 'column' as const
+  },
+  popupHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '12px 15px',
+    borderBottom: '1px solid #eee'
+  },
+  closeButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '18px',
+    color: '#666',
+    cursor: 'pointer',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    transition: 'all 0.2s ease',
+    ':hover': {
+      background: '#f5f5f5',
+      color: '#333'
+    }
+  },
+  popupContent: {
+    padding: '15px',
+    maxHeight: '400px',
+    overflowY: 'auto' as const
   }
 };
 
