@@ -59,10 +59,41 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
       const updatedBlessings = context.blessings.slice(1);
       
       addLog(`Using blessing: ${blessingUsed} for resurrection`);
+
+      // Get current energy before consumption
+      const currentEnergy = event.unit.energy || 0;
+      const maxEnergy = event.unit.maxEnergy || 100;
+      
+      // Load blessing data to get effect values
+      const blessingData = await import(/* webpackMode: "eager" */ `../data/${blessingUsed}.json`);
+      const consumeEffect = blessingData.default.effects.find(
+        (effect: { type: string }) => effect.type === 'consume_resource'
+      );
+      const healEffect = blessingData.default.effects.find(
+        (effect: { type: string }) => effect.type === 'heal'
+      );
+
+      // Calculate energy to consume based on measurement type
+      const energyToConsume = consumeEffect?.measurement === 'percentage'
+        ? Math.floor((currentEnergy * consumeEffect.amount) / 100)
+        : consumeEffect?.amount || 0;
+
+      const healingMultiplier = healEffect?.value?.multiplier || 0;
+      
+      if (currentEnergy <= 0) {
+        addLog(`Warning: Unit has no energy to consume`);
+        return context; // Cannot resurrect if no energy
+      }
+
+      addLog(`Consuming ${energyToConsume} energy (${consumeEffect?.amount}% of current energy: ${currentEnergy}) for resurrection`);
+
+      const healingAmount = Math.floor(energyToConsume * healingMultiplier);
+      addLog(`Healing amount (${healingMultiplier * 100}% of consumed energy): ${healingAmount}`);
+
       const resurrectedUnit = {
         ...event.unit,
-        hp: Math.floor(event.unit.maxHp * 0.5),
-        energy: Math.floor((event.unit.maxEnergy || 100) * 0.3)
+        hp: healingAmount,
+        energy: currentEnergy - energyToConsume
       };
 
       const updatedPlayerUnits = context.playerUnits.map(unit => 
@@ -75,7 +106,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
         blessings: updatedBlessings
       };
 
-      addLog(`${event.unit.name} has been resurrected with ${resurrectedUnit.hp} HP!`);
+      addLog(`${event.unit.name} has been resurrected with ${resurrectedUnit.hp} HP! (Energy consumed: ${energyToConsume}, Remaining energy: ${resurrectedUnit.energy})`);
       return newContext;
     }
 
