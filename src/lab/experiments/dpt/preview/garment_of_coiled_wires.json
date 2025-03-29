@@ -1,6 +1,6 @@
 {
-    "id": "garment_of_coiled_wires.json",
-    "name": "Garment of Coiled Wires",
-    "path": "erudition",
-    "description": "After characters use their Ultimate, they restore HP equal to 16.0% of their Max HP"
-  }
+  "id": "garment_of_coiled_wires",
+  "name": "Garment of Coiled Wires",
+  "path": "erudition",
+  "description": "After characters use their Ultimate, they restore HP equal to 16.0% of their Max HP"
+}

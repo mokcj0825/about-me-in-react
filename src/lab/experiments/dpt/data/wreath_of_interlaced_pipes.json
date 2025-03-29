@@ -17,7 +17,8 @@
     {
       "type": "consume_resource",
       "resource": "energy",
-      "amount": "all"
+      "amount": 100,
+      "measurement": "percentage"
     },
     {
       "type": "heal",

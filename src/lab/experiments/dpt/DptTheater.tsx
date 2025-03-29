@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import BlessingList from './BlessingList';
-import Renderer from './Renderer';
+import { Renderer } from './Renderer';
 
 interface DptTheaterProps {
   blessingId?: string;
