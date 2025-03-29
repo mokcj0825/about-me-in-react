@@ -5,6 +5,11 @@ import UnitCard from './UnitCard';
 import TestSequence from './TestSequence';
 import { executeEnemyAttack } from '../mechanism/action/execute';
 import { KnockoutEvent } from '../mechanism/event/knockout';
+import { processBlessingEffects } from '../mechanism/blessing/handler';
+import { loadBlessing } from '../mechanism/blessing/loader';
+import { loadInstruction } from '../mechanism/instruction/loader';
+import { Blessing } from '../mechanism/blessing/types';
+import { loadScript, executeScriptLine, ScriptLine } from '../mechanism/script/loader';
 
 interface BattlefieldProps {
   blessingId?: string;
@@ -22,12 +27,6 @@ interface ScriptContext {
   currentLine: number;
 }
 
-interface ScriptLine {
-  id: number;
-  description: string;
-  execute: (context: ScriptContext) => Promise<ScriptContext>;
-}
-
 export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElement {
   const [instruction, setInstruction] = useState<InstructionData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +34,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [scriptContext, setScriptContext] = useState<ScriptContext | null>(null);
   const [currentScriptLine, setCurrentScriptLine] = useState<number>(0);
+  const [scriptLines, setScriptLines] = useState<ScriptLine[]>([]);
   const [showTestSequence, setShowTestSequence] = useState<boolean>(false);
 
   // Helper to add logs
@@ -55,175 +55,120 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
     
     if (context.blessings.length > 0) {
       addLog('Checking for resurrection blessings...');
-      const blessingUsed = context.blessings[0];
+      const blessingId = context.blessings[0];
       const updatedBlessings = context.blessings.slice(1);
       
-      addLog(`Using blessing: ${blessingUsed} for resurrection`);
+      addLog(`Using blessing: ${blessingId} for resurrection`);
 
-      // Get current energy before consumption
-      const currentEnergy = event.unit.energy || 0;
-      const maxEnergy = event.unit.maxEnergy || 100;
-      
-      // Load blessing data to get effect values
-      const blessingData = await import(/* webpackMode: "eager" */ `../data/${blessingUsed}.json`);
-      const consumeEffect = blessingData.default.effects.find(
-        (effect: { type: string }) => effect.type === 'consume_resource'
-      );
-      const healEffect = blessingData.default.effects.find(
-        (effect: { type: string }) => effect.type === 'heal'
-      );
+      try {
+        const blessingData = await loadBlessing(blessingId);
+        const { updatedUnit, descriptions } = await processBlessingEffects(event.unit, blessingData);
+        
+        descriptions.forEach(desc => addLog(desc));
 
-      // Calculate energy to consume based on measurement type
-      const energyToConsume = consumeEffect?.measurement === 'percentage'
-        ? Math.floor((currentEnergy * consumeEffect.amount) / 100)
-        : consumeEffect?.amount || 0;
+        const updatedPlayerUnits = context.playerUnits.map(unit => 
+          unit.id === updatedUnit.id ? updatedUnit : unit
+        );
 
-      const healingMultiplier = healEffect?.value?.multiplier || 0;
-      
-      if (currentEnergy <= 0) {
-        addLog(`Warning: Unit has no energy to consume`);
-        return context; // Cannot resurrect if no energy
+        return {
+          ...context,
+          playerUnits: updatedPlayerUnits,
+          blessings: updatedBlessings
+        };
+      } catch (error) {
+        addLog(`Error processing blessing: ${error instanceof Error ? error.message : String(error)}`);
+        return context;
       }
-
-      addLog(`Consuming ${energyToConsume} energy (${consumeEffect?.amount}% of current energy: ${currentEnergy}) for resurrection`);
-
-      const healingAmount = Math.floor(energyToConsume * healingMultiplier);
-      addLog(`Healing amount (${healingMultiplier * 100}% of consumed energy): ${healingAmount}`);
-
-      const resurrectedUnit = {
-        ...event.unit,
-        hp: healingAmount,
-        energy: currentEnergy - energyToConsume
-      };
-
-      const updatedPlayerUnits = context.playerUnits.map(unit => 
-        unit.id === resurrectedUnit.id ? resurrectedUnit : unit
-      );
-
-      const newContext = {
-        ...context,
-        playerUnits: updatedPlayerUnits,
-        blessings: updatedBlessings
-      };
-
-      addLog(`${event.unit.name} has been resurrected with ${resurrectedUnit.hp} HP! (Energy consumed: ${energyToConsume}, Remaining energy: ${resurrectedUnit.energy})`);
-      return newContext;
     }
 
     addLog('No resurrection blessings available.');
     return context;
   };
 
-  // Define script lines
-  const scriptLines: ScriptLine[] = [
-    {
-      id: 0,
-      description: 'Enemy A attacks player unit',
-      execute: async (context: ScriptContext) => {
-        addLog('\n=== Enemy A attacks ===');
-        const enemyA = context.enemyUnits[0];
-        const playerTarget = context.playerUnits[0];
-        
-        const attack = executeEnemyAttack(enemyA, playerTarget, context.blessings.length > 0);
-        addLog(attack.description);
-
-        let updatedContext = {
-          ...context,
-          playerUnits: [attack.targetUnit, ...context.playerUnits.slice(1)]
-        };
-
-        if (attack.knockoutEvent) {
-          updatedContext = await onKnockout(attack.knockoutEvent, updatedContext);
-        }
-
-        return updatedContext;
-      }
-    },
-    {
-      id: 1,
-      description: 'Enemy B attacks player unit',
-      execute: async (context: ScriptContext) => {
-        addLog('\n=== Enemy B attacks ===');
-        const enemyB = context.enemyUnits[1];
-        const playerTarget = context.playerUnits[0];
-        
-        const attack = executeEnemyAttack(enemyB, playerTarget, context.blessings.length > 0);
-        addLog(attack.description);
-
-        let updatedContext = {
-          ...context,
-          playerUnits: [attack.targetUnit, ...context.playerUnits.slice(1)]
-        };
-
-        if (attack.knockoutEvent) {
-          updatedContext = await onKnockout(attack.knockoutEvent, updatedContext);
-        }
-
-        return updatedContext;
-      }
-    }
-  ];
-
   const executeNextLine = async () => {
     if (!scriptContext || currentScriptLine >= scriptLines.length) return;
 
     const line = scriptLines[currentScriptLine];
-    const updatedContext = await line.execute(scriptContext);
-    
-    // Update instruction setup with the latest unit states
-    if (instruction) {
-      const updatedInstruction = {
-        ...instruction,
-        setup: {
-          ...instruction.setup,
-          player_units: updatedContext.playerUnits,
-          enemy_units: updatedContext.enemyUnits,
-          blessings: updatedContext.blessings
-        }
-      };
-      setInstruction(updatedInstruction);
+    addLog(`Executing: ${line.description}`);
+
+    try {
+      const { updatedContext, descriptions } = await executeScriptLine(line, scriptContext);
+      descriptions.forEach(desc => addLog(desc));
+      
+      // Update instruction setup with the latest unit states
+      if (instruction) {
+        const updatedInstruction = {
+          ...instruction,
+          setup: {
+            ...instruction.setup,
+            player_units: updatedContext.playerUnits,
+            enemy_units: updatedContext.enemyUnits,
+            blessings: updatedContext.blessings
+          }
+        };
+        setInstruction(updatedInstruction);
+      }
+      
+      setScriptContext(updatedContext);
+      setCurrentScriptLine(prev => prev + 1);
+    } catch (error) {
+      addLog(`Error executing script line: ${error instanceof Error ? error.message : String(error)}`);
     }
-    
-    setScriptContext(updatedContext);
-    setCurrentScriptLine(prev => prev + 1);
   };
 
   const runScript = async () => {
+    if (!instruction) return;
+    
     const initialContext: ScriptContext = {
-      playerUnits: instruction?.setup.player_units || [],
-      enemyUnits: instruction?.setup.enemy_units || [],
-      blessings: instruction?.setup.blessings || [],
+      playerUnits: instruction.setup.player_units || [],
+      enemyUnits: instruction.setup.enemy_units || [],
+      blessings: instruction.setup.blessings || [],
       currentLine: 0
     };
 
-    // Reset instruction to initial state when resetting script
-    if (instruction) {
-      const resetInstruction = await import(/* webpackMode: "eager" */ `../instructions/${blessingId}.json`);
-      setInstruction(resetInstruction.default);
+    try {
+      // Reset instruction and load script
+      const [resetInstruction, scriptLines] = await Promise.all([
+        loadInstruction(blessingId || ''),
+        loadScript(blessingId || '')
+      ]);
+      
+      setInstruction(resetInstruction);
+      setScriptLines(scriptLines);
+      setScriptContext(initialContext);
+      setCurrentScriptLine(0);
+      
+      addLog('=== Starting Script Execution ===');
+      addLog(`Available blessings: ${initialContext.blessings.join(', ')}`);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to reset script');
     }
-
-    setScriptContext(initialContext);
-    setCurrentScriptLine(0);
-    addLog('=== Starting Script Execution ===');
-    addLog(`Available blessings: ${initialContext.blessings.join(', ')}`);
   };
 
-  // Load instruction data
+  // Initial load
   useEffect(() => {
     let isMounted = true;
 
-    setInstruction(null);
-    setError(null);
-    setIsLoading(true);
-    setLogs([]);
-    setScriptContext(null);
-    setCurrentScriptLine(0);
+    const initialize = async () => {
+      if (!blessingId) return;
 
-    const loadBattlefieldData = async () => {
+      setInstruction(null);
+      setError(null);
+      setIsLoading(true);
+      setLogs([]);
+      setScriptContext(null);
+      setCurrentScriptLine(0);
+      setScriptLines([]);
+
       try {
-        const instructionData = await import(/* webpackMode: "eager" */ `../instructions/${blessingId}.json`);
+        const [instructionData, scriptData] = await Promise.all([
+          loadInstruction(blessingId),
+          loadScript(blessingId)
+        ]);
+
         if (isMounted) {
-          setInstruction(instructionData.default);
+          setInstruction(instructionData);
+          setScriptLines(scriptData);
         }
       } catch (err) {
         if (isMounted) {
@@ -236,9 +181,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
       }
     };
 
-    if (blessingId) {
-      loadBattlefieldData();
-    }
+    initialize();
 
     return () => {
       isMounted = false;
