@@ -9,6 +9,7 @@ export interface DeathCallbackResult {
   wasResurrected: boolean;
   updatedUnit: TurnUnit;
   updatedState: TurnState;
+  descriptions?: string[];  // Optional array of descriptions about what happened
 }
 
 /**
@@ -19,22 +20,20 @@ export async function executeAttack(
   state: TurnState,
   onDeath?: (unit: TurnUnit, state: TurnState) => Promise<DeathCallbackResult>
 ): Promise<ActionResult> {
-  console.log('Starting attack execution:', { actor, state });
-  
   const events: TurnEvent[] = [];
   let updatedState = { ...state };
 
   // Find target (for now, randomly select from player units)
   const playerUnits = state.units.filter(u => u.id.startsWith('player_') && u.hp > 0);
   if (playerUnits.length === 0) {
-    console.log('No valid targets found');
+    events.push({ type: 'action', unit: actor, description: 'No valid targets found' });
     return { updatedState, events };
   }
 
   const target = playerUnits[Math.floor(Math.random() * playerUnits.length)];
   const damage = actor.attack || 0;
   
-  console.log('Attack details:', { actor: actor.name, target: target.name, damage });
+  events.push({ type: 'action', unit: actor, description: `${actor.name} attacks ${target.name} for ${damage} damage` });
 
   // Apply damage
   let updatedTarget: TurnUnit = {
@@ -44,21 +43,20 @@ export async function executeAttack(
 
   // If unit died, trigger onDeath callback
   if (updatedTarget.hp === 0) {
-    console.log('Unit defeated, triggering onDeath callback:', updatedTarget.name);
-    
     if (onDeath) {
       const result = await onDeath(updatedTarget, updatedState);
-      console.log('onDeath callback result:', result);
       
       if (result.wasResurrected) {
-        console.log('Unit was resurrected:', result.updatedUnit);
         updatedTarget = result.updatedUnit;
         updatedState = result.updatedState;
+        if (result.descriptions) {
+          result.descriptions.forEach(desc => events.push({ type: 'effect', unit: updatedTarget, description: desc }));
+        }
       } else {
-        console.log('Unit remains defeated:', updatedTarget.name);
+        if (result.descriptions) {
+          result.descriptions.forEach(desc => events.push({ type: 'death', unit: updatedTarget, description: desc }));
+        }
       }
-    } else {
-      console.log('No onDeath callback provided');
     }
   }
 
@@ -68,7 +66,6 @@ export async function executeAttack(
     units: updatedState.units.map(u => u.id === updatedTarget.id ? updatedTarget : u)
   };
 
-  console.log('Attack execution completed');
   return { updatedState, events };
 }
 
@@ -79,10 +76,9 @@ export function executeWait(
   actor: TurnUnit,
   state: TurnState
 ): ActionResult {
-  console.log('Unit waiting:', actor.name);
   return {
     updatedState: state,
-    events: []
+    events: [{ type: 'action', unit: actor, description: `${actor.name} waits` }]
   };
 }
 
@@ -93,8 +89,6 @@ export async function executeUltimate(
   actor: TurnUnit,
   state: TurnState
 ): Promise<ActionResult> {
-  console.log('Starting ultimate execution:', { actor: actor.name, energy: actor.energy });
-  
   const events: TurnEvent[] = [];
   let updatedState = { ...state };
 
@@ -104,6 +98,6 @@ export async function executeUltimate(
     energy: 0
   };
 
-  console.log('Ultimate execution completed');
+  events.push({ type: 'action', unit: actor, description: `${actor.name} uses ultimate, consuming ${energyConsumed} energy` });
   return { updatedState, events };
 } 

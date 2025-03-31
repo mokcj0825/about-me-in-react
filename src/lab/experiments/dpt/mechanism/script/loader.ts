@@ -79,8 +79,6 @@ export function createInitialContext(setup: ScriptData['initialSetup']): TurnSta
  * Handles unit death and potential resurrection
  */
 async function handleUnitDeath(unit: TurnUnit, state: TurnState): Promise<DeathCallbackResult> {
-  console.log('Handling unit death:', { unit: unit.name, blessings: state.blessings });
-  
   // Check for resurrection blessing
   if (state.blessings.length > 0 && unit.id.startsWith('player_')) {
     const blessingId = state.blessings[0];
@@ -89,8 +87,6 @@ async function handleUnitDeath(unit: TurnUnit, state: TurnState): Promise<DeathC
       
       if (blessingData.trigger.type === 'on_knockout' && 
           blessingData.target === 'player') {
-        console.log('Processing resurrection blessing:', blessingId);
-        
         const { updatedUnit, descriptions } = await processBlessingEffects(
           unit,
           blessingData,
@@ -99,14 +95,11 @@ async function handleUnitDeath(unit: TurnUnit, state: TurnState): Promise<DeathC
 
         // If unit was resurrected (HP > 0)
         if (updatedUnit.hp > 0) {
-          console.log('Resurrection successful:', { unit: updatedUnit.name, hp: updatedUnit.hp });
-          
           // Create new state with empty blessings
           const updatedState = {
             ...state,
             blessings: []  // Remove blessing after successful resurrection
           };
-          console.log('Removed blessing after resurrection, new state:', updatedState);
 
           const resurrectedUnit: TurnUnit = {
             ...updatedUnit,
@@ -120,20 +113,26 @@ async function handleUnitDeath(unit: TurnUnit, state: TurnState): Promise<DeathC
           return {
             wasResurrected: true,
             updatedUnit: resurrectedUnit,
-            updatedState
+            updatedState,
+            descriptions
           };
         }
       }
     } catch (error) {
-      console.error('Error processing resurrection:', error);
+      return {
+        wasResurrected: false,
+        updatedUnit: unit,
+        updatedState: state,
+        descriptions: [`Error processing resurrection: ${error instanceof Error ? error.message : String(error)}`]
+      };
     }
   }
 
-  console.log('No resurrection occurred');
   return {
     wasResurrected: false,
     updatedUnit: unit,
-    updatedState: state
+    updatedState: state,
+    descriptions: [`${unit.name} has been defeated`]
   };
 }
 
@@ -144,12 +143,6 @@ export async function executeScriptLine(
   line: ScriptLine,
   context: TurnState
 ): Promise<{ updatedContext: TurnState; descriptions: string[] }> {
-  console.log('Executing script line with context:', { 
-    line, 
-    blessings: context.blessings,
-    turnCount: context.turnCount 
-  });
-
   // Find the actor
   const actor = context.units.find(u => u.id === line.action.actor);
   if (!actor) {
@@ -180,19 +173,12 @@ export async function executeScriptLine(
         };
     }
 
-    console.log('Action result:', { 
-      actionType: line.action.type,
-      blessingsBeforeUpdate: context.blessings,
-      blessingsAfterUpdate: result.updatedState.blessings
-    });
-
     // Return the updated context
     return {
       updatedContext: result.updatedState,
       descriptions: result.events.map(event => event.description)
     };
   } catch (error) {
-    console.error('Error executing action:', error);
     return {
       updatedContext: context,
       descriptions: [`Error executing ${line.action.type}: ${error instanceof Error ? error.message : String(error)}`]
