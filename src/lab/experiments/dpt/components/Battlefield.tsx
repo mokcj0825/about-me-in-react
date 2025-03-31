@@ -47,6 +47,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
   const [logs, setLogs] = useState<ActionLog[]>([]);
   const [turnManager, setTurnManager] = useState<TurnManager | null>(null);
   const [battleState, setBattleState] = useState<TurnState | null>(null);
+  const [stateVersion, setStateVersion] = useState<number>(0);
   const [isStepInProgress, setIsStepInProgress] = useState<boolean>(false);
 
   // Helper to add logs
@@ -72,11 +73,16 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
       const result = await turnManager.processTurn();
       const { newState, events } = result;
       
-      // Log turn events
+      // Log turn events and debug state changes
       events.forEach((event: TurnEvent) => {
         const type = event.type === 'turn_start' || event.type === 'turn_end' ? 'turn' : 
                     event.type === 'action' ? 'action' : 'effect';
         addLog(event.description, type);
+        
+        // Debug log for state changes
+        if (event.type === 'effect' && event.unit) {
+          addLog(`Debug - Unit ${event.unit.id} state: HP=${event.unit.hp}/${event.unit.maxHp}`, 'system');
+        }
       });
 
       // Queue next action for the active unit if it can still act
@@ -85,13 +91,42 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
         turnManager.queueAction(newState.activeUnit, actionType);
       }
 
-      // Create a new state object to ensure React catches all changes
-      setBattleState({
-        ...newState,
-        units: [...newState.units],  // Create new array reference
-        activeUnit: newState.activeUnit ? { ...newState.activeUnit } : null,  // Create new object reference if exists
-        blessings: [...newState.blessings]  // Create new array reference
+      // Create a new state object with deep cloning of units
+      const updatedState: TurnState = {
+        turnCount: newState.turnCount,
+        isPaused: newState.isPaused,
+        blessings: [...newState.blessings],
+        activeUnit: newState.activeUnit ? { ...newState.activeUnit } : null,
+        units: newState.units.map(unit => {
+          // Find the most recent version of this unit from events
+          const latestUnitEvent = [...events].reverse().find(
+            event => event.type === 'effect' && event.unit && event.unit.id === unit.id
+          );
+
+          // Use the most recent unit state if available
+          const baseUnit = latestUnitEvent?.unit || unit;
+
+          return {
+            ...baseUnit,
+            statusEffects: [...(baseUnit.statusEffects || [])],
+            strategy: baseUnit.strategy ? {
+              type: baseUnit.strategy.type,
+              actions: [...baseUnit.strategy.actions]
+            } : undefined
+          };
+        })
+      };
+
+      // Debug log the state update
+      addLog(`Debug - State update: Version ${stateVersion + 1}`, 'system');
+      updatedState.units.forEach(unit => {
+        addLog(`Debug - Updated unit ${unit.id}: HP=${unit.hp}/${unit.maxHp}`, 'system');
       });
+
+      // Force React to recognize the state change
+      setStateVersion(prev => prev + 1);
+      setBattleState(updatedState);
+      
     } catch (error) {
       addLog(`Error executing step: ${error instanceof Error ? error.message : String(error)}`, 'system');
     } finally {
@@ -154,17 +189,17 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div style={styles.root}>      
+    <div style={styles.root} key={`battlefield-${stateVersion}`}>      
       <div style={styles.unitsContainer}>
         <div style={styles.unitSection}>
           <h3>Player Units</h3>
           <div style={styles.unitList}>
             {battleState?.units
               .filter(u => u.id.startsWith('player_'))
-              .map((unit, index) => (
+              .map((unit) => (
                 <UnitCard 
-                  key={`player-${index}`} 
-                  unit={unit} 
+                  key={`${unit.id}-${stateVersion}`}
+                  unit={unit}
                   isPlayerUnit={true}
                   isActive={unit.id === battleState.activeUnit?.id}
                 />
@@ -177,10 +212,10 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
           <div style={styles.unitList}>
             {battleState?.units
               .filter(u => u.id.startsWith('enemy_'))
-              .map((unit, index) => (
+              .map((unit) => (
                 <UnitCard 
-                  key={`enemy-${index}`} 
-                  unit={unit} 
+                  key={`${unit.id}-${stateVersion}`}
+                  unit={unit}
                   isPlayerUnit={false}
                   isActive={unit.id === battleState.activeUnit?.id}
                 />
