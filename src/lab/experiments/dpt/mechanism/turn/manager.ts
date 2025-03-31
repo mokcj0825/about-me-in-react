@@ -181,21 +181,91 @@ export class TurnManager {
           };
         }
       } else if (action === 'ultimate') {
+        // Find target (for now, randomly select from enemy units)
+        const enemyUnits = updatedState.units.filter(u => !u.id.startsWith('player_') && u.hp > 0);
+        if (enemyUnits.length === 0) {
+          events.push({ type: 'action', unit: unitAfterStart, description: 'No valid targets found for ultimate' });
+          return { newState: updatedState, events };
+        }
+
+        const target = enemyUnits[Math.floor(Math.random() * enemyUnits.length)];
         const energyCost = 120; // Default energy cost
-        const updatedUnit = {
+        const baseDamage = unitAfterStart.attack || 0;
+        const ultimateMultiplier = 2.5;
+        const damage = Math.floor(baseDamage * ultimateMultiplier);
+
+        // Create new references for updated units
+        let updatedUnit: TurnUnit = {
           ...unitAfterStart,
           energy: Math.max(0, unitAfterStart.energy - energyCost)
+        };
+
+        let updatedTarget: TurnUnit = {
+          ...target,
+          hp: Math.max(0, (target.hp || 0) - damage)
         };
         
         events.push({
           type: 'action',
           unit: updatedUnit,
-          description: `${updatedUnit.name} uses Ultimate, consuming ${energyCost} energy`
+          description: `${updatedUnit.name} uses Ultimate on ${target.name}, consuming ${energyCost} energy and dealing ${damage} damage`
         });
 
+        // Process blessings that trigger after ultimate
+        if (updatedState.blessings.length > 0) {
+          for (const blessingId of updatedState.blessings) {
+            try {
+              const blessingData = await loadBlessing(blessingId);
+              
+              if (blessingData.trigger.type === 'after_ultimate' && 
+                  blessingData.target === 'player' &&
+                  updatedUnit.id.startsWith('player_')) {
+                const { updatedUnit: blessedUnit, descriptions } = await processBlessingEffects(
+                  updatedUnit,
+                  blessingData,
+                  { consumedEnergy: energyCost, tempVars: {} }
+                );
+                
+                // Create new reference for blessed unit
+                updatedUnit = {
+                  ...updatedUnit,
+                  hp: blessedUnit.hp,
+                  maxHp: blessedUnit.maxHp,
+                  energy: blessedUnit.energy,
+                  maxEnergy: blessedUnit.maxEnergy
+                };
+                
+                descriptions.forEach((desc: string) => 
+                  events.push({ type: 'effect', unit: updatedUnit, description: desc })
+                );
+
+                // Update state immediately after each blessing effect with new references
+                updatedState = {
+                  ...updatedState,
+                  units: updatedState.units.map(u => 
+                    u.id === updatedUnit.id ? { ...updatedUnit } : { ...u }
+                  ),
+                  activeUnit: updatedUnit.id === updatedState.activeUnit?.id ? { ...updatedUnit } : updatedState.activeUnit ? { ...updatedState.activeUnit } : null
+                };
+              }
+            } catch (error) {
+              events.push({ 
+                type: 'effect', 
+                unit: updatedUnit, 
+                description: `Error processing blessing: ${error instanceof Error ? error.message : String(error)}` 
+              });
+            }
+          }
+        }
+
+        // Update state with new references for all units
         updatedState = {
           ...updatedState,
-          units: updatedState.units.map(u => u.id === updatedUnit.id ? updatedUnit : u)
+          units: updatedState.units.map(u => 
+            u.id === updatedUnit.id ? { ...updatedUnit } :
+            u.id === updatedTarget.id ? { ...updatedTarget } : { ...u }
+          ),
+          activeUnit: updatedUnit.id === updatedState.activeUnit?.id ? { ...updatedUnit } : updatedState.activeUnit ? { ...updatedState.activeUnit } : null
         };
       }
     }
@@ -227,9 +297,23 @@ export class TurnManager {
     this.actionQueue = this.actionQueue.filter(a => a.actor.id !== unitAfterStart.id);
     updatedState.units.forEach(unit => {
       if (unit.canAct && unit.hp > 0) {
-        const actionType = unit.strategy?.type === 'aggressive' 
-          ? `attack:${unit.strategy.actions.find(a => a.type === 'attack')?.target}`
-          : 'wait';
+        let actionType = 'wait';
+        
+        if (unit.strategy) {
+          // Check for ultimate first if energy threshold is met
+          const ultimateAction = unit.strategy.actions.find(a => a.type === 'ultimate');
+          if (ultimateAction && (!ultimateAction.energy_threshold || (unit.energy || 0) >= ultimateAction.energy_threshold)) {
+            actionType = 'ultimate';
+          }
+          // Then check for attack if no ultimate
+          else if (unit.strategy.type === 'aggressive') {
+            const attackAction = unit.strategy.actions.find(a => a.type === 'attack');
+            if (attackAction) {
+              actionType = `attack:${attackAction.target}`;
+            }
+          }
+        }
+        
         this.actionQueue.push({ actor: unit, action: actionType });
       }
     });

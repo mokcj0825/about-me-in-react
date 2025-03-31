@@ -63,9 +63,8 @@ function calculateValue(base: ValueBase, unit: Unit, context: EffectContext['bat
 
   // If it's a percentage calculation, apply the multiplier to the percentage value
   if (measurement === 'percentage') {
-    const percentageResult = baseValue * multiplier;
-    // For resurrection, we want to return a percentage of maxHP
-    return Math.floor((unit.maxHp || 1) * (percentageResult / 100));
+    // For healing, we want to return a percentage of maxHP
+    return Math.floor((unit.maxHp || 1) * (multiplier / 100));
   }
 
   return Math.floor(baseValue * multiplier);
