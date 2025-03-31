@@ -1,4 +1,6 @@
 import { TurnState, TurnUnit, TurnEvent } from '../../type/TurnSystem';
+import { loadBlessing } from '../blessing/loader';
+import { processBlessingEffects } from '../blessing/handler';
 
 export interface ActionResult {
   updatedState: TurnState;
@@ -99,5 +101,50 @@ export async function executeUltimate(
   };
 
   events.push({ type: 'action', unit: actor, description: `${actor.name} uses ultimate, consuming ${energyConsumed} energy` });
+
+  // Process blessings that trigger after ultimate
+  if (state.blessings.length > 0) {
+    for (const blessingId of state.blessings) {
+      try {
+        const blessingData = await loadBlessing(blessingId);
+        
+        if (blessingData.trigger.type === 'after_ultimate' && 
+            blessingData.target === 'player' &&
+            actor.id.startsWith('player_')) {
+          const { updatedUnit, descriptions } = await processBlessingEffects(
+            updatedActor,
+            blessingData,
+            { consumedEnergy: energyConsumed, tempVars: {} }
+          );
+          
+          // Preserve TurnUnit properties
+          updatedActor = {
+            ...updatedActor,
+            hp: updatedUnit.hp,
+            maxHp: updatedUnit.maxHp,
+            energy: updatedUnit.energy,
+            maxEnergy: updatedUnit.maxEnergy
+          };
+          
+          descriptions.forEach((desc: string) => 
+            events.push({ type: 'effect', unit: updatedActor, description: desc })
+          );
+        }
+      } catch (error) {
+        events.push({ 
+          type: 'effect', 
+          unit: actor, 
+          description: `Error processing blessing: ${error instanceof Error ? error.message : String(error)}` 
+        });
+      }
+    }
+  }
+
+  // Update state with modified actor
+  updatedState = {
+    ...updatedState,
+    units: updatedState.units.map(u => u.id === updatedActor.id ? updatedActor : u)
+  };
+
   return { updatedState, events };
 } 

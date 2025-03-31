@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { BlessingPreview } from '../type/BlessingPreview';
-import { InstructionData, Unit } from '../type/InstructionData';
-import { TurnState, TurnUnit, TurnEvent } from '../type/TurnSystem';
+import { InstructionData, Unit, UnitStrategy } from '../type/InstructionData';
+import { TurnState, TurnUnit, TurnEvent, createTurnUnit } from '../type/TurnSystem';
 import UnitCard from './UnitCard';
-import TestSequence from './TestSequence';
+import { loadBlessing } from '../mechanism/blessing/loader';
+import { processBlessingEffects } from '../mechanism/blessing/handler';
 import { loadInstruction } from '../mechanism/instruction/loader';
-import { loadScript, executeScriptLine, ScriptLine, ScriptData, createInitialContext } from '../mechanism/script/loader';
 import { TurnManager } from '../mechanism/turn/manager';
 
 interface BattlefieldProps {
@@ -18,14 +18,36 @@ interface ActionLog {
   type?: 'turn' | 'action' | 'effect' | 'system';
 }
 
+function selectAction(unit: TurnUnit): string {
+  if (!unit.strategy) return 'wait';
+
+  // For aggressive units, prioritize attack actions
+  if (unit.strategy.type === 'aggressive') {
+    const attackAction = unit.strategy.actions.find(a => a.type === 'attack');
+    if (attackAction) {
+      return `attack:${attackAction.target}`;
+    }
+  }
+
+  // For passive units, check for ultimate if energy is sufficient
+  if (unit.strategy.type === 'passive') {
+    const ultimateAction = unit.strategy.actions.find(a => a.type === 'ultimate');
+    if (ultimateAction && (!ultimateAction.energy_threshold || (unit.energy || 0) >= ultimateAction.energy_threshold)) {
+      return 'ultimate';
+    }
+  }
+
+  // Default to wait if no other actions are available
+  return 'wait';
+}
+
 export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElement {
-  const [instruction, setInstruction] = useState<InstructionData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [logs, setLogs] = useState<ActionLog[]>([]);
-  const [scriptLines, setScriptLines] = useState<ScriptLine[]>([]);
-  const [currentScriptLine, setCurrentScriptLine] = useState<number>(0);
   const [turnManager, setTurnManager] = useState<TurnManager | null>(null);
+  const [battleState, setBattleState] = useState<TurnState | null>(null);
+  const [isStepInProgress, setIsStepInProgress] = useState<boolean>(false);
 
   // Helper to add logs
   const addLog = (message: string, type: ActionLog['type'] = 'action') => {
@@ -40,140 +62,96 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
     setLogs([]);
   };
 
-  const executeNextStep = async () => {
-    if (!turnManager || currentScriptLine >= scriptLines.length) return;
+  const executeStep = async () => {
+    if (!turnManager || !battleState || isStepInProgress) return;
 
     try {
-      // Process the turn
-      const { newState, events } = turnManager.processTurn();
+      setIsStepInProgress(true);
       
-      // Log turn events with appropriate styling
-      events.forEach(event => {
+      // Process the turn
+      const result = await turnManager.processTurn();
+      const { newState, events } = result;
+      
+      // Log turn events
+      events.forEach((event: TurnEvent) => {
         const type = event.type === 'turn_start' || event.type === 'turn_end' ? 'turn' : 
                     event.type === 'action' ? 'action' : 'effect';
         addLog(event.description, type);
       });
 
-      // Get the current script line
-      const line = scriptLines[currentScriptLine];
-      const actor = newState.units.find(u => u.id === line.action.actor);
-
-      if (!actor) {
-        addLog(`Error: Could not find actor ${line.action.actor}`, 'system');
-        return;
+      // Queue next action for the active unit if it can still act
+      if (newState.activeUnit && newState.activeUnit.canAct) {
+        const actionType = selectAction(newState.activeUnit);
+        turnManager.queueAction(newState.activeUnit, actionType);
       }
 
-      // Queue the action from the script
-      turnManager.queueAction(actor, line.action.type);
-      
-      // Execute the script line
-      const { updatedContext, descriptions } = await executeScriptLine(line, newState);
-      
-      // Update turn manager with the new state
-      turnManager.setState(updatedContext);
-      
-      // Log action results
-      descriptions.forEach(desc => addLog(desc));
-
-      // Update instruction setup with the latest unit states
-      if (instruction) {
-        const updatedInstruction = {
-          ...instruction,
-          setup: {
-            ...instruction.setup,
-            player_units: updatedContext.units.filter(u => u.id.startsWith('player_')),
-            enemy_units: updatedContext.units.filter(u => u.id.startsWith('enemy_')),
-            blessings: updatedContext.blessings
-          }
-        };
-        setInstruction(updatedInstruction);
-      }
-
-      // Move to next script line
-      setCurrentScriptLine(prev => prev + 1);
-
+      // Create a new state object to ensure React catches all changes
+      setBattleState({
+        ...newState,
+        units: [...newState.units],  // Create new array reference
+        activeUnit: newState.activeUnit ? { ...newState.activeUnit } : null,  // Create new object reference if exists
+        blessings: [...newState.blessings]  // Create new array reference
+      });
     } catch (error) {
       addLog(`Error executing step: ${error instanceof Error ? error.message : String(error)}`, 'system');
+    } finally {
+      setIsStepInProgress(false);
     }
   };
 
-  const runScript = async () => {
+  const initializeBattle = async () => {
     if (!blessingId) return;
     
     try {
-      // Reset instruction and load script
-      const [resetInstruction, scriptData] = await Promise.all([
-        loadInstruction(blessingId),
-        loadScript(blessingId)
-      ]);
+      setIsLoading(true);
+      setLogs([]);
       
-      setInstruction(resetInstruction);
-      setScriptLines(scriptData.scriptLines);
+      // Load instruction data for initial setup
+      const instruction = await loadInstruction(blessingId);
       
-      // Create new turn manager with initial state
-      const initialContext = createInitialContext(scriptData.initialSetup);
-      const newTurnManager = new TurnManager(initialContext);
+      // Create turn units from instruction data
+      const units: TurnUnit[] = [
+        ...instruction.setup.player_units.map(u => createTurnUnit(u)),
+        ...instruction.setup.enemy_units.map(u => createTurnUnit(u))
+      ];
+
+      const initialState: TurnState = {
+        units,
+        activeUnit: null,
+        turnCount: 0,
+        isPaused: false,
+        blessings: instruction.setup.blessings
+      };
+
+      const newTurnManager = new TurnManager(initialState);
+      
+      // Queue initial actions for all units
+      units.forEach(unit => {
+        const actionType = selectAction(unit);
+        newTurnManager.queueAction(unit, actionType);
+      });
+      
       setTurnManager(newTurnManager);
-      setCurrentScriptLine(0);
+      setBattleState(initialState);
       
-      addLog('=== Starting Script Execution ===', 'system');
-      addLog(`Available blessings: ${initialContext.blessings.join(', ')}`, 'system');
+      addLog('=== Battle Initialized ===', 'system');
+      addLog(`Available blessings: ${initialState.blessings.join(', ')}`, 'system');
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to reset script');
+      setError(error instanceof Error ? error.message : 'Failed to initialize battle');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Initial load
   useEffect(() => {
-    let isMounted = true;
-
-    const initialize = async () => {
-      if (!blessingId) return;
-
-      setInstruction(null);
-      setError(null);
-      setIsLoading(true);
-      setLogs([]);
-      setCurrentScriptLine(0);
-      setScriptLines([]);
-      setTurnManager(null);
-
-      try {
-        const [instructionData, scriptData] = await Promise.all([
-          loadInstruction(blessingId),
-          loadScript(blessingId)
-        ]);
-
-        if (isMounted) {
-          setInstruction(instructionData);
-          setScriptLines(scriptData.scriptLines);
-          const initialContext = createInitialContext(scriptData.initialSetup);
-          const newTurnManager = new TurnManager(initialContext);
-          setTurnManager(newTurnManager);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : 'An error occurred');
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initialize();
-
-    return () => {
-      isMounted = false;
-    };
+    if (blessingId) {
+      initializeBattle();
+    }
   }, [blessingId]);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error}</div>;
-  if (!instruction) return <div>No data available</div>;
-
-  const battleState = turnManager?.getState();
 
   return (
     <div style={styles.root}>      
@@ -193,7 +171,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
             ))}
           </div>
         </div>
-        
+
         <div style={styles.unitSection}>
           <h3>Enemy Units</h3>
           <div style={styles.unitList}>
@@ -215,20 +193,20 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
         <div style={styles.header}>
           <div style={styles.controls}>
             <button 
-              onClick={runScript} 
+              onClick={initializeBattle} 
               style={styles.button}
-              disabled={!instruction || currentScriptLine === scriptLines.length}
+              disabled={isLoading}
             >
-              Reset Script
+              Reset Battle
             </button>
-            <button 
-              onClick={executeNextStep} 
+            <button
+              onClick={executeStep}
               style={{
                 ...styles.button,
                 marginLeft: '10px',
                 background: '#2196F3'
               }}
-              disabled={!turnManager || currentScriptLine >= scriptLines.length}
+              disabled={isStepInProgress}
             >
               Next Step
             </button>
@@ -277,7 +255,7 @@ const styles = {
   },
   unitsContainer: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '20px',
     minHeight: '200px'
   },

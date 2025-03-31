@@ -1,8 +1,8 @@
 import React from 'react';
-import { Unit } from '../type/InstructionData';
+import { TurnUnit } from '../type/TurnSystem';
 
 export interface UnitCardProps {
-  unit: Unit;
+  unit: TurnUnit;
   isPlayerUnit: boolean;
   isActive?: boolean;
 }
@@ -12,7 +12,7 @@ export interface UnitCardProps {
  * and status effects. Uses a three-column layout for better space utilization.
  */
 export function UnitCard({ unit, isPlayerUnit, isActive = false }: UnitCardProps): React.ReactElement {
-  const isKnockedOut = unit.hp <= 0;
+  const isKnockedOut = unit.hp <= 0 && !unit.wasResurrected;
   const isLowHp = unit.hp && unit.hp <= unit.maxHp * 0.3;
   
   const getHpColor = (): string => {

@@ -113,10 +113,15 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
       ? Math.floor((currentValue * effect.amount) / 100)
       : effect.amount;
 
+    // For energy consumption on knockout, consume all available energy
+    const finalAmount = effect.resource === 'energy' && battleContext.incomingDamage && currentValue < amountToConsume
+      ? currentValue
+      : amountToConsume;
+
     const updatedUnit = setResourceValue(
       unit,
       effect.resource,
-      Math.max(0, currentValue - amountToConsume)
+      Math.max(0, currentValue - finalAmount)
     );
 
     // Store values in declared temporary variables
@@ -125,10 +130,10 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
       Object.entries(effect.stores).forEach(([varName, valueType]) => {
         switch (valueType) {
           case 'consumed_amount':
-            battleContext.tempVars[varName] = amountToConsume;
+            battleContext.tempVars[varName] = finalAmount;
             break;
           case 'consumed_percentage':
-            battleContext.tempVars[varName] = amountToConsume / (unit.maxEnergy || 1);
+            battleContext.tempVars[varName] = finalAmount / (unit.maxEnergy || 1);
             break;
           // Add more cases as needed for other value types
         }
@@ -137,8 +142,8 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
 
     return {
       updatedUnit,
-      description: `Consumed ${amountToConsume} ${effect.resource}`,
-      consumedAmount: amountToConsume
+      description: `Consumed ${finalAmount} ${effect.resource}`,
+      consumedAmount: finalAmount
     };
   },
 

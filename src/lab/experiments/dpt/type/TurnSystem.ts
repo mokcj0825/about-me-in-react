@@ -1,5 +1,5 @@
 import { BlessingEffect } from '../mechanism/blessing/types';
-import { Unit } from './InstructionData';
+import { Unit, UnitStrategy } from './InstructionData';
 
 /**
  * Represents a unit's state in the turn system
@@ -19,6 +19,8 @@ export interface TurnUnit extends Unit {
   wasResurrected?: boolean;
   /** Buffs that are active on this unit */
   buffs: Buff[];
+  /** Unit's action strategy */
+  strategy?: UnitStrategy;
 }
 
 /**
@@ -109,16 +111,21 @@ export interface TurnResult {
 }
 
 /**
- * Events that can occur during a turn
+ * Represents an event that occurred during a turn
  */
 export interface TurnEvent {
   /** Type of event */
-  type: 'dot_damage' | 'status_tick' | 'turn_start' | 'turn_end' | 'action' | 'death' | 'effect';
-  /** Unit affected by the event */
+  type: 'turn_start' | 'turn_end' | 'action' | 'effect' | 'death' | 'dot_damage' | 'status_tick';
+  /** Unit involved in the event */
   unit: TurnUnit;
-  /** Additional data about the event */
-  data?: Record<string, unknown>;
-  /** Description of what happened */
+  /** Target unit for actions like attacks */
+  target?: TurnUnit;
+  /** Additional data for the event */
+  data?: {
+    damage?: number;
+    effect?: StatusEffect;
+  };
+  /** Human-readable description of the event */
   description: string;
 }
 
@@ -134,7 +141,7 @@ export function calculateBaseActionValue(speed: number): number {
  * If speed is not defined in the unit data, defaults to 100
  */
 export function createTurnUnit(unit: Unit): TurnUnit {
-  const speed = (unit as any).spd ?? 100;
+  const speed = unit.spd ?? 100;
   const baseActionValue = calculateBaseActionValue(speed);
   return {
     ...unit,
@@ -144,6 +151,7 @@ export function createTurnUnit(unit: Unit): TurnUnit {
     statusEffects: [],
     canAct: true,
     wasResurrected: false,
-    buffs: []
+    buffs: [],
+    strategy: unit.strategy
   };
 } 
