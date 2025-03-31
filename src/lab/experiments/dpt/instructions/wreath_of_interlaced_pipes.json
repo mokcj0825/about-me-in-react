@@ -10,7 +10,7 @@
         "name": "Test Subject A",
         "hp": 1000,
         "maxHp": 1000,
-        "energy": 200,
+        "energy": 100,
         "maxEnergy": 200,
         "spd": 100
       },
@@ -19,7 +19,7 @@
         "name": "Test Subject B",
         "hp": 1000,
         "maxHp": 1000,
-        "energy": 200,
+        "energy": 100,
         "maxEnergy": 200,
         "spd": 100
       }

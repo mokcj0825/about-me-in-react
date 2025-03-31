@@ -94,7 +94,7 @@ async function handleUnitDeath(unit: TurnUnit, state: TurnState): Promise<DeathC
         const { updatedUnit, descriptions } = await processBlessingEffects(
           unit,
           blessingData,
-          {}
+          { tempVars: {} }
         );
 
         // If unit was resurrected (HP > 0)

@@ -23,7 +23,11 @@ export interface BlessingEffect {
   value?: {
     base: ValueBase;
     multiplier: number;
+    measurement?: Measurement;
   };
+  // For storing/reading temporary values
+  stores?: string[];  // Variables this effect will write to
+  reads?: string[];   // Variables this effect will read from
 }
 
 export interface Blessing {
@@ -34,4 +38,6 @@ export interface Blessing {
   type: string;
   trigger: BlessingTrigger;
   effects: BlessingEffect[];
+  // Declare all temporary variables used by this blessing
+  tempVars: string[];
 } 

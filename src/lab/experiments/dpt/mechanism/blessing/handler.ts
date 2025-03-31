@@ -8,6 +8,7 @@ interface EffectContext {
     consumedEnergy?: number;
     incomingDamage?: number;
     sourceId?: string;
+    tempVars: Record<string, number>;  // For storing temporary calculation results
   };
 }
 
@@ -17,23 +18,57 @@ interface EffectResult {
 }
 
 /**
+ * Validates that an effect only uses declared temporary variables
+ */
+function validateTempVars(effect: BlessingEffect, blessing: Blessing): void {
+  const declaredVars = blessing.tempVars || [];
+  const usedVars = [
+    ...(effect.stores ? Object.keys(effect.stores) : []),
+    ...(effect.reads || [])
+  ];
+  
+  const undeclaredVars = usedVars.filter(v => !declaredVars.includes(v));
+  if (undeclaredVars.length > 0) {
+    throw new Error(`Effect uses undeclared temporary variables: ${undeclaredVars.join(', ')}`);
+  }
+}
+
+/**
  * Calculates value based on different bases and context
  */
-function calculateValue(base: ValueBase, unit: Unit, context: EffectContext['battleContext'], multiplier: number): number {
+function calculateValue(base: ValueBase, unit: Unit, context: EffectContext['battleContext'], multiplier: number, measurement?: 'percentage'): number {
+  let baseValue: number;
   switch (base) {
     case 'current_hp':
-      return Math.floor((unit.hp || 0) * multiplier);
+      baseValue = unit.hp || 0;
+      break;
     case 'max_hp':
-      return Math.floor((unit.maxHp || 0) * multiplier);
+      baseValue = unit.maxHp || 0;
+      break;
     case 'current_energy':
-      return Math.floor((unit.energy || 0) * multiplier);
+      baseValue = unit.energy || 0;
+      break;
     case 'max_energy':
-      return Math.floor((unit.maxEnergy || 0) * multiplier);
+      baseValue = unit.maxEnergy || 0;
+      break;
     case 'consumed_energy':
-      return Math.floor((context.consumedEnergy || 0) * multiplier);
+      // For consumed energy, calculate it as a percentage of max energy
+      const consumedEnergy = context.consumedEnergy || 0;
+      const maxEnergy = unit.maxEnergy || 1;
+      baseValue = measurement === 'percentage' ? (consumedEnergy / maxEnergy) * 100 : consumedEnergy;
+      break;
     default:
-      return 0;
+      baseValue = 0;
   }
+
+  // If it's a percentage calculation, apply the multiplier to the percentage value
+  if (measurement === 'percentage') {
+    const percentageResult = baseValue * multiplier;
+    // For resurrection, we want to return a percentage of maxHP
+    return Math.floor((unit.maxHp || 1) * (percentageResult / 100));
+  }
+
+  return Math.floor(baseValue * multiplier);
 }
 
 /**
@@ -68,7 +103,7 @@ function setResourceValue(unit: Unit, resource: ResourceType, value: number): Un
  * Registry of effect handlers for different effect types
  */
 const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResult> = {
-  consume_resource: ({ unit, effect }) => {
+  consume_resource: ({ unit, effect, battleContext }) => {
     if (!effect.resource || !effect.amount) {
       return { updatedUnit: unit, description: 'Invalid consume_resource effect' };
     }
@@ -84,6 +119,22 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
       Math.max(0, currentValue - amountToConsume)
     );
 
+    // Store values in declared temporary variables
+    if (effect.stores) {
+      // Store each value according to its declared type
+      Object.entries(effect.stores).forEach(([varName, valueType]) => {
+        switch (valueType) {
+          case 'consumed_amount':
+            battleContext.tempVars[varName] = amountToConsume;
+            break;
+          case 'consumed_percentage':
+            battleContext.tempVars[varName] = amountToConsume / (unit.maxEnergy || 1);
+            break;
+          // Add more cases as needed for other value types
+        }
+      });
+    }
+
     return {
       updatedUnit,
       description: `Consumed ${amountToConsume} ${effect.resource}`,
@@ -91,26 +142,26 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
     };
   },
 
-  resurrect: ({ unit, effect }) => {
-    console.log('resurrect', unit, effect);
+  resurrect: ({ unit, effect, battleContext }) => {
+    console.log('resurrect', unit, effect, battleContext);
     // Only resurrect if unit is actually dead (hp = 0)
     if (unit.hp !== 0) {
       return { updatedUnit: unit, description: 'Unit is not dead, cannot resurrect' };
     }
 
-    // Resurrect with specified HP amount or percentage
-    let resurrectionHp = 1; // Default to 1 if no amount specified
-    if (effect.amount) {
-      resurrectionHp = effect.measurement === 'percentage'
-        ? Math.floor((unit.maxHp || 1) * effect.amount / 100)
-        : effect.amount;
+    // Calculate resurrection HP using stored percentage
+    let resurrectionHp = 1; // Default to 1 if no value specified
+    if (effect.value && effect.reads?.includes('pos2') && battleContext.tempVars.pos2 !== undefined) {
+      const percentage = battleContext.tempVars.pos2;
+      resurrectionHp = Math.max(1, Math.floor((unit.maxHp || 1) * percentage * effect.value.multiplier));
     }
 
     const updatedUnit = { ...unit, hp: Math.min(resurrectionHp, unit.maxHp || 1) };
     console.log('updatedUnit', updatedUnit);
+
     return {
       updatedUnit,
-      description: `Unit resurrected with ${resurrectionHp} HP`
+      description: `Unit resurrected with ${resurrectionHp} HP (${Math.floor((resurrectionHp / (unit.maxHp || 1)) * 100)}% of max HP)`
     };
   },
 
@@ -156,11 +207,14 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
 export async function processBlessingEffects(
   unit: Unit,
   blessing: Blessing,
-  battleContext: EffectContext['battleContext'] = {}
+  battleContext: EffectContext['battleContext'] = { tempVars: {} }
 ): Promise<{ updatedUnit: Unit; descriptions: string[] }> {
   let currentUnit = { ...unit };
   const descriptions: string[] = [];
-  let currentContext = { ...battleContext };
+  let currentContext = { 
+    ...battleContext,
+    tempVars: {}  // Always start with fresh tempVars
+  };
 
   // Process effects in sequence, updating battleContext as needed
   for (const effect of blessing.effects) {
@@ -168,6 +222,9 @@ export async function processBlessingEffects(
       descriptions.push(`Invalid effect: ${effect.type || 'missing type'}`);
       continue;
     }
+
+    // Validate temporary variables before processing
+    validateTempVars(effect, blessing);
 
     const handler = effectHandlers[effect.type];
     const result = handler({
@@ -187,6 +244,9 @@ export async function processBlessingEffects(
       };
     }
   }
+
+  // Clear all temporary variables at the end
+  currentContext.tempVars = {};
 
   return { updatedUnit: currentUnit, descriptions };
 } 
