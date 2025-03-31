@@ -1,15 +1,39 @@
 import { Unit } from '../../type/InstructionData';
-import { Blessing, BlessingEffect, EffectType, ResourceType } from './types';
+import { Blessing, BlessingEffect, EffectType, ResourceType, ValueBase } from './types';
 
 interface EffectContext {
   unit: Unit;
   effect: BlessingEffect;
-  consumedEnergy?: number;
+  battleContext: {
+    consumedEnergy?: number;
+    incomingDamage?: number;
+    sourceId?: string;
+  };
 }
 
 interface EffectResult {
   updatedUnit: Unit;
   description: string;
+}
+
+/**
+ * Calculates value based on different bases and context
+ */
+function calculateValue(base: ValueBase, unit: Unit, context: EffectContext['battleContext'], multiplier: number): number {
+  switch (base) {
+    case 'current_hp':
+      return Math.floor((unit.hp || 0) * multiplier);
+    case 'max_hp':
+      return Math.floor((unit.maxHp || 0) * multiplier);
+    case 'current_energy':
+      return Math.floor((unit.energy || 0) * multiplier);
+    case 'max_energy':
+      return Math.floor((unit.maxEnergy || 0) * multiplier);
+    case 'consumed_energy':
+      return Math.floor((context.consumedEnergy || 0) * multiplier);
+    default:
+      return 0;
+  }
 }
 
 /**
@@ -31,8 +55,8 @@ function getResourceValue(unit: Unit, resource: ResourceType): number {
  */
 function setResourceValue(unit: Unit, resource: ResourceType, value: number): Unit {
   switch (resource) {
-    case 'hp': return { ...unit, hp: value };
-    case 'energy': return { ...unit, energy: value };
+    case 'hp': return { ...unit, hp: Math.min(value, unit.maxHp || 0) };
+    case 'energy': return { ...unit, energy: Math.min(value, unit.maxEnergy || 0) };
     default: {
       const _exhaustiveCheck: never = resource;
       return _exhaustiveCheck;
@@ -44,11 +68,6 @@ function setResourceValue(unit: Unit, resource: ResourceType, value: number): Un
  * Registry of effect handlers for different effect types
  */
 const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResult> = {
-  prevent_knockout: ({ unit }) => ({
-    updatedUnit: unit,
-    description: 'Prevented knockout'
-  }),
-
   consume_resource: ({ unit, effect }) => {
     if (!effect.resource || !effect.amount) {
       return { updatedUnit: unit, description: 'Invalid consume_resource effect' };
@@ -67,49 +86,65 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
 
     return {
       updatedUnit,
-      description: `Consumed ${amountToConsume} ${effect.resource}`
+      description: `Consumed ${amountToConsume} ${effect.resource}`,
+      consumedAmount: amountToConsume
     };
   },
 
-  heal: ({ unit, effect, consumedEnergy }) => {
+  resurrect: ({ unit, effect }) => {
+    console.log('resurrect', unit, effect);
+    // Only resurrect if unit is actually dead (hp = 0)
+    if (unit.hp !== 0) {
+      return { updatedUnit: unit, description: 'Unit is not dead, cannot resurrect' };
+    }
+
+    // Resurrect with specified HP amount or percentage
+    let resurrectionHp = 1; // Default to 1 if no amount specified
+    if (effect.amount) {
+      resurrectionHp = effect.measurement === 'percentage'
+        ? Math.floor((unit.maxHp || 1) * effect.amount / 100)
+        : effect.amount;
+    }
+
+    const updatedUnit = { ...unit, hp: Math.min(resurrectionHp, unit.maxHp || 1) };
+    console.log('updatedUnit', updatedUnit);
+    return {
+      updatedUnit,
+      description: `Unit resurrected with ${resurrectionHp} HP`
+    };
+  },
+
+  heal: ({ unit, effect, battleContext }) => {
     if (!effect.value) {
       return { updatedUnit: unit, description: 'Invalid heal effect' };
     }
 
-    let healAmount = 0;
-    switch (effect.value.base) {
-      case 'max_hp':
-        healAmount = Math.floor((unit.maxHp || 0) * effect.value.multiplier);
-        break;
-      case 'consumed_energy':
-        healAmount = Math.floor((consumedEnergy || 0) * effect.value.multiplier);
-        break;
-      // Add more cases for other base types
-    }
+    // For consumed_energy base, use the actual consumed amount from battleContext
+    const healAmount = effect.value.base === 'consumed_energy' && battleContext.consumedEnergy
+      ? Math.floor(battleContext.consumedEnergy * effect.value.multiplier)
+      : calculateValue(effect.value.base, unit, battleContext, effect.value.multiplier);
 
-    const newHp = Math.min((unit.hp || 0) + healAmount, unit.maxHp || 0);
+    const currentHp = unit.hp || 0;
+    const maxHp = unit.maxHp || 0;
+    const updatedUnit = setResourceValue(unit, 'hp', Math.min(currentHp + healAmount, maxHp));
+
     return {
-      updatedUnit: { ...unit, hp: newHp },
+      updatedUnit,
       description: `Healed for ${healAmount} HP`
     };
   },
 
-  restore_energy: ({ unit, effect }) => {
+  restore_energy: ({ unit, effect, battleContext }) => {
     if (!effect.value) {
       return { updatedUnit: unit, description: 'Invalid restore_energy effect' };
     }
 
-    let restoreAmount = 0;
-    switch (effect.value.base) {
-      case 'max_energy':
-        restoreAmount = Math.floor((unit.maxEnergy || 0) * effect.value.multiplier);
-        break;
-      // Add more cases for other base types
-    }
+    const restoreAmount = calculateValue(effect.value.base, unit, battleContext, effect.value.multiplier);
+    const currentEnergy = unit.energy || 0;
+    const updatedUnit = setResourceValue(unit, 'energy', currentEnergy + restoreAmount);
 
-    const newEnergy = Math.min((unit.energy || 0) + restoreAmount, unit.maxEnergy || 0);
     return {
-      updatedUnit: { ...unit, energy: newEnergy },
+      updatedUnit,
       description: `Restored ${restoreAmount} energy`
     };
   }
@@ -121,21 +156,36 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
 export async function processBlessingEffects(
   unit: Unit,
   blessing: Blessing,
-  context: { consumedEnergy?: number } = {}
+  battleContext: EffectContext['battleContext'] = {}
 ): Promise<{ updatedUnit: Unit; descriptions: string[] }> {
   let currentUnit = { ...unit };
   const descriptions: string[] = [];
+  let currentContext = { ...battleContext };
 
+  // Process effects in sequence, updating battleContext as needed
   for (const effect of blessing.effects) {
-    const handler = effectHandlers[effect.type];
-    if (!handler) {
-      descriptions.push(`Unknown effect type: ${effect.type}`);
+    if (!effect.type || !(effect.type in effectHandlers)) {
+      descriptions.push(`Invalid effect: ${effect.type || 'missing type'}`);
       continue;
     }
 
-    const result = handler({ unit: currentUnit, effect, ...context });
+    const handler = effectHandlers[effect.type];
+    const result = handler({
+      unit: currentUnit,
+      effect,
+      battleContext: currentContext
+    });
+
     currentUnit = result.updatedUnit;
     descriptions.push(result.description);
+
+    // Update context with consumed amount if available
+    if (effect.type === 'consume_resource' && 'consumedAmount' in result) {
+      currentContext = {
+        ...currentContext,
+        consumedEnergy: (result as { consumedAmount: number }).consumedAmount
+      };
+    }
   }
 
   return { updatedUnit: currentUnit, descriptions };

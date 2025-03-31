@@ -1,17 +1,17 @@
 import React from 'react';
 import { Unit } from '../type/InstructionData';
 
-interface UnitCardProps {
+export interface UnitCardProps {
   unit: Unit;
-  /** Indicates if this is a player unit (true) or enemy unit (false) */
-  isPlayerUnit?: boolean;
+  isPlayerUnit: boolean;
+  isActive?: boolean;
 }
 
 /**
  * Renders a card displaying unit information with visual indicators for HP, energy,
  * and status effects. Uses a three-column layout for better space utilization.
  */
-export const UnitCard: React.FC<UnitCardProps> = ({ unit, isPlayerUnit = true }) => {
+export function UnitCard({ unit, isPlayerUnit, isActive = false }: UnitCardProps): React.ReactElement {
   const isKnockedOut = unit.hp <= 0;
   const isLowHp = unit.hp && unit.hp <= unit.maxHp * 0.3;
   
@@ -38,7 +38,8 @@ export const UnitCard: React.FC<UnitCardProps> = ({ unit, isPlayerUnit = true })
       borderRadius: '8px',
       background: isKnockedOut ? '#ffebee' : '#fff',
       transition: 'all 0.3s ease',
-      position: 'relative' as const
+      position: 'relative' as const,
+      ...(isActive ? { boxShadow: '0 0 15px rgba(33, 150, 243, 0.5)', transform: 'scale(1.02)' } : {})
     }}>
       <div style={{
         display: 'grid',
@@ -86,6 +87,19 @@ export const UnitCard: React.FC<UnitCardProps> = ({ unit, isPlayerUnit = true })
               animation: 'fadeIn 0.3s ease'
             }}>
               K.O.
+            </div>
+          )}
+          {isActive && (
+            <div style={{
+              background: '#2196F3',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '0.8em',
+              fontWeight: 'bold',
+              animation: 'fadeIn 0.3s ease'
+            }}>
+              Active
             </div>
           )}
         </div>
@@ -176,6 +190,68 @@ export const UnitCard: React.FC<UnitCardProps> = ({ unit, isPlayerUnit = true })
       </style>
     </div>
   );
+}
+
+const styles = {
+  card: {
+    padding: '15px',
+    borderRadius: '8px',
+    margin: '10px',
+    width: '200px',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s ease'
+  },
+  playerCard: {
+    background: '#e3f2fd',
+    border: '1px solid #90caf9'
+  },
+  enemyCard: {
+    background: '#fbe9e7',
+    border: '1px solid #ffccbc'
+  },
+  activeCard: {
+    boxShadow: '0 0 15px rgba(33, 150, 243, 0.5)',
+    transform: 'scale(1.02)'
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '10px'
+  },
+  name: {
+    margin: '0',
+    fontSize: '16px',
+    fontWeight: 'bold'
+  },
+  activeIndicator: {
+    background: '#2196F3',
+    color: 'white',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    fontSize: '12px'
+  },
+  stats: {
+    marginBottom: '10px'
+  },
+  statRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    margin: '5px 0'
+  },
+  effects: {
+    borderTop: '1px solid rgba(0,0,0,0.1)',
+    paddingTop: '10px'
+  },
+  effectsTitle: {
+    margin: '0 0 5px 0',
+    fontSize: '14px'
+  },
+  effect: {
+    fontSize: '12px',
+    color: '#666',
+    margin: '3px 0'
+  }
 };
 
 export default UnitCard; 

@@ -5,15 +5,11 @@
   "target": "player",
   "type": "survival",
   "trigger": {
-    "type": "on_fatal_damage",
+    "type": "on_knockout",
     "conditions": ["hp_zero"],
     "usage": "once_per_battle_team"
   },
   "effects": [
-    {
-      "type": "prevent_knockout",
-      "duration": "instant"
-    },
     {
       "type": "consume_resource",
       "resource": "energy",
@@ -21,11 +17,9 @@
       "measurement": "percentage"
     },
     {
-      "type": "heal",
-      "value": {
-        "base": "consumed_energy",
-        "multiplier": 0.5
-      }
+      "type": "resurrect",
+      "amount": 50,
+      "measurement": "percentage"
     }
   ]
 }

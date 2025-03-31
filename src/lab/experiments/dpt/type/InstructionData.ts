@@ -3,17 +3,22 @@ export interface Unit {
     name: string;
     hp: number;
     maxHp: number;
-    energy?: number;
-    maxEnergy?: number;
+    energy: number;
+    maxEnergy: number;
+    spd: number;
+    usedEffects?: {
+      preventKnockout?: boolean;
+    };
     attack?: number;
     target_type?: string;
   }
   
   export interface TestStep {
     step: number;
+    expected_actor: string;
     action: {
-      actor: string;
       type: string;
+      actor?: string;
       description: string;
       expected_result: string[];
     };
@@ -29,7 +34,7 @@ export interface Unit {
       enemy_units: Unit[];
     };
     test_sequence: TestStep[];
-    validation: {
+    validation?: {
       success_conditions: string[];
       edge_cases: string[];
     };
