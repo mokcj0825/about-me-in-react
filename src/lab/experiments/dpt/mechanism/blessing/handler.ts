@@ -158,7 +158,7 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
 
     const updatedUnit = { ...unit, hp: Math.min(resurrectionHp, unit.maxHp || 1) };
     console.log('updatedUnit', updatedUnit);
-
+    console.log('tempVars in resurrect', battleContext.tempVars);
     return {
       updatedUnit,
       description: `Unit resurrected with ${resurrectionHp} HP (${Math.floor((resurrectionHp / (unit.maxHp || 1)) * 100)}% of max HP)`
@@ -178,7 +178,7 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
     const currentHp = unit.hp || 0;
     const maxHp = unit.maxHp || 0;
     const updatedUnit = setResourceValue(unit, 'hp', Math.min(currentHp + healAmount, maxHp));
-
+    console.log('tempVars in heal', battleContext.tempVars);
     return {
       updatedUnit,
       description: `Healed for ${healAmount} HP`
@@ -193,7 +193,7 @@ const effectHandlers: Record<EffectType, (context: EffectContext) => EffectResul
     const restoreAmount = calculateValue(effect.value.base, unit, battleContext, effect.value.multiplier);
     const currentEnergy = unit.energy || 0;
     const updatedUnit = setResourceValue(unit, 'energy', currentEnergy + restoreAmount);
-
+    console.log('tempVars in restore_energy', battleContext.tempVars);
     return {
       updatedUnit,
       description: `Restored ${restoreAmount} energy`

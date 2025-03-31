@@ -27,7 +27,8 @@
         "base": "consumed_energy",
         "multiplier": 0.5
       },
-      "reads": ["pos2"]
+      "reads": ["pos2"],
+      "description": "Resurrect with HP equal to 50% of consumed energy percentage"
     }
   ]
 }
