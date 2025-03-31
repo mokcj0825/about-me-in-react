@@ -2,8 +2,8 @@
  * Types for blessing triggers and effects
  */
 
-export type TriggerType = 'on_fatal_damage' | 'after_ultimate' | 'on_turn_start' | 'on_turn_end';
-export type EffectType = 'prevent_knockout' | 'consume_resource' | 'heal' | 'restore_energy';
+export type TriggerType = 'on_fatal_damage' | 'after_ultimate' | 'on_turn_start' | 'on_turn_end' | 'on_knockout';
+export type EffectType = 'consume_resource' | 'heal' | 'restore_energy' | 'resurrect';
 export type ResourceType = 'hp' | 'energy';
 export type ValueBase = 'current_hp' | 'max_hp' | 'current_energy' | 'max_energy' | 'consumed_energy';
 export type Measurement = 'percentage' | 'absolute';
@@ -23,7 +23,11 @@ export interface BlessingEffect {
   value?: {
     base: ValueBase;
     multiplier: number;
+    measurement?: Measurement;
   };
+  // For storing/reading temporary values
+  stores?: string[];  // Variables this effect will write to
+  reads?: string[];   // Variables this effect will read from
 }
 
 export interface Blessing {
@@ -34,4 +38,6 @@ export interface Blessing {
   type: string;
   trigger: BlessingTrigger;
   effects: BlessingEffect[];
+  // Declare all temporary variables used by this blessing
+  tempVars: string[];
 } 

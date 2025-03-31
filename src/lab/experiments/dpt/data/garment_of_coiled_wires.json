@@ -15,7 +15,8 @@
       "value": {
         "base": "max_hp",
         "multiplier": 0.16
-      }
+      },
+      "description": "Heal for 16% of max HP"
     }
   ]
 }

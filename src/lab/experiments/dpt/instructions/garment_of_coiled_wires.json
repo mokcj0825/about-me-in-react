@@ -11,44 +11,99 @@
         "hp": 400,
         "maxHp": 1000,
         "energy": 120,
-        "maxEnergy": 120
+        "maxEnergy": 120,
+        "spd": 100,
+        "strategy": {
+          "type": "aggressive",
+          "actions": [
+            {
+              "type": "ultimate",
+              "energy_threshold": 100
+            },
+            {
+              "type": "wait"
+            }
+          ]
+        }
+      },
+      {
+        "id": "player_2",
+        "name": "Test Subject B",
+        "hp": 500,
+        "maxHp": 1000,
+        "energy": 120,
+        "maxEnergy": 120,
+        "spd": 100,
+        "strategy": {
+          "type": "aggressive",
+          "actions": [
+            {
+              "type": "ultimate",
+              "energy_threshold": 100
+            },
+            {
+              "type": "wait"
+            }
+          ]
+        }
       }
     ],
     "enemy_units": [
       {
         "id": "enemy_1",
-        "name": "Target Dummy",
+        "name": "Damage Dealer A",
         "hp": 1000,
-        "maxHp": 1000
+        "maxHp": 1000,
+        "spd": 90,
+        "strategy": {
+          "type": "aggressive",
+          "actions": [
+            {
+              "type": "attack",
+              "target": "player_1"
+            },
+            {
+              "type": "attack",
+              "target": "player_2"
+            }
+          ]
+        }
+      },
+      {
+        "id": "enemy_2",
+        "name": "Damage Dealer B",
+        "hp": 1000,
+        "maxHp": 1000,
+        "spd": 90,
+        "strategy": {
+          "type": "aggressive",
+          "actions": [
+            {
+              "type": "attack",
+              "target": "player_2"
+            },
+            {
+              "type": "attack",
+              "target": "player_1"
+            }
+          ]
+        }
       }
     ]
   },
-  "test_sequence": [
-    {
-      "step": 1,
-      "action": {
-        "actor": "player_1",
-        "type": "ultimate",
-        "description": "Test Subject A casts ultimate ability",
-        "expected_result": [
-          "Ultimate should consume all energy (120)",
-          "Blessing should trigger after ultimate cast",
-          "Unit should recover HP equal to 16% of max HP (160 HP)",
-          "Final HP should be 560 (400 + 160)"
-        ]
-      }
-    }
-  ],
   "validation": {
     "success_conditions": [
-      "Player unit's energy is fully consumed (0/120)",
-      "Player unit's HP increases by 16% of max HP",
-      "Blessing effect triggers immediately after ultimate cast"
+      "Player unit's energy is fully consumed (0/120) after ultimate",
+      "Player unit's HP increases by 16% of max HP when ultimate is used",
+      "Blessing effect triggers immediately after ultimate cast",
+      "Blessing persists across turns and can trigger multiple times"
     ],
     "edge_cases": [
       "Blessing should trigger even if unit is at full HP",
       "HP recovery should not exceed maxHp",
-      "HP recovery amount is based on maxHp, not current HP"
+      "HP recovery amount is based on maxHp, not current HP",
+      "Blessing should work for all player units",
+      "Blessing should trigger every time an ultimate is used"
     ]
   }
 }

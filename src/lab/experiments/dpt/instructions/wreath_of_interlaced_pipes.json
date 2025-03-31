@@ -10,16 +10,34 @@
         "name": "Test Subject A",
         "hp": 1000,
         "maxHp": 1000,
-        "energy": 200,
-        "maxEnergy": 200
+        "energy": 100,
+        "maxEnergy": 200,
+        "spd": 100,
+        "strategy": {
+          "type": "passive",
+          "actions": [
+            {
+              "type": "wait"
+            }
+          ]
+        }
       },
       {
         "id": "player_2",
         "name": "Test Subject B",
         "hp": 1000,
         "maxHp": 1000,
-        "energy": 200,
-        "maxEnergy": 200
+        "energy": 100,
+        "maxEnergy": 200,
+        "spd": 100,
+        "strategy": {
+          "type": "passive",
+          "actions": [
+            {
+              "type": "wait"
+            }
+          ]
+        }
       }
     ],
     "enemy_units": [
@@ -29,7 +47,16 @@
         "hp": 1000,
         "maxHp": 1000,
         "attack": 99999,
-        "target_type": "single"
+        "spd": 200,
+        "strategy": {
+          "type": "aggressive",
+          "actions": [
+            {
+              "type": "attack",
+              "target": "player_1"
+            }
+          ]
+        }
       },
       {
         "id": "enemy_2",
@@ -37,47 +64,32 @@
         "hp": 1000,
         "maxHp": 1000,
         "attack": 99999,
-        "target_type": "single"
+        "spd": 200,
+        "strategy": {
+          "type": "aggressive",
+          "actions": [
+            {
+              "type": "attack",
+              "target": "player_2"
+            }
+          ]
+        }
       }
     ]
   },
-  "test_sequence": [
-    {
-      "step": 1,
-      "action": {
-        "actor": "enemy_1",
-        "type": "attack",
-        "description": "Enemy A deals fatal damage to a random player unit",
-        "expected_result": [
-          "Target unit should not be knocked out",
-          "Target unit's energy should be consumed",
-          "Target unit should recover HP equal to 50% of consumed energy",
-          "Blessing effect should be marked as used for the team"
-        ]
-      }
-    },
-    {
-      "step": 2,
-      "action": {
-        "actor": "enemy_2",
-        "type": "attack",
-        "description": "Enemy B deals fatal damage to random player unit",
-        "expected_result": [
-          "Target unit should be knocked out (blessing already used)",
-          "No energy consumption or HP recovery should occur"
-        ]
-      }
-    }
-  ],
   "validation": {
     "success_conditions": [
-      "First player unit survives with HP = (consumed_energy * 0.5)",
-      "Second player unit is knocked out",
-      "Blessing effect is consumed"
+      "First attacked player unit should not be knocked out",
+      "First attacked player unit's energy should be consumed",
+      "First attacked player unit should recover HP equal to 50% of consumed energy",
+      "Second attacked player unit should be knocked out (blessing already used)",
+      "No energy consumption or HP recovery for second attacked unit"
     ],
     "edge_cases": [
-      "If both units are hit simultaneously, only one should receive the blessing effect",
-      "The blessing effect should not trigger again in the same battle"
+      "Blessing should only work once per team",
+      "HP recovery should not exceed maxHp",
+      "Energy consumption should not go below 0",
+      "Blessing should work regardless of attack order"
     ]
   }
 }
