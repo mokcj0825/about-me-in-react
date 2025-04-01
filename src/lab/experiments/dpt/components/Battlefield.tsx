@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { BlessingPreview } from '../type/BlessingPreview';
-import { InstructionData, Unit, UnitStrategy } from '../type/InstructionData';
 import { TurnState, TurnUnit, TurnEvent, createTurnUnit } from '../type/TurnSystem';
 import UnitCard from './UnitCard';
-import { loadBlessing } from '../mechanism/blessing/loader';
-import { processBlessingEffects } from '../mechanism/blessing/handler';
 import { loadInstruction } from '../mechanism/instruction/loader';
 import { TurnManager } from '../mechanism/turn/manager';
 
@@ -189,7 +185,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
   if (error) return <div>Error: {error}</div>;
 
   return (
-    <div style={styles.root} key={`battlefield-${stateVersion}`}>      
+    <div style={styles.root}>      
       <div style={styles.unitsContainer}>
         <div style={styles.unitSection}>
           <h3>Player Units</h3>
@@ -198,7 +194,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
               .filter(u => u.id.startsWith('player_'))
               .map((unit) => (
                 <UnitCard 
-                  key={`${unit.id}-${stateVersion}`}
+                  key={unit.id}
                   unit={unit}
                   isPlayerUnit={true}
                   isActive={unit.id === battleState.activeUnit?.id}
@@ -214,7 +210,7 @@ export function Battlefield({ blessingId }: BattlefieldProps): React.ReactElemen
               .filter(u => u.id.startsWith('enemy_'))
               .map((unit) => (
                 <UnitCard 
-                  key={`${unit.id}-${stateVersion}`}
+                  key={unit.id}
                   unit={unit}
                   isPlayerUnit={false}
                   isActive={unit.id === battleState.activeUnit?.id}
