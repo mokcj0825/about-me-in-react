@@ -1,0 +1,8 @@
+{
+  "id": "candle_of_delayed_diffraction",
+  "name": "Candle of delayed diffraction",
+  "path": "erudition",
+  "rarity": 1,
+  "category": "attack",
+  "description": "After characters use an AoE ATK ability, their ATK increases by 30.0% lasting for 2 turn(s)."
+}

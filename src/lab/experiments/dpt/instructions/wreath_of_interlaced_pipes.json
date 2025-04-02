@@ -2,80 +2,86 @@
   "id": "wreath_of_interlaced_pipes_test",
   "name": "Wreath of Interlaced Pipes Survival Test",
   "description": "Demonstrates the survival mechanism of Wreath of Interlaced Pipes blessing",
-  "setup": {
-    "blessings": ["wreath_of_interlaced_pipes"],
-    "player_units": [
-      {
-        "id": "player_1",
-        "name": "Test Subject A",
-        "hp": 1000,
-        "maxHp": 1000,
-        "energy": 100,
-        "maxEnergy": 200,
-        "spd": 100,
-        "strategy": {
-          "type": "passive",
-          "actions": [
-            {
-              "type": "wait"
-            }
-          ]
-        }
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structures": {
+      "survival_effect": {
+        "id": "wreath_survival",
+        "type": "survival_trigger",
+        "energy_cost": "all",
+        "hp_recovery_ratio": 0.5,
+        "trigger": "before_knockout",
+        "uses_per_team": 1
       },
-      {
-        "id": "player_2",
-        "name": "Test Subject B",
-        "hp": 1000,
-        "maxHp": 1000,
-        "energy": 100,
-        "maxEnergy": 200,
-        "spd": 100,
-        "strategy": {
-          "type": "passive",
-          "actions": [
-            {
-              "type": "wait"
-            }
+      "event_types": [
+        "damage_received",
+        "before_knockout",
+        "energy_consumed",
+        "hp_recovered",
+        "blessing_used"
+      ],
+      "required_interfaces": {
+        "DamageHandler": {
+          "methods": [
+            "calculateDamage(source: Unit, target: Unit, amount: number): number",
+            "applyDamage(target: Unit, amount: number): void",
+            "isKnockoutDamage(unit: Unit, damage: number): boolean"
+          ]
+        },
+        "BlessingManager": {
+          "methods": [
+            "hasBlessing(unit: Unit, blessingId: string): boolean",
+            "hasBlessingBeenUsed(teamId: string, blessingId: string): boolean",
+            "markBlessingAsUsed(teamId: string, blessingId: string): void"
+          ]
+        },
+        "ResourceManager": {
+          "methods": [
+            "consumeEnergy(unit: Unit, amount: number): number",
+            "recoverHp(unit: Unit, amount: number): number"
           ]
         }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "damage_received",
+        "checks": [
+          "Is damage lethal?",
+          "Does unit have wreath_of_interlaced_pipes blessing?",
+          "Has blessing not been used by team yet?"
+        ],
+        "actions": [
+          "Calculate energy to consume (all remaining)",
+          "Calculate HP to recover (50% of consumed energy)",
+          "Consume energy",
+          "Recover HP",
+          "Mark blessing as used for team",
+          "Emit blessing_used event"
+        ]
       }
     ],
-    "enemy_units": [
-      {
-        "id": "enemy_1",
-        "name": "Damage Dealer A",
-        "hp": 1000,
-        "maxHp": 1000,
-        "attack": 99999,
-        "spd": 200,
-        "strategy": {
-          "type": "aggressive",
-          "actions": [
-            {
-              "type": "attack",
-              "target": "player_1"
-            }
-          ]
-        }
-      },
-      {
-        "id": "enemy_2",
-        "name": "Damage Dealer B",
-        "hp": 1000,
-        "maxHp": 1000,
-        "attack": 99999,
-        "spd": 200,
-        "strategy": {
-          "type": "aggressive",
-          "actions": [
-            {
-              "type": "attack",
-              "target": "player_2"
-            }
-          ]
-        }
-      }
-    ]
+    "pseudocode": {
+      "damage_handling": [
+        "function handleDamage(event: DamageEvent) {",
+        "  const damage = damageHandler.calculateDamage(event.source, event.target, event.amount);",
+        "  ",
+        "  if (damageHandler.isKnockoutDamage(event.target, damage)) {",
+        "    if (blessingManager.hasBlessing(event.target, 'wreath_of_interlaced_pipes') &&",
+        "        !blessingManager.hasBlessingBeenUsed(event.target.teamId, 'wreath_of_interlaced_pipes')) {",
+        "      const energyConsumed = resourceManager.consumeEnergy(event.target, event.target.energy);",
+        "      const hpRecovered = resourceManager.recoverHp(event.target, energyConsumed * 0.5);",
+        "      ",
+        "      blessingManager.markBlessingAsUsed(event.target.teamId, 'wreath_of_interlaced_pipes');",
+        "      emitEvent('blessing_used', { target: event.target, blessing: 'wreath_of_interlaced_pipes' });",
+        "    }",
+        "  }",
+        "  ",
+        "  damageHandler.applyDamage(event.target, damage);",
+        "}"
+      ]
+    }
   },
   "validation": {
     "success_conditions": [

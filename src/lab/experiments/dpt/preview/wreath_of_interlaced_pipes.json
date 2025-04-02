@@ -2,5 +2,7 @@
   "id": "wreath_of_interlaced_pipes",
   "name": "Wreath of interlaced pipes",
   "path": "erudition",
+  "rarity": 1,
+  "category": "defense",
   "description": "When struck with a killing blow, characters will not be knocked down and will instead consume all their Energy, then restore HP equal to 50.0% of the consumed Energy. This effect can only be triggered once per battle for the whole team."
 }

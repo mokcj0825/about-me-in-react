@@ -11,6 +11,10 @@
     {
         "id": "canopy_of_mottled_metal",
         "name": "Canopy of Mottled Metal"
+    },
+    {
+        "id": "candle_of_delayed_diffraction",
+        "name": "Candle of Delayed Diffraction"
     }
   ]
 } 
