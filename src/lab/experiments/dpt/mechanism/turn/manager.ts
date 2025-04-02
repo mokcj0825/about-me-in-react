@@ -1,9 +1,21 @@
 import { TurnState, TurnUnit, TurnEvent, TurnResult } from '../../type/TurnSystem';
 import { loadBlessing } from '../blessing/loader';
 import { processBlessingEffects } from '../blessing/handler';
+import { handleAttack } from './manager_handler/attack';
+import { handleUltimate } from './manager_handler/ultimate';
 
 /**
  * Manages the turn-based battle system
+ * 
+ * Note on Action Handler Imports:
+ * Action handlers (attack, ultimate) are imported statically rather than dynamically because:
+ * 1. They are core battle mechanics that are always required
+ * 2. They are small, essential modules used frequently during battle
+ * 3. They need to be immediately available for battle execution
+ * 4. They are tightly coupled with the turn manager's functionality
+ * 
+ * While we generally prefer dynamic imports for scalability, in this case static imports
+ * provide better reliability and simpler error handling without sacrificing maintainability.
  */
 export class TurnManager {
   private state: TurnState;
@@ -109,164 +121,36 @@ export class TurnManager {
     const queuedAction = this.actionQueue.find(a => a.actor.id === unitAfterStart.id);
     if (queuedAction) {
       const { action } = queuedAction;
-      if (action.startsWith('attack:')) {
-        const targetId = action.split(':')[1];
-        const target = updatedState.units.find(u => u.id === targetId);
-        if (target) {
-          const damage = unitAfterStart.attack || 100; // Default damage if not specified
-          let updatedTarget = {
-            ...target,
-            hp: Math.max(0, target.hp - damage)
-          };
-          
-          events.push({
-            type: 'action',
-            unit: unitAfterStart,
-            target: updatedTarget,
-            description: `${unitAfterStart.name} attacks ${target.name} for ${damage} damage`
+      
+      switch (true) {
+        case action.startsWith('attack:'): {
+          const targetId = action.split(':')[1];
+          const { updatedState: newState, events: attackEvents } = await handleAttack({
+            actor: unitAfterStart,
+            targetId,
+            state: updatedState,
+            usedBlessings: this.usedBlessings
           });
-
-          // Process blessing effects if target is a player unit and hasn't used blessing yet
-          if (target.id.startsWith('player_') && updatedState.blessings.length > 0) {
-            for (const blessingId of updatedState.blessings) {
-              // Skip if this blessing has already been used
-              if (this.usedBlessings.has(blessingId)) continue;
-
-              try {
-                const blessingData = await loadBlessing(blessingId);
-                
-                if (blessingData.trigger.type === 'on_knockout' && 
-                    blessingData.target === 'player') {
-                  const { updatedUnit, descriptions } = await processBlessingEffects(
-                    updatedTarget as TurnUnit,
-                    blessingData,
-                    { incomingDamage: damage, tempVars: {} }
-                  );
-                  
-                  // Update target with blessing effects
-                  updatedTarget = updatedUnit as TurnUnit;
-                  
-                  descriptions.forEach(desc => 
-                    events.push({
-                      type: 'effect',
-                      unit: updatedTarget,
-                      description: desc
-                    })
-                  );
-
-                  // Mark blessing as used
-                  this.usedBlessings.add(blessingId);
-                  break; // Only process one blessing
-                }
-              } catch (error) {
-                events.push({
-                  type: 'effect',
-                  unit: target,
-                  description: `Error processing blessing: ${error instanceof Error ? error.message : String(error)}`
-                });
-              }
-            }
-          } else if (updatedTarget.hp === 0) {
-            events.push({
-              type: 'death',
-              unit: updatedTarget,
-              description: `${updatedTarget.name} has been defeated`
-            });
-          }
-
-          // Update units array with modified target
-          updatedState = {
-            ...updatedState,
-            units: updatedState.units.map(u => u.id === targetId ? updatedTarget : u)
-          };
+          
+          updatedState = newState;
+          events.push(...attackEvents);
+          break;
         }
-      } else if (action === 'ultimate') {
-        // Find target (for now, randomly select from enemy units)
-        const enemyUnits = updatedState.units.filter(u => !u.id.startsWith('player_') && u.hp > 0);
-        if (enemyUnits.length === 0) {
-          events.push({ type: 'action', unit: unitAfterStart, description: 'No valid targets found for ultimate' });
-          return { newState: updatedState, events };
-        }
-
-        const target = enemyUnits[Math.floor(Math.random() * enemyUnits.length)];
-        const energyCost = 120; // Default energy cost
-        const baseDamage = unitAfterStart.attack || 0;
-        const ultimateMultiplier = 2.5;
-        const damage = Math.floor(baseDamage * ultimateMultiplier);
-
-        // Create new references for updated units
-        let updatedUnit: TurnUnit = {
-          ...unitAfterStart,
-          energy: Math.max(0, unitAfterStart.energy - energyCost)
-        };
-
-        let updatedTarget: TurnUnit = {
-          ...target,
-          hp: Math.max(0, (target.hp || 0) - damage)
-        };
         
-        events.push({
-          type: 'action',
-          unit: updatedUnit,
-          description: `${updatedUnit.name} uses Ultimate on ${target.name}, consuming ${energyCost} energy and dealing ${damage} damage`
-        });
-
-        // Process blessings that trigger after ultimate
-        if (updatedState.blessings.length > 0) {
-          for (const blessingId of updatedState.blessings) {
-            try {
-              const blessingData = await loadBlessing(blessingId);
-              
-              if (blessingData.trigger.type === 'after_ultimate' && 
-                  blessingData.target === 'player' &&
-                  updatedUnit.id.startsWith('player_')) {
-                const { updatedUnit: blessedUnit, descriptions } = await processBlessingEffects(
-                  updatedUnit,
-                  blessingData,
-                  { consumedEnergy: energyCost, tempVars: {} }
-                );
-                
-                // Create new reference for blessed unit
-                updatedUnit = {
-                  ...updatedUnit,
-                  hp: blessedUnit.hp,
-                  maxHp: blessedUnit.maxHp,
-                  energy: blessedUnit.energy,
-                  maxEnergy: blessedUnit.maxEnergy
-                };
-                
-                descriptions.forEach((desc: string) => 
-                  events.push({ type: 'effect', unit: updatedUnit, description: desc })
-                );
-
-                // Update state immediately after each blessing effect with new references
-                updatedState = {
-                  ...updatedState,
-                  units: updatedState.units.map(u => 
-                    u.id === updatedUnit.id ? { ...updatedUnit } : { ...u }
-                  ),
-                  activeUnit: updatedUnit.id === updatedState.activeUnit?.id ? { ...updatedUnit } : updatedState.activeUnit ? { ...updatedState.activeUnit } : null
-                };
-              }
-            } catch (error) {
-              events.push({ 
-                type: 'effect', 
-                unit: updatedUnit, 
-                description: `Error processing blessing: ${error instanceof Error ? error.message : String(error)}` 
-              });
-            }
-          }
+        case action === 'ultimate': {
+          const { updatedState: newState, events: ultimateEvents } = await handleUltimate({
+            actor: unitAfterStart,
+            state: updatedState,
+            usedBlessings: this.usedBlessings
+          });
+          
+          updatedState = newState;
+          events.push(...ultimateEvents);
+          break;
         }
-
-        // Update state with new references for all units
-        updatedState = {
-          ...updatedState,
-          units: updatedState.units.map(u => 
-            u.id === updatedUnit.id ? { ...updatedUnit } :
-            u.id === updatedTarget.id ? { ...updatedTarget } : { ...u }
-          ),
-          activeUnit: updatedUnit.id === updatedState.activeUnit?.id ? { ...updatedUnit } : updatedState.activeUnit ? { ...updatedState.activeUnit } : null
-        };
+        
+        default:
+          break;
       }
     }
 
