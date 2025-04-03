@@ -6,21 +6,44 @@ interface SectionProps {
 }
 
 const Section: React.FC<SectionProps> = ({ title, children }) => (
-  <section style={{ 
-    background: "#f8f9fa", 
-    padding: "1rem",
-    borderRadius: "8px",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
-    minHeight: 0
+  <section style={{
+    marginBottom: '2rem',
+    maxHeight: '600px', // Maximum height before scrolling
+    display: 'flex',
+    flexDirection: 'column'
   }}>
-    <h2 style={{ margin: "0 0 1rem 0", fontSize: "1.25rem", flexShrink: 0 }}>{title}</h2>
-    <div style={{ 
-      overflow: "auto",
-      flex: 1
+    <h2 style={{ 
+      margin: '0 0 1rem 0',
+      fontSize: '1.25rem',
+      position: 'sticky',
+      top: 0,
+      backgroundColor: '#fff',
+      padding: '0.5rem 0',
+      zIndex: 1
     }}>
+      {title}
+    </h2>
+    <div 
+      style={{
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        flex: 1,
+        padding: '0.5rem',
+        borderRadius: '4px',
+        backgroundColor: '#fafafa',
+        overscrollBehavior: 'contain',
+        msOverflowStyle: 'none',
+        scrollbarWidth: 'none'
+      }}
+      className="section-content"
+    >
+      <style>
+        {`
+          .section-content::-webkit-scrollbar {
+            display: none;
+          }
+        `}
+      </style>
       {children}
     </div>
   </section>

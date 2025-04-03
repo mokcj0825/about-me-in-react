@@ -1,0 +1,8 @@
+{
+    "id": "mimesis_tactile_pathway",
+    "name": "Mimesis: Tactile Pathway",
+    "path": "erudition",
+    "description": "After characters use an attack, they deal Additional DMG to the attacked enemy target(s). For every enemy target that was attacked, increase Additional DMG by 15.0% of the character's ATK.",
+    "rarity": 2,
+    "category": "offense"
+  }

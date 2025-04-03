@@ -2,13 +2,13 @@ import React from 'react';
 import Section from '../Section';
 import { BlessingInstruction } from '../../types';
 
-interface InterfacesSectionProps {
+interface InterfaceSectionProps {
   instruction: BlessingInstruction;
 }
 
-const InterfacesSection: React.FC<InterfacesSectionProps> = ({ instruction }) => (
-  <Section title="Required Interfaces">
-    {Object.entries(instruction.implementation.data_structures.required_interfaces).map(([name, { methods }]) => (
+const InterfaceSection: React.FC<InterfaceSectionProps> = ({ instruction }) => (
+  <Section title="Required Interface">
+    {Object.entries(instruction.implementation.data_structure.required_interface).map(([name, { method }]) => (
       <div key={name} style={{ marginBottom: "1rem" }}>
         <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1rem" }}>{name}</h3>
         <ul style={{ 
@@ -16,8 +16,8 @@ const InterfacesSection: React.FC<InterfacesSectionProps> = ({ instruction }) =>
           paddingLeft: "1.5rem",
           fontSize: "0.875rem"
         }}>
-          {methods.map((method, index) => (
-            <li key={index}>{method}</li>
+          {method.map((methodItem, index) => (
+            <li key={index}>{methodItem}</li>
           ))}
         </ul>
       </div>
@@ -25,4 +25,4 @@ const InterfacesSection: React.FC<InterfacesSectionProps> = ({ instruction }) =>
   </Section>
 );
 
-export default InterfacesSection; 
+export default InterfaceSection; 

@@ -1,0 +1,8 @@
+{
+    "id": "load_striated_cortex",
+    "name": "Load: Striated Cortex",
+    "path": "erudition",
+    "description": "If characters' AoE ATK ability only attacks 1 enemy, this ATK will deal an additional set amount of DMG equal to 40.0% of the original DMG to the attacked enemy target.",
+    "rarity": 2,
+    "category": "offense"
+  }

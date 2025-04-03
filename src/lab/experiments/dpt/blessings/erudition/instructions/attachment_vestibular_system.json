@@ -1,0 +1,153 @@
+{
+  "id": "attachment_vestibular_system",
+  "name": "Attachment: Vestibular System",
+  "path": "erudition",
+  "description": "When characters use Ultimates via Brain in a Vat, their CRIT DMG increases by 80.0%, lasting until this ability ends.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "crit_dmg_buff": {
+        "id": "vestibular_crit_buff",
+        "type": "stat_modifier",
+        "stat": "crit_damage",
+        "value": 80,
+        "value_type": "percentage",
+        "condition": "brain_in_vat_ultimate",
+        "duration": "until_ability_end",
+        "trigger": "brain_in_vat_ultimate_start"
+      },
+      "event_type": [
+        "ultimate_start",
+        "ultimate_end",
+        "stat_modifier_applied",
+        "stat_modifier_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "apply_stat_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_stat_modifier(unit: Unit, modifier_id: string): void",
+            "has_stat_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "BrainInVatManager": {
+          "method": [
+            "is_ultimate_from_brain_in_vat(ability: Ability): boolean",
+            "is_brain_in_vat_active(): boolean"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "handle_ability_start(source: Unit, ability: Ability): void",
+            "handle_ability_end(source: Unit, ability: Ability): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ultimate_start",
+        "check": [
+          "Does unit have attachment_vestibular_system blessing?",
+          "Is ability an Ultimate?",
+          "Is Ultimate being used via Brain in Vat?"
+        ],
+        "action": [
+          "Apply 80% CRIT DMG buff",
+          "Emit stat_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "ultimate_end",
+        "check": [
+          "Does unit have attachment_vestibular_system blessing?",
+          "Was this a Brain in Vat Ultimate?",
+          "Is CRIT DMG buff active?"
+        ],
+        "action": [
+          "Remove CRIT DMG buff",
+          "Emit stat_modifier_removed event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ultimate_start_handling": [
+        "function handle_ultimate_start(event: AbilityStartEvent) {",
+        "  if (!has_blessing(event.source, 'attachment_vestibular_system')) return;",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  if (!brain_in_vat_manager.is_ultimate_from_brain_in_vat(event.ability)) return;",
+        "  ",
+        "  const crit_dmg_modifier = {",
+        "    id: 'vestibular_crit_buff',",
+        "    stat: 'crit_damage',",
+        "    value: 80,",
+        "    type: 'percentage',",
+        "    condition: 'brain_in_vat_ultimate'",
+        "  };",
+        "  ",
+        "  stat_modifier_manager.apply_stat_modifier(event.source, crit_dmg_modifier);",
+        "  ",
+        "  emit_event('stat_modifier_applied', {",
+        "    unit: event.source,",
+        "    modifier: crit_dmg_modifier,",
+        "    source: 'attachment_vestibular_system'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'attachment_vestibular_system',",
+        "    trigger: 'ultimate_start',",
+        "    unit: event.source,",
+        "    detail: {",
+        "      crit_damage_increase: 80,",
+        "      ability: event.ability.id",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "ultimate_end_handling": [
+        "function handle_ultimate_end(event: AbilityEndEvent) {",
+        "  if (!has_blessing(event.source, 'attachment_vestibular_system')) return;",
+        "  if (!brain_in_vat_manager.is_ultimate_from_brain_in_vat(event.ability)) return;",
+        "  ",
+        "  if (stat_modifier_manager.has_stat_modifier(event.source, 'vestibular_crit_buff')) {",
+        "    stat_modifier_manager.remove_stat_modifier(event.source, 'vestibular_crit_buff');",
+        "    ",
+        "    emit_event('stat_modifier_removed', {",
+        "      unit: event.source,",
+        "      modifier_id: 'vestibular_crit_buff',",
+        "      source: 'attachment_vestibular_system'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'attachment_vestibular_system',",
+        "      trigger: 'ultimate_end',",
+        "      unit: event.source",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "80% CRIT DMG increase applied when Ultimate is used via Brain in Vat",
+      "CRIT DMG buff persists until Ultimate ability ends",
+      "Proper event emission for stat modification",
+      "Buff only applies to Ultimate used via Brain in Vat",
+      "Buff is removed immediately when Ultimate ends"
+    ],
+    "edge_case": [
+      "Ultimate interrupted before completion",
+      "Brain in Vat deactivated during Ultimate",
+      "Multiple Ultimate used in quick succession",
+      "Interaction with other CRIT DMG modifier",
+      "Ultimate used without Brain in Vat",
+      "Brain in Vat activation during normal Ultimate"
+    ]
+  }
+} 

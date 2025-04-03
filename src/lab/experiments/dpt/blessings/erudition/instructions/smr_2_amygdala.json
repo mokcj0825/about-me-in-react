@@ -1,0 +1,109 @@
+{
+  "id": "smr_2_amygdala",
+  "name": "SMR-2 Amygdala",
+  "description": "Dealing fatal DMG to enemies will charge the Brain in a Vat by 50.0%.",
+  "rarity": 3,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "fatal_charge": {
+        "id": "smr_fatal_charge",
+        "type": "resource_modifier",
+        "resource": "brain_in_vat",
+        "value": 50,
+        "value_type": "percentage",
+        "trigger": "on_fatal_damage"
+      },
+      "event_type": [
+        "damage_dealt",
+        "unit_defeated",
+        "brain_in_vat_charged",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "BrainInVatManager": {
+          "method": [
+            "charge_vat(amount: number, type: 'flat' | 'percentage'): number",
+            "get_current_charge(): number",
+            "get_max_charge(): number"
+          ]
+        },
+        "DamageHandler": {
+          "method": [
+            "is_fatal_damage(target: Unit, damage: number): boolean",
+            "get_damage_source(damage_event: DamageEvent): Unit",
+            "get_damage_amount(damage_event: DamageEvent): number"
+          ]
+        },
+        "UnitStateManager": {
+          "method": [
+            "is_defeated(unit: Unit): boolean",
+            "get_current_hp(unit: Unit): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "damage_dealt",
+        "check": [
+          "Does source have smr_2_amygdala blessing?",
+          "Is target an enemy?",
+          "Is damage fatal?"
+        ],
+        "action": [
+          "Calculate charge amount (50% of max)",
+          "Apply charge to Brain in Vat",
+          "Emit brain_in_vat_charged event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "fatal_damage_handling": [
+        "function handle_damage_dealt(event: DamageEvent) {",
+        "  const source = damage_handler.get_damage_source(event);",
+        "  if (!has_blessing(source, 'smr_2_amygdala')) return;",
+        "  if (!event.target.is_enemy) return;",
+        "  ",
+        "  const damage = damage_handler.get_damage_amount(event);",
+        "  if (!damage_handler.is_fatal_damage(event.target, damage)) return;",
+        "  ",
+        "  const charge_amount = brain_in_vat_manager.get_max_charge() * 0.5;",
+        "  const actual_charge = brain_in_vat_manager.charge_vat(charge_amount, 'percentage');",
+        "  ",
+        "  emit_event('brain_in_vat_charged', {",
+        "    amount: actual_charge,",
+        "    source: 'smr_2_amygdala',",
+        "    trigger: 'fatal_damage',",
+        "    target: event.target",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'smr_2_amygdala',",
+        "    trigger: 'fatal_damage',",
+        "    source: source,",
+        "    target: event.target",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Brain in Vat is charged by 50% when dealing fatal damage",
+      "Effect only triggers on enemy defeat",
+      "Charge is applied before unit is marked as defeated",
+      "Multiple fatal hit in succession each trigger the effect",
+      "Event is emitted in correct order"
+    ],
+    "edge_case": [
+      "Multiple unit dealing fatal damage simultaneously",
+      "Overkill damage calculation",
+      "Revival effect interaction",
+      "DoT effect causing fatal damage",
+      "Fatal damage during Brain in Vat activation",
+      "Multiple damage instance in same frame"
+    ]
+  }
+} 

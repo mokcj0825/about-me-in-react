@@ -1,0 +1,113 @@
+{
+  "id": "candle_of_delayed_diffraction",
+  "name": "Candle of Delayed Diffraction",
+  "description": "After characters use an AoE ATK ability, their ATK increases by 30.0% lasting for 2 turn(s).",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "buff": {
+        "id": "candle_atk_buff",
+        "type": "stat_modifier",
+        "stat": "atk",
+        "value": 30,
+        "value_type": "percentage",
+        "duration": 2,
+        "stack_type": "refresh",
+        "trigger": "after_aoe"
+      },
+      "event_type": [
+        "ability_used",
+        "buff_applied",
+        "buff_removed",
+        "turn_start",
+        "turn_end"
+      ],
+      "required_interface": {
+        "BuffManager": {
+          "method": [
+            "apply_buff(target: Unit, buff: Buff): void",
+            "remove_buff(target: Unit, buff_id: string): void",
+            "update_buff_duration(unit: Unit): void",
+            "get_active_buff(unit: Unit): Buff[]"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_aoe_ability(ability: Ability): boolean",
+            "handle_ability_used(actor: Unit, ability: Ability, target: Unit[]): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ability_used",
+        "check": [
+          "Is ability AoE or splash type?",
+          "Does user have candle_of_delayed_diffraction blessing?",
+          "Is ability an attack type?"
+        ],
+        "action": [
+          "Create new ATK buff instance",
+          "Apply buff to ability user",
+          "Emit buff_applied event"
+        ]
+      },
+      {
+        "trigger": "turn_end",
+        "action": [
+          "Update buff duration",
+          "Remove expired buff",
+          "Emit buff_removed event if buff expires"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "buff_application": [
+        "function handle_ability_used(event: AbilityUsedEvent) {",
+        "  if (!is_aoe_ability(event.ability)) return;",
+        "  if (!has_blessing(event.actor, 'candle_of_delayed_diffraction')) return;",
+        "  if (!is_attack_ability(event.ability)) return;",
+        "  ",
+        "  const buff = create_buff({",
+        "    id: 'candle_atk_buff',",
+        "    value: 30,",
+        "    duration: 2",
+        "  });",
+        "  ",
+        "  buff_manager.apply_buff(event.actor, buff);",
+        "  emit_event('buff_applied', { target: event.actor, buff });",
+        "}"
+      ],
+      "buff_update": [
+        "function handle_turn_end(event: TurnEndEvent) {",
+        "  for (const unit of get_all_unit()) {",
+        "    const expired_buff = buff_manager.update_buff_duration(unit);",
+        "    if (expired_buff) {",
+        "      buff_manager.remove_buff(unit, expired_buff.id);",
+        "      emit_event('buff_removed', { target: unit, buff: expired_buff });",
+        "    }",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Player unit's ATK increases by 30% after using an AoE attack ability",
+      "ATK buff lasts for exactly 2 turn",
+      "ATK buff is applied immediately after the AoE ability is used",
+      "ATK buff stacks multiplicatively with other ATK buff",
+      "ATK buff only applies for attack-type AoE ability"
+    ],
+    "edge_case": [
+      "Buff should be applied for both AoE and splash damage attack ability",
+      "Buff should not be applied for non-attack AoE ability (like healing)",
+      "Buff duration should be tracked correctly across multiple turn",
+      "Buff should be removed exactly after 2 turn, not before or after",
+      "Multiple instance of the same buff should refresh the duration",
+      "ATK buff should affect damage calculation correctly"
+    ]
+  }
+} 

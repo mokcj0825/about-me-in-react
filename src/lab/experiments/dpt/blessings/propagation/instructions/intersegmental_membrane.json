@@ -1,0 +1,155 @@
+{
+  "id": "intersegmental_membrane",
+  "name": "Intersegmental Membrane",
+  "path": "propagation",
+  "description": "For each Skill Point a character consumes, the DMG received by them reduces by 8% for 1 turn(s). This effect can be stacked up to 2 time(s).",
+  "rarity": 2,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "damage_reduction": {
+        "id": "intersegmental_membrane_buff",
+        "type": "damage_taken_modifier",
+        "value": -8,
+        "value_type": "percentage",
+        "condition": "skill_point_consumed",
+        "duration": 1,
+        "duration_type": "turn",
+        "max_stacks": 2,
+        "trigger": "skill_point_consumed"
+      },
+      "event_type": [
+        "skill_point_consumed",
+        "turn_end",
+        "damage_taken_modifier_applied",
+        "damage_taken_modifier_removed",
+        "damage_taken_modifier_stacked",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageTakenModifierManager": {
+          "method": [
+            "apply_damage_taken_modifier(unit: Unit, modifier: DamageTakenModifier): void",
+            "remove_damage_taken_modifier(unit: Unit, modifier_id: string): void",
+            "has_damage_taken_modifier(unit: Unit, modifier_id: string): boolean",
+            "get_stack_count(unit: Unit, modifier_id: string): number"
+          ]
+        },
+        "ResourceManager": {
+          "method": [
+            "on_skill_point_consumed(callback: (data: { unit: Unit, amount: number }) => void): void"
+          ]
+        },
+        "TurnManager": {
+          "method": [
+            "on_turn_end(callback: () => void): void"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_ally(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "skill_point_consumed",
+        "check": [
+          "Is unit an ally?",
+          "Is skill point amount greater than 0?",
+          "Is current stack count less than max stacks?"
+        ],
+        "action": [
+          "Apply or stack 8% DMG reduction buff",
+          "Emit damage_taken_modifier_applied or damage_taken_modifier_stacked event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "turn_end",
+        "check": [
+          "Are there any active damage reduction buffs?"
+        ],
+        "action": [
+          "Remove expired damage reduction buffs",
+          "Emit damage_taken_modifier_removed event for each removed buff",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "skill_point_handling": [
+        "function handle_skill_point_consumed({ unit, amount }: { unit: Unit, amount: number }) {",
+        "  if (!team_manager.is_ally(unit)) return;",
+        "  if (amount <= 0) return;",
+        "  ",
+        "  const current_stacks = damage_taken_modifier_manager.get_stack_count(unit, 'intersegmental_membrane_buff') || 0;",
+        "  if (current_stacks >= 2) return;",
+        "  ",
+        "  const damage_taken_modifier = {",
+        "    id: 'intersegmental_membrane_buff',",
+        "    type: 'damage_taken_modifier',",
+        "    value: -8,",
+        "    value_type: 'percentage',",
+        "    condition: 'skill_point_consumed',",
+        "    duration: 1,",
+        "    duration_type: 'turn',",
+        "    max_stacks: 2",
+        "  };",
+        "  ",
+        "  damage_taken_modifier_manager.apply_damage_taken_modifier(unit, damage_taken_modifier);",
+        "  ",
+        "  const event_type = current_stacks === 0 ? 'damage_taken_modifier_applied' : 'damage_taken_modifier_stacked';",
+        "  emit_event(event_type, {",
+        "    unit: unit,",
+        "    modifier: damage_taken_modifier,",
+        "    source: 'intersegmental_membrane',",
+        "    stack_count: current_stacks + 1",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'intersegmental_membrane',",
+        "    trigger: 'skill_point_consumed',",
+        "    unit: unit,",
+        "    detail: {",
+        "      damage_reduction: 8,",
+        "      stack_count: current_stacks + 1,",
+        "      duration: 1",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "turn_end_handling": [
+        "function handle_turn_end() {",
+        "  // The DamageTakenModifierManager will automatically remove expired modifiers",
+        "  // We just need to emit events for removed buffs",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'intersegmental_membrane',",
+        "    trigger: 'turn_end',",
+        "    detail: {",
+        "      buffs_expired: true",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "DMG reduction increases by exactly 8% per Skill Point consumed",
+      "Effect lasts for exactly 1 turn",
+      "Stacks up to 2 times maximum",
+      "Each stack is tracked independently",
+      "Only affects allies"
+    ],
+    "edge_case": [
+      "Multiple Skill Points consumed in one turn",
+      "Buff expires while damage calculation is ongoing",
+      "Character dies with active stacks",
+      "New stack applied when at max stacks",
+      "Different duration stacks expiring at different times"
+    ]
+  }
+} 

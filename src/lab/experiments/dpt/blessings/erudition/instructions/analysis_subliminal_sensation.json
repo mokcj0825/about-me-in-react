@@ -1,0 +1,181 @@
+{
+  "id": "analysis_subliminal_sensation",
+  "name": "Analysis: Subliminal Sensation",
+  "description": "Characters' Ultimate DMG increases by 50.0%, lasting until the end of the first Ultimate they use in battle. After entering battle, characters regenerate energy equal to 60.0% of their respective Max Energy.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "ultimate_buff": {
+        "id": "subliminal_ultimate_buff",
+        "type": "damage_modifier",
+        "value": 50,
+        "value_type": "percentage",
+        "condition": "ultimate_damage",
+        "duration": "until_first_ultimate_end",
+        "trigger": "battle_start"
+      },
+      "energy_restore": {
+        "id": "subliminal_energy_restore",
+        "type": "resource_modifier",
+        "resource": "energy",
+        "value": 60,
+        "value_type": "percentage_max",
+        "trigger": "battle_start"
+      },
+      "event_type": [
+        "battle_start",
+        "ultimate_start",
+        "ultimate_end",
+        "damage_modifier_applied",
+        "damage_modifier_removed",
+        "energy_restored",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageModifierManager": {
+          "method": [
+            "apply_damage_modifier(unit: Unit, modifier: DamageModifier): void",
+            "remove_damage_modifier(unit: Unit, modifier_id: string): void",
+            "has_damage_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "ResourceManager": {
+          "method": [
+            "restore_energy(unit: Unit, amount: number, type: 'flat' | 'percentage'): number",
+            "get_max_energy(unit: Unit): number",
+            "get_current_energy(unit: Unit): number"
+          ]
+        },
+        "BattleStateManager": {
+          "method": [
+            "on_battle_start(): void",
+            "is_first_ultimate(unit: Unit): boolean",
+            "mark_ultimate_used(unit: Unit): void"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "handle_ability_start(source: Unit, ability: Ability): void",
+            "handle_ability_end(source: Unit, ability: Ability): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "battle_start",
+        "check": [
+          "Does unit have analysis_subliminal_sensation blessing?"
+        ],
+        "action": [
+          "Apply 50% Ultimate DMG buff",
+          "Calculate 60% of max energy",
+          "Restore energy",
+          "Emit damage_modifier_applied event",
+          "Emit energy_restored event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "ultimate_end",
+        "check": [
+          "Does unit have analysis_subliminal_sensation blessing?",
+          "Was this the first Ultimate used?",
+          "Is damage buff still active?"
+        ],
+        "action": [
+          "Remove Ultimate DMG buff",
+          "Emit damage_modifier_removed event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "battle_start_handling": [
+        "function handle_battle_start(event: BattleStartEvent) {",
+        "  if (!has_blessing(event.unit, 'analysis_subliminal_sensation')) return;",
+        "  ",
+        "  // Apply Ultimate DMG buff",
+        "  const dmg_modifier = {",
+        "    id: 'subliminal_ultimate_buff',",
+        "    value: 50,",
+        "    type: 'percentage',",
+        "    condition: 'ultimate_damage'",
+        "  };",
+        "  damage_modifier_manager.apply_damage_modifier(event.unit, dmg_modifier);",
+        "  ",
+        "  // Restore energy",
+        "  const max_energy = resource_manager.get_max_energy(event.unit);",
+        "  const energy_restored = resource_manager.restore_energy(event.unit, 60, 'percentage');",
+        "  ",
+        "  // Emit events",
+        "  emit_event('damage_modifier_applied', {",
+        "    unit: event.unit,",
+        "    modifier: dmg_modifier,",
+        "    source: 'analysis_subliminal_sensation'",
+        "  });",
+        "  ",
+        "  emit_event('energy_restored', {",
+        "    unit: event.unit,",
+        "    amount: energy_restored,",
+        "    source: 'analysis_subliminal_sensation'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'analysis_subliminal_sensation',",
+        "    trigger: 'battle_start',",
+        "    unit: event.unit,",
+        "    detail: {",
+        "      energy_restored: energy_restored,",
+        "      damage_increase: 50",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "ultimate_end_handling": [
+        "function handle_ultimate_end(event: AbilityEndEvent) {",
+        "  if (!has_blessing(event.source, 'analysis_subliminal_sensation')) return;",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  if (!battle_state_manager.is_first_ultimate(event.source)) return;",
+        "  ",
+        "  if (damage_modifier_manager.has_damage_modifier(event.source, 'subliminal_ultimate_buff')) {",
+        "    damage_modifier_manager.remove_damage_modifier(event.source, 'subliminal_ultimate_buff');",
+        "    ",
+        "    emit_event('damage_modifier_removed', {",
+        "      unit: event.source,",
+        "      modifier_id: 'subliminal_ultimate_buff',",
+        "      source: 'analysis_subliminal_sensation'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'analysis_subliminal_sensation',",
+        "      trigger: 'ultimate_end',",
+        "      unit: event.source",
+        "    });",
+        "  }",
+        "  ",
+        "  battle_state_manager.mark_ultimate_used(event.source);",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "50% Ultimate DMG buff is applied at battle start",
+      "60% max energy is restored at battle start",
+      "DMG buff persists until first Ultimate ends",
+      "DMG buff is removed after first Ultimate",
+      "Energy restoration happens before first action"
+    ],
+    "edge_case": [
+      "Battle interrupted before Ultimate use",
+      "Multiple battle in succession",
+      "Ultimate interrupted or cancelled",
+      "Max energy changed during battle",
+      "Interaction with other Ultimate DMG buff",
+      "Energy restoration with existing energy"
+    ]
+  }
+} 

@@ -1,0 +1,8 @@
+{
+    "id": "attachment_vestibular_system",
+    "name": "Attachment: Vestibular System",
+    "path": "erudition",
+    "description": "When characters use Ultimates via Brain in a Vat, their CRIT DMG increases by 80.0%, lasting until this ability ends.",
+    "rarity": 2,
+    "category": "offense"
+  }

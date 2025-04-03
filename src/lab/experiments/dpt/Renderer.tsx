@@ -1,63 +1,40 @@
 /// <reference types="vite/client" />
 import React, { useEffect, useState } from 'react';
+import OverviewSection from './components/sections/OverviewSection';
+import EventFlowSection from './components/sections/EventFlowSection';
+import PseudocodeSection from './components/sections/PseudocodeSection';
+import ValidationSection from './components/sections/ValidationSection';
 import { BlessingInstruction } from './types';
-import TabButton from './components/TabButton';
-import {
-  OverviewSection,
-  DataStructuresSection,
-  InterfacesSection,
-  EventFlowSection,
-  PseudocodeSection,
-  ValidationSection
-} from './components/sections';
+import InterfaceSection from './components/sections/InterfaceSection';
+import DataStructureSection from './components/sections/DataStructureSection';
 
 interface RendererProps {
   blessingId: string;
 }
 
 // Pre-load all instruction files
-const instructionModules = import.meta.glob<{ default: BlessingInstruction }>('./instructions/*.json');
-
-const sections = [
-  { id: "overview", title: "Overview" },
-  { id: "dataStructures", title: "Data Structures" },
-  { id: "interfaces", title: "Required Interfaces" },
-  { id: "eventFlow", title: "Event Flow" },
-  { id: "pseudocode", title: "Pseudocode" },
-  { id: "validation", title: "Validation" }
-] as const;
+const instructionModules = import.meta.glob<{ default: BlessingInstruction }>(
+  './blessings/*/instructions/*.json',
+  { eager: true }
+);
 
 const Renderer: React.FC<RendererProps> = ({ blessingId }) => {
   const [instruction, setInstruction] = useState<BlessingInstruction | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<typeof sections[number]['id']>("overview");
+  const [activeSection, setActiveSection] = useState<"overview" | "data_structure" | "interface" | "event_flow" | "pseudocode" | "validation">("overview");
 
   useEffect(() => {
-    const loadInstruction = async () => {
+    const loadInstruction = () => {
       try {
-        const modulePath = `./instructions/${blessingId}.json`;
-        const loader = instructionModules[modulePath];
-        
-        if (!loader) {
-          throw new Error(`Instruction file not found: ${modulePath}`);
+        const foundInstruction = Object.values(instructionModules)
+          .find(module => module.default.id === blessingId)?.default;
+
+        if (!foundInstruction) {
+          throw new Error(`Instruction not found for blessing: ${blessingId}`);
         }
 
-        const module = await loader();
-        const data = module.default;
-
-        // Validate category
-        if (!['offense', 'defense', 'hinder', 'boost', 'recovery'].includes(data.category)) {
-          throw new Error(`Invalid category: ${data.category}`);
-        }
-
-        setInstruction({
-          ...data,
-          category: data.category as 'offense' | 'defense' | 'hinder' | 'boost' | 'recovery'
-        });
-        setError(null);
+        setInstruction(foundInstruction);
       } catch (error) {
-        console.error('Failed to load blessing instruction:', error);
-        setError(`Failed to load instruction for blessing ${blessingId}: ${error instanceof Error ? error.message : String(error)}`);
+        console.error('Error loading instruction:', error);
       }
     };
 
@@ -65,65 +42,77 @@ const Renderer: React.FC<RendererProps> = ({ blessingId }) => {
   }, [blessingId]);
 
   if (!instruction) {
-    return (
-      <div style={{ padding: '1rem' }}>
-        {error ? (
-          <div style={{ color: 'red' }}>
-            {error}
-          </div>
-        ) : (
-          'Loading...'
-        )}
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
+  const section = [
+    {
+      id: "overview",
+      title: "Overview",
+      component: <OverviewSection instruction={instruction} />
+    },
+    {
+      id: "data_structure",
+      title: "Data Structure",
+      component: <DataStructureSection instruction={instruction} />
+    },
+    {
+      id: "interface",
+      title: "Required Interface",
+      component: <InterfaceSection instruction={instruction} />
+    },
+    {
+      id: "event_flow",
+      title: "Event Flow",
+      component: <EventFlowSection instruction={instruction} />
+    },
+    {
+      id: "pseudocode",
+      title: "Pseudocode",
+      component: <PseudocodeSection instruction={instruction} />
+    },
+    {
+      id: "validation",
+      title: "Validation",
+      component: <ValidationSection instruction={instruction} />
+    }
+  ] as const;
+
   return (
-    <div style={{ 
-      height: "100%", 
-      display: "flex", 
+    <div style={{
+      display: "flex",
       flexDirection: "column",
-      gap: "1rem",
-      padding: "1rem",
-      overflow: "hidden"
+      gap: "2rem",
+      maxWidth: "800px",
+      margin: "2rem auto",
+      padding: "0 1rem"
     }}>
-      {/* Header Section */}
       <div style={{
-        borderBottom: "1px solid #e0e0e0",
-        paddingBottom: "1rem",
-        flexShrink: 0
+        display: "flex",
+        gap: "0.5rem",
+        flexWrap: "wrap"
       }}>
-        <h1 style={{ margin: "0 0 0.5rem 0" }}>{instruction.name}</h1>
-        <p style={{ margin: "0 0 1rem 0", color: "#666" }}>{instruction.description}</p>
-        
-        {/* Section Navigation */}
-        <div style={{
-          display: "flex",
-          gap: "0.5rem",
-          overflowX: "auto",
-          paddingBottom: "0.5rem"
-        }}>
-          {sections.map(section => (
-            <TabButton
-              key={section.id}
-              id={section.id}
-              title={section.title}
-              isActive={activeSection === section.id}
-              onClick={() => setActiveSection(section.id)}
-            />
-          ))}
-        </div>
+        {section.map(section => (
+          <button
+            key={section.id}
+            onClick={() => setActiveSection(section.id)}
+            style={{
+              padding: "0.5rem 1rem",
+              border: "none",
+              borderRadius: "4px",
+              background: activeSection === section.id ? "#007bff" : "#e9ecef",
+              color: activeSection === section.id ? "#fff" : "#212529",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              fontWeight: 500
+            }}
+          >
+            {section.title}
+          </button>
+        ))}
       </div>
 
-      {/* Content Section */}
-      <div style={{ flex: 1, minHeight: 0 }}>
-        {activeSection === "overview" && <OverviewSection instruction={instruction} />}
-        {activeSection === "dataStructures" && <DataStructuresSection instruction={instruction} />}
-        {activeSection === "interfaces" && <InterfacesSection instruction={instruction} />}
-        {activeSection === "eventFlow" && <EventFlowSection instruction={instruction} />}
-        {activeSection === "pseudocode" && <PseudocodeSection instruction={instruction} />}
-        {activeSection === "validation" && <ValidationSection instruction={instruction} />}
-      </div>
+      {section.find(s => s.id === activeSection)?.component}
     </div>
   );
 };

@@ -1,0 +1,113 @@
+{
+  "id": "sporangium",
+  "name": "Sporangium",
+  "path": "propagation",
+  "description": "For each Skill Point a character consumes, the character regenerates 3 extra Energy.",
+  "rarity": 1,
+  "category": "recovery",
+  "implementation": {
+    "data_structure": {
+      "energy_restore": {
+        "id": "sporangium_restore",
+        "type": "resource_modifier",
+        "resource": "energy",
+        "value": 3,
+        "value_type": "flat",
+        "condition": "per_skill_point",
+        "trigger": "skill_point_consumed"
+      },
+      "event_type": [
+        "skill_point_consumed",
+        "energy_restored",
+        "resource_modifier_applied",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "ResourceManager": {
+          "method": [
+            "get_current_energy(unit: Unit): number",
+            "get_max_energy(unit: Unit): number",
+            "modify_energy(unit: Unit, amount: number): void",
+            "on_skill_point_consumed(callback: (data: { unit: Unit, amount: number }) => void): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "skill_point_consumed",
+        "check": [
+          "Does unit have sporangium blessing?",
+          "Is skill point amount greater than 0?"
+        ],
+        "action": [
+          "Calculate energy to restore (3 per point)",
+          "Check max energy limit",
+          "Restore energy",
+          "Emit resource_modifier_applied event",
+          "Emit energy_restored event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "skill_point_handling": [
+        "function handle_skill_point_consumed({ unit, amount }: { unit: Unit, amount: number }) {",
+        "  if (!has_blessing(unit, 'sporangium')) return;",
+        "  if (amount <= 0) return;",
+        "  ",
+        "  const energy_to_restore = amount * 3;",
+        "  const current_energy = resource_manager.get_current_energy(unit);",
+        "  const max_energy = resource_manager.get_max_energy(unit);",
+        "  ",
+        "  const actual_restore = Math.min(energy_to_restore, max_energy - current_energy);",
+        "  ",
+        "  if (actual_restore > 0) {",
+        "    resource_manager.modify_energy(unit, actual_restore);",
+        "    ",
+        "    emit_event('resource_modifier_applied', {",
+        "      unit: unit,",
+        "      modifier: {",
+        "        id: 'sporangium_restore',",
+        "        resource: 'energy',",
+        "        value: actual_restore,",
+        "        type: 'flat'",
+        "      },",
+        "      source: 'sporangium'",
+        "    });",
+        "    ",
+        "    emit_event('energy_restored', {",
+        "      unit: unit,",
+        "      amount: actual_restore,",
+        "      source: 'sporangium'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'sporangium',",
+        "      trigger: 'skill_point_consumed',",
+        "      unit: unit,",
+        "      detail: {",
+        "        skill_point_consumed: amount,",
+        "        energy_restored: actual_restore",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Regenerates exactly 3 Energy per Skill Point consumed",
+      "Energy regeneration respects maximum Energy limit",
+      "Works with any amount of Skill Point consumed",
+      "Energy regeneration is immediate upon Skill Point consumption"
+    ],
+    "edge_case": [
+      "Character is at max Energy when consuming a Skill Point",
+      "Multiple Skill Point consumed at once",
+      "Character dies during Skill Point consumption",
+      "Energy regeneration from multiple source"
+    ]
+  }
+} 

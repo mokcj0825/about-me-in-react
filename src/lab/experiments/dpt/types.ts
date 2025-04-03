@@ -5,26 +5,26 @@ export interface BlessingInstruction {
   rarity: number;
   category: 'defense' | 'offense' | 'hinder' | 'boost' | 'recovery';
   implementation: {
-    data_structures: {
+    data_structure: {
       [key: string]: any;
-      event_types: string[];
-      required_interfaces: {
+      event_type: string[];
+      required_interface: {
         [key: string]: {
-          methods: string[];
+          method: string[];
         };
       };
     };
     event_flow: Array<{
       trigger: string;
-      checks?: string[];
-      actions: string[];
+      check?: string[];
+      action: string[];
     }>;
     pseudocode: {
       [key: string]: string[];
     };
   };
   validation: {
-    success_conditions: string[];
-    edge_cases: string[];
+    success_condition: string[];
+    edge_case: string[];
   };
 } 

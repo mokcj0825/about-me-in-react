@@ -1,0 +1,8 @@
+{
+    "id": "imitation_transmitter_synthesis",
+    "name": "Imitation: Transmitter Synthesis",
+    "path": "erudition",
+    "description": "For every 1 Energy that exceeds the characters' Max Energy, charges Brain in a Vat by 0.8%.",
+    "rarity": 2,
+    "category": "boost"
+  }

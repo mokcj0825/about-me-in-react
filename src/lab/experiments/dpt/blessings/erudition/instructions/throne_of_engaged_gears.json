@@ -1,0 +1,163 @@
+{
+  "id": "throne_of_engaged_gears",
+  "name": "Throne of Engaged Gears",
+  "description": "For every Blessing of Erudition currently in possession, characters' Ultimate DMG increases by 7.0%, stacking up to 6 times.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "damage_buff": {
+        "id": "engaged_gears_buff",
+        "type": "damage_modifier",
+        "base_value": 7,
+        "max_stack": 6,
+        "value_type": "percentage",
+        "condition": "ultimate_damage",
+        "trigger": "blessing_count_update"
+      },
+      "event_type": [
+        "blessing_obtained",
+        "blessing_removed",
+        "blessing_count_update",
+        "damage_modifier_applied",
+        "damage_modifier_updated",
+        "ultimate_start",
+        "ultimate_damage",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "BlessingManager": {
+          "method": [
+            "count_blessing_by_path(unit: Unit, path: string): number",
+            "on_blessing_obtained(unit: Unit, blessing: Blessing): void",
+            "on_blessing_removed(unit: Unit, blessing: Blessing): void"
+          ]
+        },
+        "DamageModifierManager": {
+          "method": [
+            "apply_damage_modifier(unit: Unit, modifier: DamageModifier): void",
+            "update_damage_modifier(unit: Unit, modifier_id: string, new_value: number): void",
+            "remove_damage_modifier(unit: Unit, modifier_id: string): void",
+            "has_damage_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "handle_ultimate_damage(source: Unit, target: Unit, ability: Ability): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "blessing_count_update",
+        "check": [
+          "Does unit have throne_of_engaged_gears blessing?",
+          "How many Erudition blessing is present?",
+          "Is current stack count different from new count?"
+        ],
+        "action": [
+          "Calculate new damage bonus based on Erudition blessing count",
+          "Apply or update damage modifier",
+          "Emit damage_modifier_updated event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "ultimate_damage",
+        "check": [
+          "Does unit have throne_of_engaged_gears blessing?",
+          "Is damage modifier active?",
+          "Is ability an Ultimate?"
+        ],
+        "action": [
+          "Apply stacked damage bonus to Ultimate damage",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "blessing_count_update_handling": [
+        "function handle_blessing_count_update(event: BlessingCountUpdateEvent) {",
+        "  if (!has_blessing(event.unit, 'throne_of_engaged_gears')) return;",
+        "  ",
+        "  const erudition_count = blessing_manager.count_blessing_by_path(event.unit, 'erudition');",
+        "  const stack_count = Math.min(erudition_count, 6);",
+        "  const damage_bonus = stack_count * 7;",
+        "  ",
+        "  const damage_modifier = {",
+        "    id: 'engaged_gears_buff',",
+        "    value: damage_bonus,",
+        "    type: 'percentage',",
+        "    condition: 'ultimate_damage'",
+        "  };",
+        "  ",
+        "  if (!damage_modifier_manager.has_damage_modifier(event.unit, 'engaged_gears_buff')) {",
+        "    damage_modifier_manager.apply_damage_modifier(event.unit, damage_modifier);",
+        "    emit_event('damage_modifier_applied', {",
+        "      unit: event.unit,",
+        "      modifier: damage_modifier,",
+        "      source: 'throne_of_engaged_gears'",
+        "    });",
+        "  } else {",
+        "    damage_modifier_manager.update_damage_modifier(event.unit, 'engaged_gears_buff', damage_bonus);",
+        "    emit_event('damage_modifier_updated', {",
+        "      unit: event.unit,",
+        "      modifier_id: 'engaged_gears_buff',",
+        "      new_value: damage_bonus,",
+        "      source: 'throne_of_engaged_gears'",
+        "    });",
+        "  }",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'throne_of_engaged_gears',",
+        "    trigger: 'blessing_count_update',",
+        "    unit: event.unit,",
+        "    detail: {",
+        "      erudition_count: erudition_count,",
+        "      stack_count: stack_count,",
+        "      damage_bonus: damage_bonus",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "ultimate_damage_handling": [
+        "function handle_ultimate_damage(event: AbilityDamageEvent) {",
+        "  if (!has_blessing(event.source, 'throne_of_engaged_gears')) return;",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  ",
+        "  if (damage_modifier_manager.has_damage_modifier(event.source, 'engaged_gears_buff')) {",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'throne_of_engaged_gears',",
+        "      trigger: 'ultimate_damage',",
+        "      unit: event.source,",
+        "      target: event.target,",
+        "      detail: {",
+        "        ability: event.ability.id,",
+        "        damage_modifier_active: true",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Damage bonus scales correctly with Erudition blessing count",
+      "Stack limited to maximum of 6",
+      "Bonus updates when Erudition blessing changes",
+      "Only applies to Ultimate damage",
+      "Proper event emission for modifier change"
+    ],
+    "edge_case": [
+      "Erudition blessing added/removed rapidly",
+      "Stack count at maximum when blessing removed",
+      "Interaction with other Ultimate damage modifier",
+      "Multiple unit with same blessing",
+      "Blessing count change during Ultimate",
+      "Non-Erudition blessing affecting count"
+    ]
+  }
+} 

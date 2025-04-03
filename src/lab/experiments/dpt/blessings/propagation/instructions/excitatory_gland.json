@@ -1,0 +1,119 @@
+{
+  "id": "excitatory_gland",
+  "name": "Excitatory Gland",
+  "path": "propagation",
+  "description": "If the team has 0 Skill Point when an ally uses their Basic ATK, additionally recovers 1 Skill Point.",
+  "rarity": 2,
+  "category": "recovery",
+  "implementation": {
+    "data_structure": {
+      "skill_point_restore": {
+        "id": "excitatory_gland_effect",
+        "type": "resource_modifier",
+        "resource": "skill_point",
+        "value": 1,
+        "value_type": "flat",
+        "condition": "team_skill_point_zero",
+        "trigger": "basic_attack_used"
+      },
+      "event_type": [
+        "basic_attack_start",
+        "basic_attack_end",
+        "skill_point_restored",
+        "resource_modifier_applied",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "ResourceManager": {
+          "method": [
+            "get_team_skill_point(): number",
+            "modify_team_skill_point(amount: number): void",
+            "on_skill_point_changed(callback: (amount: number) => void): void"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "on_basic_attack_end(callback: (unit: Unit) => void): void",
+            "is_basic_attack(ability: Ability): boolean"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_ally(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "basic_attack_end",
+        "check": [
+          "Is unit an ally?",
+          "Was the ability a Basic ATK?",
+          "Does team have 0 Skill Points?"
+        ],
+        "action": [
+          "Restore 1 Skill Point to team",
+          "Emit resource_modifier_applied event",
+          "Emit skill_point_restored event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "basic_attack_handling": [
+        "function handle_basic_attack_end(unit: Unit, ability: Ability) {",
+        "  if (!team_manager.is_ally(unit)) return;",
+        "  if (!ability_handler.is_basic_attack(ability)) return;",
+        "  ",
+        "  const current_skill_point = resource_manager.get_team_skill_point();",
+        "  if (current_skill_point > 0) return;",
+        "  ",
+        "  resource_manager.modify_team_skill_point(1);",
+        "  ",
+        "  emit_event('resource_modifier_applied', {",
+        "    unit: unit,",
+        "    modifier: {",
+        "      id: 'excitatory_gland_effect',",
+        "      resource: 'skill_point',",
+        "      value: 1,",
+        "      type: 'flat'",
+        "    },",
+        "    source: 'excitatory_gland'",
+        "  });",
+        "  ",
+        "  emit_event('skill_point_restored', {",
+        "    amount: 1,",
+        "    source: 'excitatory_gland'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'excitatory_gland',",
+        "    trigger: 'basic_attack_end',",
+        "    unit: unit,",
+        "    detail: {",
+        "      skill_point_restored: 1,",
+        "      team_skill_point_before: 0,",
+        "      team_skill_point_after: 1",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Restores exactly 1 Skill Point when team has 0 Skill Points",
+      "Only triggers on Basic ATK usage",
+      "Only triggers for ally units",
+      "Skill Point is restored immediately after Basic ATK"
+    ],
+    "edge_case": [
+      "Multiple Basic ATKs used simultaneously",
+      "Skill Point changes during Basic ATK animation",
+      "Multiple sources trying to restore Skill Points",
+      "Basic ATK interrupted or cancelled",
+      "Team Skill Point cap reached"
+    ]
+  }
+} 

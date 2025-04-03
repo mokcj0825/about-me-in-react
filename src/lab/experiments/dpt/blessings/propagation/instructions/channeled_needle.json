@@ -1,0 +1,175 @@
+{
+  "id": "channeled_needle",
+  "name": "Channeled Needle",
+  "path": "propagation",
+  "description": "Each character's Basic ATK CRIT DMG increases by 40%.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "crit_dmg_buff": {
+        "id": "channeled_needle_buff",
+        "type": "stat_modifier",
+        "stat": "basic_attack_crit_damage",
+        "value": 40,
+        "value_type": "percentage",
+        "condition": "permanent",
+        "duration": "permanent",
+        "trigger": "blessing_activated"
+      },
+      "event_type": [
+        "blessing_activated",
+        "character_added",
+        "character_removed",
+        "stat_modifier_applied",
+        "stat_modifier_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "apply_stat_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_stat_modifier(unit: Unit, modifier_id: string): void",
+            "has_stat_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "CharacterManager": {
+          "method": [
+            "get_all_character(): Unit[]",
+            "on_character_added(callback: (unit: Unit) => void): void",
+            "on_character_removed(callback: (unit: Unit) => void): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "blessing_activated",
+        "check": [
+          "Get all current character"
+        ],
+        "action": [
+          "For each character, apply 40% Basic ATK CRIT DMG buff",
+          "Emit stat_modifier_applied event for each character",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "character_added",
+        "check": [
+          "Is new character eligible for buff?"
+        ],
+        "action": [
+          "Apply 40% Basic ATK CRIT DMG buff to new character",
+          "Emit stat_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "character_removed",
+        "check": [
+          "Does removed character have the buff?"
+        ],
+        "action": [
+          "Remove Basic ATK CRIT DMG buff from character",
+          "Emit stat_modifier_removed event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "blessing_activation_handling": [
+        "function handle_blessing_activated() {",
+        "  const all_character = character_manager.get_all_character();",
+        "  ",
+        "  for (const unit of all_character) {",
+        "    const crit_dmg_modifier = {",
+        "      id: 'channeled_needle_buff',",
+        "      stat: 'basic_attack_crit_damage',",
+        "      value: 40,",
+        "      type: 'percentage',",
+        "      condition: 'permanent'",
+        "    };",
+        "    ",
+        "    stat_modifier_manager.apply_stat_modifier(unit, crit_dmg_modifier);",
+        "    ",
+        "    emit_event('stat_modifier_applied', {",
+        "      unit: unit,",
+        "      modifier: crit_dmg_modifier,",
+        "      source: 'channeled_needle'",
+        "    });",
+        "  }",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'channeled_needle',",
+        "    trigger: 'blessing_activated',",
+        "    detail: {",
+        "      crit_damage_increase: 40,",
+        "      affected_count: all_character.length",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "character_add_handling": [
+        "function handle_character_added(unit: Unit) {",
+        "  const crit_dmg_modifier = {",
+        "    id: 'channeled_needle_buff',",
+        "    stat: 'basic_attack_crit_damage',",
+        "    value: 40,",
+        "    type: 'percentage',",
+        "    condition: 'permanent'",
+        "  };",
+        "  ",
+        "  stat_modifier_manager.apply_stat_modifier(unit, crit_dmg_modifier);",
+        "  ",
+        "  emit_event('stat_modifier_applied', {",
+        "    unit: unit,",
+        "    modifier: crit_dmg_modifier,",
+        "    source: 'channeled_needle'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'channeled_needle',",
+        "    trigger: 'character_added',",
+        "    unit: unit",
+        "  });",
+        "}"
+      ],
+      "character_remove_handling": [
+        "function handle_character_removed(unit: Unit) {",
+        "  if (stat_modifier_manager.has_stat_modifier(unit, 'channeled_needle_buff')) {",
+        "    stat_modifier_manager.remove_stat_modifier(unit, 'channeled_needle_buff');",
+        "    ",
+        "    emit_event('stat_modifier_removed', {",
+        "      unit: unit,",
+        "      modifier_id: 'channeled_needle_buff',",
+        "      source: 'channeled_needle'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'channeled_needle',",
+        "      trigger: 'character_removed',",
+        "      unit: unit",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "40% Basic ATK CRIT DMG increase applied to all character",
+      "New character receives buff when added to team",
+      "Buff is removed when character leaves team",
+      "Buff persists through character swap",
+      "Multiple instance of blessing does not stack"
+    ],
+    "edge_case": [
+      "Character already has high Basic ATK CRIT DMG",
+      "Character removed and re-added to team",
+      "Multiple character added simultaneously",
+      "Blessing deactivated and reactivated",
+      "Interaction with other Basic ATK CRIT DMG modifier"
+    ]
+  }
+} 

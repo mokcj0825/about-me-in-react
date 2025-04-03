@@ -1,0 +1,8 @@
+{
+    "id": "bci_34_gray_matter",
+    "name": "BCI-34 Gray Matter",
+    "path": "erudition",
+    "description": "When entering battle, charges the Brain in a Vat by 65.0%. Breaking an enemy's Weakness charges the Brain in a Vat by 35.0%.",
+    "rarity": 3,
+    "category": "boost"
+  }

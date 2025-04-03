@@ -1,0 +1,150 @@
+{
+  "id": "vesicle",
+  "name": "Vesicle",
+  "path": "propagation",
+  "description": "When an ally's HP is below 50%, increase their DEF by 15%.",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "def_buff": {
+        "id": "vesicle_buff",
+        "type": "stat_modifier",
+        "stat": "defense",
+        "value": 15,
+        "value_type": "percentage",
+        "condition": "hp_below_50",
+        "trigger": "hp_changed"
+      },
+      "event_type": [
+        "hp_changed",
+        "stat_modifier_applied",
+        "stat_modifier_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "apply_stat_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_stat_modifier(unit: Unit, modifier_id: string): void",
+            "has_stat_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "ResourceManager": {
+          "method": [
+            "get_current_hp(unit: Unit): number",
+            "get_max_hp(unit: Unit): number",
+            "on_hp_changed(callback: (unit: Unit) => void): void"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_ally(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "hp_changed",
+        "check": [
+          "Is unit an ally?",
+          "Calculate current HP percentage",
+          "Is HP below 50%?",
+          "Does unit already have the buff?"
+        ],
+        "action": [
+          "Apply 15% DEF buff",
+          "Emit stat_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "hp_changed",
+        "check": [
+          "Is unit an ally?",
+          "Calculate current HP percentage",
+          "Is HP above or equal to 50%?",
+          "Does unit have the buff?"
+        ],
+        "action": [
+          "Remove DEF buff",
+          "Emit stat_modifier_removed event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "hp_change_handling": [
+        "function handle_hp_changed(unit: Unit) {",
+        "  if (!team_manager.is_ally(unit)) return;",
+        "  ",
+        "  const current_hp = resource_manager.get_current_hp(unit);",
+        "  const max_hp = resource_manager.get_max_hp(unit);",
+        "  const hp_percentage = (current_hp / max_hp) * 100;",
+        "  ",
+        "  const has_buff = stat_modifier_manager.has_stat_modifier(unit, 'vesicle_buff');",
+        "  ",
+        "  if (hp_percentage < 50 && !has_buff) {",
+        "    const def_modifier = {",
+        "      id: 'vesicle_buff',",
+        "      stat: 'defense',",
+        "      value: 15,",
+        "      type: 'percentage',",
+        "      condition: 'hp_below_50'",
+        "    };",
+        "    ",
+        "    stat_modifier_manager.apply_stat_modifier(unit, def_modifier);",
+        "    ",
+        "    emit_event('stat_modifier_applied', {",
+        "      unit: unit,",
+        "      modifier: def_modifier,",
+        "      source: 'vesicle'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'vesicle',",
+        "      trigger: 'hp_below_50',",
+        "      unit: unit,",
+        "      detail: {",
+        "        hp_percentage: hp_percentage,",
+        "        defense_increase: 15",
+        "      }",
+        "    });",
+        "  } else if (hp_percentage >= 50 && has_buff) {",
+        "    stat_modifier_manager.remove_stat_modifier(unit, 'vesicle_buff');",
+        "    ",
+        "    emit_event('stat_modifier_removed', {",
+        "      unit: unit,",
+        "      modifier_id: 'vesicle_buff',",
+        "      source: 'vesicle'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'vesicle',",
+        "      trigger: 'hp_above_50',",
+        "      unit: unit,",
+        "      detail: {",
+        "        hp_percentage: hp_percentage",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "DEF buff is applied when ally HP drops below 50%",
+      "DEF buff is removed when ally HP rises above 50%",
+      "DEF buff is exactly 15%",
+      "Only affects allies"
+    ],
+    "edge_case": [
+      "HP fluctuating around 50% threshold",
+      "Multiple allies with HP below 50%",
+      "Character dies while buff is active",
+      "HP change during battle initialization"
+    ]
+  }
+} 

@@ -3,6 +3,6 @@
   "name": "Stimulation: Saltatory Conduction",
   "path": "erudition",
   "rarity": 2,
-  "category": "defense",
+  "category": "hinder",
   "description": "When characters use their Ultimate to attack enemies that are Weakness Broken, delay the enemy's action by 16.0%. Every time the enemy target becomes Weakness Broken, this effect can be triggered up to 3 times."
 }

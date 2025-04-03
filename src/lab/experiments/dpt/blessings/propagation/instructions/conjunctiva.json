@@ -1,0 +1,141 @@
+{
+  "id": "conjunctiva",
+  "name": "Conjunctiva",
+  "path": "propagation",
+  "description": "After a character uses Basic ATK, their DEF increases by 40% for 1 turn.",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "def_buff": {
+        "id": "conjunctiva_def_buff",
+        "type": "stat_modifier",
+        "stat": "defense",
+        "value": 40,
+        "value_type": "percentage",
+        "condition": "after_basic_attack",
+        "duration": 1,
+        "duration_type": "turn",
+        "trigger": "basic_attack_end"
+      },
+      "event_type": [
+        "basic_attack_start",
+        "basic_attack_end",
+        "turn_end",
+        "stat_modifier_applied",
+        "stat_modifier_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "apply_stat_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_stat_modifier(unit: Unit, modifier_id: string): void",
+            "has_stat_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "on_basic_attack_end(callback: (unit: Unit) => void): void",
+            "is_basic_attack(ability: Ability): boolean"
+          ]
+        },
+        "TurnManager": {
+          "method": [
+            "on_turn_end(callback: () => void): void",
+            "get_current_turn(): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "basic_attack_end",
+        "check": [
+          "Does unit have conjunctiva blessing?",
+          "Was the ability a Basic ATK?"
+        ],
+        "action": [
+          "Apply 40% DEF buff for 1 turn",
+          "Emit stat_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "turn_end",
+        "check": [
+          "Are there any active DEF buffs from this blessing?"
+        ],
+        "action": [
+          "Remove expired DEF buffs",
+          "Emit stat_modifier_removed event for each removed buff",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "basic_attack_handling": [
+        "function handle_basic_attack_end(unit: Unit) {",
+        "  if (!has_blessing(unit, 'conjunctiva')) return;",
+        "  ",
+        "  const def_modifier = {",
+        "    id: 'conjunctiva_def_buff',",
+        "    stat: 'defense',",
+        "    value: 40,",
+        "    type: 'percentage',",
+        "    duration: 1,",
+        "    duration_type: 'turn',",
+        "    condition: 'after_basic_attack'",
+        "  };",
+        "  ",
+        "  stat_modifier_manager.apply_stat_modifier(unit, def_modifier);",
+        "  ",
+        "  emit_event('stat_modifier_applied', {",
+        "    unit: unit,",
+        "    modifier: def_modifier,",
+        "    source: 'conjunctiva'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'conjunctiva',",
+        "    trigger: 'basic_attack_end',",
+        "    unit: unit,",
+        "    detail: {",
+        "      defense_increase: 40,",
+        "      duration: 1",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "turn_end_handling": [
+        "function handle_turn_end() {",
+        "  const current_turn = turn_manager.get_current_turn();",
+        "  ",
+        "  // The StatModifierManager will automatically remove expired modifiers",
+        "  // We just need to emit events for the removals",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'conjunctiva',",
+        "    trigger: 'turn_end',",
+        "    detail: {",
+        "      turn: current_turn",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "DEF increases by exactly 40% after using Basic ATK",
+      "Buff lasts for exactly 1 turn",
+      "DEF returns to original value when duration expires",
+      "Multiple use of Basic ATK refreshes the duration"
+    ],
+    "edge_case": [
+      "Using Basic ATK multiple time in one turn",
+      "Character dies while buff is active",
+      "Turn ends while multiple character has active buff",
+      "Buff is applied when other DEF modifier is active"
+    ]
+  }
+} 
