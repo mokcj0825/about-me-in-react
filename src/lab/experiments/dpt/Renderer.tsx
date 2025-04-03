@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 import React, { useEffect, useState } from 'react';
 import { BlessingInstruction } from './types';
 import TabButton from './components/TabButton';
@@ -13,6 +14,9 @@ import {
 interface RendererProps {
   blessingId: string;
 }
+
+// Pre-load all instruction files
+const instructionModules = import.meta.glob<{ default: BlessingInstruction }>('./instructions/*.json');
 
 const sections = [
   { id: "overview", title: "Overview" },
@@ -31,7 +35,14 @@ const Renderer: React.FC<RendererProps> = ({ blessingId }) => {
   useEffect(() => {
     const loadInstruction = async () => {
       try {
-        const module = await import(`./instructions/${blessingId}.json`);
+        const modulePath = `./instructions/${blessingId}.json`;
+        const loader = instructionModules[modulePath];
+        
+        if (!loader) {
+          throw new Error(`Instruction file not found: ${modulePath}`);
+        }
+
+        const module = await loader();
         const data = module.default;
 
         // Validate category
@@ -46,7 +57,7 @@ const Renderer: React.FC<RendererProps> = ({ blessingId }) => {
         setError(null);
       } catch (error) {
         console.error('Failed to load blessing instruction:', error);
-        setError(error instanceof Error ? error.message : 'Failed to load instruction');
+        setError(`Failed to load instruction for blessing ${blessingId}: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
@@ -58,7 +69,7 @@ const Renderer: React.FC<RendererProps> = ({ blessingId }) => {
       <div style={{ padding: '1rem' }}>
         {error ? (
           <div style={{ color: 'red' }}>
-            Error loading instruction: {error}
+            {error}
           </div>
         ) : (
           'Loading...'
