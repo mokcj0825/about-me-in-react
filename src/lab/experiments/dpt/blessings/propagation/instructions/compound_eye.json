@@ -1,0 +1,136 @@
+{
+  "id": "compound_eye",
+  "name": "Compound Eye",
+  "path": "propagation",
+  "description": "After entering battle, recover 1 Skill Point after each ally turn. This effect can trigger up to 3 time across all ally.",
+  "rarity": 1,
+  "category": "recovery",
+  "implementation": {
+    "data_structure": {
+      "skill_point_recovery": {
+        "id": "compound_eye_recovery",
+        "type": "resource_modifier",
+        "resource": "skill_point",
+        "value": 1,
+        "value_type": "flat",
+        "condition": "ally_turn_end",
+        "max_trigger": 3,
+        "trigger": "turn_end"
+      },
+      "event_type": [
+        "battle_start",
+        "turn_end",
+        "resource_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "ResourceManager": {
+          "method": [
+            "modify_skill_point(unit: Unit, amount: number): void",
+            "get_current_skill_point(unit: Unit): number",
+            "get_max_skill_point(unit: Unit): number"
+          ]
+        },
+        "BattleStateManager": {
+          "method": [
+            "on_battle_start(): void",
+            "is_in_battle(): boolean"
+          ]
+        },
+        "TurnManager": {
+          "method": [
+            "on_turn_end(callback: (unit: Unit) => void): void",
+            "is_ally(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "battle_start",
+        "check": [
+          "Does unit have compound_eye blessing?"
+        ],
+        "action": [
+          "Reset trigger count to 3",
+          "Set up turn end listener",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "turn_end",
+        "check": [
+          "Is unit an ally?",
+          "Are there triggers remaining?",
+          "Is unit's skill point below max?"
+        ],
+        "action": [
+          "Recover 1 Skill Point",
+          "Decrease remaining trigger count",
+          "Emit resource_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "battle_start_handling": [
+        "function handle_battle_start() {",
+        "  let trigger_count = 3;",
+        "  ",
+        "  turn_manager.on_turn_end((unit: Unit) => {",
+        "    if (!battle_state_manager.is_in_battle()) return;",
+        "    if (!turn_manager.is_ally(unit)) return;",
+        "    if (trigger_count <= 0) return;",
+        "    ",
+        "    const current_sp = resource_manager.get_current_skill_point(unit);",
+        "    const max_sp = resource_manager.get_max_skill_point(unit);",
+        "    ",
+        "    if (current_sp < max_sp) {",
+        "      resource_manager.modify_skill_point(unit, 1);",
+        "      trigger_count--;",
+        "      ",
+        "      emit_event('resource_modified', {",
+        "        unit: unit,",
+        "        resource: 'skill_point',",
+        "        amount: 1,",
+        "        source: 'compound_eye'",
+        "      });",
+        "      ",
+        "      emit_event('blessing_triggered', {",
+        "        blessing: 'compound_eye',",
+        "        trigger: 'turn_end',",
+        "        unit: unit,",
+        "        detail: {",
+        "          skill_point_recovered: 1,",
+        "          trigger_remaining: trigger_count",
+        "        }",
+        "      });",
+        "    }",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'compound_eye',",
+        "    trigger: 'battle_start',",
+        "    detail: {",
+        "      max_trigger: 3",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Recover exactly 1 Skill Point after each ally turn",
+      "Effect triggers no more than 3 time total",
+      "Trigger count resets when entering a new battle",
+      "Only triggers for ally turn"
+    ],
+    "edge_case": [
+      "Multiple ally takes turn in succession",
+      "Character is at max Skill Point",
+      "Battle ends before all trigger is used",
+      "New battle starts with unused trigger"
+    ]
+  }
+} 

@@ -1,0 +1,8 @@
+{
+    "id": "catalyst",
+    "name": "Catalyst",
+    "path": "propagation",
+    "description": "After a character uses their Skill and if the Skill did not unleash an attack, all allies' DMG dealt increases by 20% for 1 turn(s). This effect can be stacked up to 3 time(s).",
+    "rarity": 2,
+    "category": "offense"
+  }

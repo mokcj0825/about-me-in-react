@@ -1,0 +1,147 @@
+{
+  "id": "load_striated_cortex",
+  "name": "Load: Striated Cortex",
+  "description": "If characters' AoE ATK ability only attacks 1 enemy, this ATK will deal an additional set amount of DMG equal to 40.0% of the original DMG to the attacked enemy target.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "damage_bonus": {
+        "id": "striated_cortex_bonus",
+        "type": "damage_modifier",
+        "value": 40,
+        "value_type": "percentage_original",
+        "condition": "single_target_aoe",
+        "trigger": "ability_damage"
+      },
+      "event_type": [
+        "ability_start",
+        "ability_damage",
+        "ability_end",
+        "damage_modifier_applied",
+        "target_count_changed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "AbilityHandler": {
+          "method": [
+            "is_aoe_ability(ability: Ability): boolean",
+            "get_target_count(ability: Ability): number",
+            "get_original_damage(ability: Ability): number",
+            "handle_ability_damage(source: Unit, ability: Ability, target: Unit): void"
+          ]
+        },
+        "DamageModifierManager": {
+          "method": [
+            "apply_damage_modifier(source: Unit, target: Unit, modifier: DamageModifier): void",
+            "calculate_bonus_damage(base_damage: number, modifier: DamageModifier): number"
+          ]
+        },
+        "TargetManager": {
+          "method": [
+            "get_valid_target(ability: Ability): Unit[]",
+            "is_valid_target(ability: Ability, target: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ability_start",
+        "check": [
+          "Does source have load_striated_cortex blessing?",
+          "Is ability an AoE ATK?",
+          "How many valid target is there?"
+        ],
+        "action": [
+          "Store target count for ability",
+          "Emit target_count_changed event"
+        ]
+      },
+      {
+        "trigger": "ability_damage",
+        "check": [
+          "Does source have load_striated_cortex blessing?",
+          "Is ability an AoE ATK?",
+          "Is target count exactly 1?"
+        ],
+        "action": [
+          "Calculate 40% of original damage",
+          "Apply additional damage to target",
+          "Emit damage_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ability_start_handling": [
+        "function handle_ability_start(event: AbilityStartEvent) {",
+        "  if (!has_blessing(event.source, 'load_striated_cortex')) return;",
+        "  if (!ability_handler.is_aoe_ability(event.ability)) return;",
+        "  ",
+        "  const valid_target = target_manager.get_valid_target(event.ability);",
+        "  ",
+        "  emit_event('target_count_changed', {",
+        "    ability: event.ability,",
+        "    target_count: valid_target.length,",
+        "    source: 'load_striated_cortex'",
+        "  });",
+        "}"
+      ],
+      "ability_damage_handling": [
+        "function handle_ability_damage(event: AbilityDamageEvent) {",
+        "  if (!has_blessing(event.source, 'load_striated_cortex')) return;",
+        "  if (!ability_handler.is_aoe_ability(event.ability)) return;",
+        "  if (ability_handler.get_target_count(event.ability) !== 1) return;",
+        "  ",
+        "  const original_damage = ability_handler.get_original_damage(event.ability);",
+        "  const damage_modifier = {",
+        "    id: 'striated_cortex_bonus',",
+        "    value: 40,",
+        "    type: 'percentage_original'",
+        "  };",
+        "  ",
+        "  const bonus_damage = damage_modifier_manager.calculate_bonus_damage(original_damage, damage_modifier);",
+        "  damage_modifier_manager.apply_damage_modifier(event.source, event.target, damage_modifier);",
+        "  ",
+        "  emit_event('damage_modifier_applied', {",
+        "    source: event.source,",
+        "    target: event.target,",
+        "    modifier: damage_modifier,",
+        "    original_damage: original_damage,",
+        "    bonus_damage: bonus_damage",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'load_striated_cortex',",
+        "    trigger: 'ability_damage',",
+        "    source: event.source,",
+        "    target: event.target,",
+        "    detail: {",
+        "      original_damage: original_damage,",
+        "      bonus_damage: bonus_damage,",
+        "      ability: event.ability.id",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "40% bonus damage applied only when AoE ability hits single target",
+      "Bonus damage calculated from original damage value",
+      "Correct target counting for AoE ability",
+      "Proper event emission for damage modification",
+      "No bonus damage when multiple target is hit"
+    ],
+    "edge_case": [
+      "Target dies before damage application",
+      "Multiple AoE ability in quick succession",
+      "Target count change during ability execution",
+      "Interaction with other damage modifier",
+      "AoE ability with forced single target",
+      "Target immunity or damage reflection"
+    ]
+  }
+} 

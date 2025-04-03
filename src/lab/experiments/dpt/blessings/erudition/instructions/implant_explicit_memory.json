@@ -1,0 +1,131 @@
+{
+  "id": "implant_explicit_memory",
+  "name": "Implant: Explicit Memory",
+  "description": "After characters use their Ultimate via Brain in a Vat, they gain a Shield equal in strength to 36.0% of their Max HP, lasting for 2 turns.",
+  "rarity": 2,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "shield_effect": {
+        "id": "explicit_memory_shield",
+        "type": "shield",
+        "value": 36,
+        "value_type": "percentage_max_hp",
+        "duration": 2,
+        "trigger": "after_brain_in_vat_ultimate",
+        "stack_type": "refresh"
+      },
+      "event_type": [
+        "brain_in_vat_ultimate_end",
+        "shield_applied",
+        "shield_removed",
+        "turn_start",
+        "turn_end",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "ShieldManager": {
+          "method": [
+            "apply_shield(unit: Unit, amount: number, duration: number): Shield",
+            "remove_shield(unit: Unit, shield_id: string): void",
+            "update_shield_duration(unit: Unit): void",
+            "calculate_max_hp_percentage(unit: Unit, percentage: number): number"
+          ]
+        },
+        "BrainInVatManager": {
+          "method": [
+            "is_ultimate_from_vat(ability: Ability): boolean",
+            "is_vat_active(): boolean",
+            "get_active_vat_ability(): Ability | null"
+          ]
+        },
+        "TurnManager": {
+          "method": [
+            "get_current_turn(): number",
+            "get_shield_duration(start_turn: number, duration: number): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "brain_in_vat_ultimate_end",
+        "check": [
+          "Does source have implant_explicit_memory blessing?",
+          "Was ability cast through Brain in Vat?"
+        ],
+        "action": [
+          "Calculate shield amount (36% of max HP)",
+          "Apply shield with 2 turn duration",
+          "Emit shield_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "turn_end",
+        "check": [
+          "Is there active shield from this blessing?"
+        ],
+        "action": [
+          "Update shield duration",
+          "Remove expired shield",
+          "Emit shield_removed event if shield expires"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ultimate_end_handling": [
+        "function handle_brain_in_vat_ultimate_end(event: AbilityEndEvent) {",
+        "  if (!has_blessing(event.source, 'implant_explicit_memory')) return;",
+        "  if (!brain_in_vat_manager.is_ultimate_from_vat(event.ability)) return;",
+        "  ",
+        "  const shield_amount = shield_manager.calculate_max_hp_percentage(event.source, 36);",
+        "  const shield = shield_manager.apply_shield(event.source, shield_amount, 2);",
+        "  ",
+        "  emit_event('shield_applied', {",
+        "    unit: event.source,",
+        "    shield: shield,",
+        "    source: 'implant_explicit_memory',",
+        "    duration: 2",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'implant_explicit_memory',",
+        "    trigger: 'brain_in_vat_ultimate_end',",
+        "    source: event.source,",
+        "    detail: {",
+        "      shield_amount: shield_amount,",
+        "      duration: 2",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "turn_end_handling": [
+        "function handle_turn_end() {",
+        "  const unit = get_unit_with_blessing('implant_explicit_memory');",
+        "  ",
+        "  if (unit) {",
+        "    shield_manager.update_shield_duration(unit);",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Shield is applied after Brain in Vat Ultimate ends",
+      "Shield strength is exactly 36% of max HP",
+      "Shield lasts for exactly 2 turns",
+      "Shield is refreshed if reapplied",
+      "Shield is properly removed after duration expires"
+    ],
+    "edge_case": [
+      "Multiple Ultimate used in succession",
+      "Shield applied when another shield is active",
+      "Unit's max HP changes while shield is active",
+      "Turn duration modified by other effect",
+      "Brain in Vat interrupted during Ultimate",
+      "Shield interaction with damage absorption effect"
+    ]
+  }
+} 

@@ -1,0 +1,8 @@
+{
+    "id": "sporangium",
+    "name": "Sporangium",
+    "path": "propagation",
+    "description": "For each Skill Point a character consumes, the character regenerates 3 extra Energy.",
+    "rarity": 1,
+    "category": "recovery"
+  }

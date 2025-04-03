@@ -1,0 +1,137 @@
+{
+  "id": "stimulation_saltatory_conduction",
+  "name": "Stimulation: Saltatory Conduction",
+  "description": "When characters use their Ultimate to attack enemies that are Weakness Broken, delay the enemy's action by 16.0%. Every time the enemy target becomes Weakness Broken, this effect can be triggered up to 3 times.",
+  "rarity": 2,
+  "category": "hinder",
+  "implementation": {
+    "data_structure": {
+      "delay_effect": {
+        "id": "saltatory_delay",
+        "type": "action_modifier",
+        "value": 16,
+        "value_type": "percentage",
+        "max_trigger_per_weakness": 3,
+        "trigger": "on_ultimate_hit_weakness_broken"
+      },
+      "trigger_tracker": {
+        "type": "counter",
+        "key": "weakness_break_count",
+        "reset_on": "weakness_break_removed",
+        "track_per_target": true
+      },
+      "event_type": [
+        "ability_used",
+        "weakness_break_applied",
+        "weakness_break_removed",
+        "action_gauge_modified",
+        "turn_start",
+        "turn_end"
+      ],
+      "required_interface": {
+        "ActionGaugeManager": {
+          "method": [
+            "modify_action_gauge(target: Unit, percentage: number): void",
+            "get_action_gauge(unit: Unit): number",
+            "is_weakness_broken(unit: Unit): boolean"
+          ]
+        },
+        "TriggerTracker": {
+          "method": [
+            "increment_trigger_count(target_id: string, trigger_id: string): void",
+            "get_trigger_count(target_id: string, trigger_id: string): number",
+            "reset_trigger_count(target_id: string, trigger_id: string): void"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "handle_ability_used(actor: Unit, ability: Ability, target: Unit[]): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ability_used",
+        "check": [
+          "Is ability an Ultimate?",
+          "Is any target Weakness Broken?",
+          "Does user have stimulation_saltatory_conduction blessing?",
+          "Has target not exceeded max trigger for current weakness break?"
+        ],
+        "action": [
+          "For each valid target:",
+          "- Get current trigger count",
+          "- If count < max_trigger:",
+          "  - Apply action gauge delay",
+          "  - Increment trigger count",
+          "  - Emit action_gauge_modified event"
+        ]
+      },
+      {
+        "trigger": "weakness_break_applied",
+        "action": [
+          "Reset trigger count for target"
+        ]
+      },
+      {
+        "trigger": "weakness_break_removed",
+        "action": [
+          "Clear trigger count for target"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "handle_ultimate": [
+        "function handle_ability_used(event: AbilityUsedEvent) {",
+        "  if (!is_ultimate_ability(event.ability)) return;",
+        "  if (!has_blessing(event.actor, 'stimulation_saltatory_conduction')) return;",
+        "  ",
+        "  for (const target of event.target) {",
+        "    if (!action_gauge_manager.is_weakness_broken(target)) continue;",
+        "    ",
+        "    const trigger_count = trigger_tracker.get_trigger_count(target.id, 'saltatory_delay');",
+        "    if (trigger_count >= 3) continue;",
+        "    ",
+        "    action_gauge_manager.modify_action_gauge(target, -16);",
+        "    trigger_tracker.increment_trigger_count(target.id, 'saltatory_delay');",
+        "    ",
+        "    emit_event('action_gauge_modified', {",
+        "      target,",
+        "      source: event.actor,",
+        "      value: -16,",
+        "      type: 'delay'",
+        "    });",
+        "  }",
+        "}"
+      ],
+      "handle_weakness_break": [
+        "function handle_weakness_break_applied(event: WeaknessBreakEvent) {",
+        "  trigger_tracker.reset_trigger_count(event.target.id, 'saltatory_delay');",
+        "}",
+        "",
+        "function handle_weakness_break_removed(event: WeaknessBreakEvent) {",
+        "  trigger_tracker.reset_trigger_count(event.target.id, 'saltatory_delay');",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Enemy action gauge is delayed by 16% when hit by Ultimate while Weakness Broken",
+      "Delay effect can be triggered up to 3 time per Weakness Break state",
+      "Trigger count resets when target becomes Weakness Broken again",
+      "Delay effect only applies to Weakness Broken target",
+      "Only Ultimate ability can trigger the delay effect"
+    ],
+    "edge_case": [
+      "Multiple unit with this blessing hitting the same target",
+      "Target becoming un-broken and re-broken multiple time",
+      "Ultimate hitting multiple target simultaneously",
+      "Action gauge manipulation with other effect",
+      "Trigger count persistence across turn",
+      "Interaction with other action gauge modifying effect"
+    ]
+  }
+} 

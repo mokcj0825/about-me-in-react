@@ -1,0 +1,128 @@
+{
+  "id": "imitation_transmitter_synthesis",
+  "name": "Imitation: Transmitter Synthesis",
+  "description": "For every 1 Energy that exceeds the characters' Max Energy, charges Brain in a Vat by 0.8%.",
+  "rarity": 2,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "energy_conversion": {
+        "id": "transmitter_conversion",
+        "type": "resource_converter",
+        "source_resource": "energy",
+        "target_resource": "brain_in_vat",
+        "conversion_rate": 0.8,
+        "trigger": "on_energy_gain",
+        "condition": "exceeds_max"
+      },
+      "event_type": [
+        "energy_gained",
+        "energy_changed",
+        "brain_in_vat_charged",
+        "blessing_triggered",
+        "resource_converted"
+      ],
+      "required_interface": {
+        "ResourceManager": {
+          "method": [
+            "get_current_energy(unit: Unit): number",
+            "get_max_energy(unit: Unit): number",
+            "get_excess_energy(unit: Unit): number",
+            "consume_energy(unit: Unit, amount: number): number"
+          ]
+        },
+        "BrainInVatManager": {
+          "method": [
+            "charge_vat(amount: number, type: 'flat' | 'percentage'): number",
+            "get_current_charge(): number",
+            "get_max_charge(): number"
+          ]
+        },
+        "ConversionCalculator": {
+          "method": [
+            "calculate_conversion(amount: number, rate: number): number",
+            "round_conversion(amount: number): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "energy_gained",
+        "check": [
+          "Does unit have imitation_transmitter_synthesis blessing?",
+          "Does current energy exceed max energy?"
+        ],
+        "action": [
+          "Calculate excess energy amount",
+          "Calculate Brain in Vat charge (0.8% per excess energy)",
+          "Apply charge to Brain in Vat",
+          "Consume excess energy",
+          "Emit brain_in_vat_charged event",
+          "Emit resource_converted event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "energy_gain_handling": [
+        "function handle_energy_gain(event: EnergyGainEvent) {",
+        "  if (!has_blessing(event.unit, 'imitation_transmitter_synthesis')) return;",
+        "  ",
+        "  const excess_energy = resource_manager.get_excess_energy(event.unit);",
+        "  if (excess_energy <= 0) return;",
+        "  ",
+        "  // Calculate conversion",
+        "  const charge_amount = conversion_calculator.calculate_conversion(excess_energy, 0.8);",
+        "  const rounded_charge = conversion_calculator.round_conversion(charge_amount);",
+        "  ",
+        "  // Apply conversion",
+        "  const actual_charge = brain_in_vat_manager.charge_vat(rounded_charge, 'percentage');",
+        "  const energy_consumed = resource_manager.consume_energy(event.unit, excess_energy);",
+        "  ",
+        "  // Emit events",
+        "  emit_event('brain_in_vat_charged', {",
+        "    amount: actual_charge,",
+        "    source: 'imitation_transmitter_synthesis',",
+        "    trigger: 'excess_energy'",
+        "  });",
+        "  ",
+        "  emit_event('resource_converted', {",
+        "    source_resource: 'energy',",
+        "    target_resource: 'brain_in_vat',",
+        "    source_amount: energy_consumed,",
+        "    target_amount: actual_charge,",
+        "    conversion_rate: 0.8",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'imitation_transmitter_synthesis',",
+        "    trigger: 'energy_gain',",
+        "    unit: event.unit,",
+        "    detail: {",
+        "      excess_energy: excess_energy,",
+        "      charge_gained: actual_charge",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Excess energy is correctly converted to Brain in Vat charge",
+      "Conversion rate of 0.8% per energy point is accurate",
+      "Excess energy is consumed after conversion",
+      "Conversion happens immediately when energy exceeds maximum",
+      "Multiple instance of excess energy is handled correctly"
+    ],
+    "edge_case": [
+      "Energy gain putting total just at max energy",
+      "Multiple source of energy gain in same frame",
+      "Interaction with energy reduction effect",
+      "Brain in Vat at or near maximum charge",
+      "Decimal point handling in conversion calculation",
+      "Energy gain while Brain in Vat is active"
+    ]
+  }
+} 

@@ -1,0 +1,159 @@
+{
+  "id": "scaled_wing",
+  "name": "Scaled Wing",
+  "path": "propagation",
+  "description": "After a character uses Basic ATK, their SPD increases by 16% for 1 turn.",
+  "rarity": 1,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "spd_buff": {
+        "id": "scaled_wing_buff",
+        "type": "stat_modifier",
+        "stat": "speed",
+        "value": 16,
+        "value_type": "percentage",
+        "condition": "after_basic_attack",
+        "duration": 1,
+        "duration_type": "turn",
+        "trigger": "basic_attack_end"
+      },
+      "event_type": [
+        "basic_attack_start",
+        "basic_attack_end",
+        "turn_end",
+        "stat_modifier_applied",
+        "stat_modifier_removed",
+        "blessing_triggered",
+        "turn_order_changed"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "apply_stat_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_stat_modifier(unit: Unit, modifier_id: string): void",
+            "has_stat_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "on_basic_attack_end(callback: (unit: Unit) => void): void",
+            "is_basic_attack(ability: Ability): boolean"
+          ]
+        },
+        "TurnManager": {
+          "method": [
+            "on_turn_end(callback: () => void): void",
+            "recalculate_turn_order(): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "basic_attack_end",
+        "check": [
+          "Does unit have scaled_wing blessing?",
+          "Was the ability a Basic ATK?"
+        ],
+        "action": [
+          "Apply 16% SPD buff for 1 turn",
+          "Emit stat_modifier_applied event",
+          "Recalculate turn order",
+          "Emit turn_order_changed event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "turn_end",
+        "check": [
+          "Are there any active SPD buffs from this blessing?"
+        ],
+        "action": [
+          "Remove expired SPD buffs",
+          "Emit stat_modifier_removed event for each removed buff",
+          "Recalculate turn order if any buff was removed",
+          "Emit turn_order_changed event if turn order changed",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "basic_attack_handling": [
+        "function handle_basic_attack_end(unit: Unit) {",
+        "  if (!has_blessing(unit, 'scaled_wing')) return;",
+        "  ",
+        "  const spd_modifier = {",
+        "    id: 'scaled_wing_buff',",
+        "    stat: 'speed',",
+        "    value: 16,",
+        "    type: 'percentage',",
+        "    duration: 1,",
+        "    duration_type: 'turn',",
+        "    condition: 'after_basic_attack'",
+        "  };",
+        "  ",
+        "  stat_modifier_manager.apply_stat_modifier(unit, spd_modifier);",
+        "  ",
+        "  emit_event('stat_modifier_applied', {",
+        "    unit: unit,",
+        "    modifier: spd_modifier,",
+        "    source: 'scaled_wing'",
+        "  });",
+        "  ",
+        "  turn_manager.recalculate_turn_order();",
+        "  emit_event('turn_order_changed', {",
+        "    source: 'scaled_wing',",
+        "    trigger: 'speed_changed'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'scaled_wing',",
+        "    trigger: 'basic_attack_end',",
+        "    unit: unit,",
+        "    detail: {",
+        "      speed_increase: 16,",
+        "      duration: 1",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "turn_end_handling": [
+        "function handle_turn_end() {",
+        "  let turn_order_changed = false;",
+        "  ",
+        "  // The StatModifierManager will automatically remove expired modifiers",
+        "  // We just need to check if any speed modifiers were removed",
+        "  if (turn_order_changed) {",
+        "    turn_manager.recalculate_turn_order();",
+        "    emit_event('turn_order_changed', {",
+        "      source: 'scaled_wing',",
+        "      trigger: 'buff_expired'",
+        "    });",
+        "  }",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'scaled_wing',",
+        "    trigger: 'turn_end'",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "SPD increases by exactly 16% after using Basic ATK",
+      "Buff lasts for exactly 1 turn",
+      "SPD returns to original value when duration expires",
+      "Turn order is recalculated when SPD changes",
+      "Multiple use of Basic ATK refreshes the duration"
+    ],
+    "edge_case": [
+      "Using Basic ATK multiple time in one turn",
+      "Character dies while buff is active",
+      "Turn ends while multiple character has active buff",
+      "Buff is applied when other SPD modifier is active",
+      "SPD change affects ongoing turn order"
+    ]
+  }
+} 

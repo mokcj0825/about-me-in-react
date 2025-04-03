@@ -1,0 +1,8 @@
+{
+    "id": "excitatory_gland",
+    "name": "Excitatory Gland",
+    "path": "propagation",
+    "description": "If the team has 0 Skill Point when an ally uses their Basic ATK, additionally recovers 1 Skill Point.",
+    "rarity": 2,
+    "category": "recovery"
+  }

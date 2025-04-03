@@ -1,0 +1,8 @@
+{
+    "id": "analysis_subliminal_sensation",
+    "name": "Analysis: Subliminal Sensation",
+    "path": "erudition",
+    "description": "Characters' Ultimate DMG increases by 50.0%, lasting until the end of the first Ultimate they use in battle. After entering battle, characters regenerate energy equal to 60.0% of their respective Max Energy.",
+    "rarity": 2,
+    "category": "offense"
+  }

@@ -1,0 +1,8 @@
+{
+    "id": "smr_2_amygdala",
+    "name": "SMR-2 Amygdala",
+    "path": "erudition",
+    "description": "Dealing fatal DMG to enemies will charge the Brain in a Vat by 50.0%.",
+    "rarity": 3,
+    "category": "boost"
+  }

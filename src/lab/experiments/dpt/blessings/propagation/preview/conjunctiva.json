@@ -1,0 +1,8 @@
+{
+    "id": "conjunctiva",
+    "name": "Conjunctiva",
+    "path": "propagation",
+    "description": "After characters use Basic ATKs, their DEF increases by 40% for 1 turn(s).",
+    "rarity": 1,
+    "category": "defense"
+  }

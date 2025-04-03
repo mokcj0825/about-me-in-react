@@ -1,0 +1,155 @@
+{
+  "id": "torch_of_anti_lag_ignition",
+  "name": "Torch of Anti-Lag Ignition",
+  "description": "After characters use their Ultimate, their next attack will deal 50.0% more DMG.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "damage_buff": {
+        "id": "anti_lag_buff",
+        "type": "damage_modifier",
+        "value": 50,
+        "value_type": "percentage",
+        "condition": "next_attack",
+        "duration": "one_attack",
+        "trigger": "ultimate_end"
+      },
+      "event_type": [
+        "ultimate_end",
+        "attack_start",
+        "attack_end",
+        "damage_modifier_applied",
+        "damage_modifier_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageModifierManager": {
+          "method": [
+            "apply_damage_modifier(unit: Unit, modifier: DamageModifier): void",
+            "remove_damage_modifier(unit: Unit, modifier_id: string): void",
+            "has_damage_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "is_attack_ability(ability: Ability): boolean",
+            "handle_ability_end(source: Unit, ability: Ability): void"
+          ]
+        },
+        "BuffManager": {
+          "method": [
+            "mark_buff_used(unit: Unit, buff_id: string): void",
+            "is_buff_active(unit: Unit, buff_id: string): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ultimate_end",
+        "check": [
+          "Does unit have torch_of_anti_lag_ignition blessing?",
+          "Was ability an Ultimate?"
+        ],
+        "action": [
+          "Apply 50% DMG buff for next attack",
+          "Emit damage_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "attack_end",
+        "check": [
+          "Does unit have torch_of_anti_lag_ignition blessing?",
+          "Was damage buff active?",
+          "Was ability an attack?"
+        ],
+        "action": [
+          "Remove damage buff",
+          "Emit damage_modifier_removed event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ultimate_end_handling": [
+        "function handle_ultimate_end(event: AbilityEndEvent) {",
+        "  if (!has_blessing(event.source, 'torch_of_anti_lag_ignition')) return;",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  ",
+        "  const damage_modifier = {",
+        "    id: 'anti_lag_buff',",
+        "    value: 50,",
+        "    type: 'percentage',",
+        "    condition: 'next_attack',",
+        "    duration: 'one_attack'",
+        "  };",
+        "  ",
+        "  damage_modifier_manager.apply_damage_modifier(event.source, damage_modifier);",
+        "  ",
+        "  emit_event('damage_modifier_applied', {",
+        "    unit: event.source,",
+        "    modifier: damage_modifier,",
+        "    source: 'torch_of_anti_lag_ignition'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'torch_of_anti_lag_ignition',",
+        "    trigger: 'ultimate_end',",
+        "    unit: event.source,",
+        "    detail: {",
+        "      damage_increase: 50,",
+        "      ability: event.ability.id",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "attack_end_handling": [
+        "function handle_attack_end(event: AbilityEndEvent) {",
+        "  if (!has_blessing(event.source, 'torch_of_anti_lag_ignition')) return;",
+        "  if (!ability_handler.is_attack_ability(event.ability)) return;",
+        "  ",
+        "  if (damage_modifier_manager.has_damage_modifier(event.source, 'anti_lag_buff')) {",
+        "    damage_modifier_manager.remove_damage_modifier(event.source, 'anti_lag_buff');",
+        "    buff_manager.mark_buff_used(event.source, 'anti_lag_buff');",
+        "    ",
+        "    emit_event('damage_modifier_removed', {",
+        "      unit: event.source,",
+        "      modifier_id: 'anti_lag_buff',",
+        "      source: 'torch_of_anti_lag_ignition'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'torch_of_anti_lag_ignition',",
+        "      trigger: 'attack_end',",
+        "      unit: event.source,",
+        "      detail: {",
+        "        buff_consumed: true,",
+        "        ability: event.ability.id",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "50% damage increase applied after Ultimate use",
+      "Buff only applies to next attack",
+      "Buff removed after attack is used",
+      "Proper event emission for modifier change",
+      "No buff stacking from multiple Ultimate use"
+    ],
+    "edge_case": [
+      "Ultimate interrupted before completion",
+      "Attack interrupted before damage",
+      "Multiple attack queued simultaneously",
+      "Interaction with other attack damage modifier",
+      "Ultimate used while buff is active",
+      "Non-damaging attack consuming buff"
+    ]
+  }
+} 

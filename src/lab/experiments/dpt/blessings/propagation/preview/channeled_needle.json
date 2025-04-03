@@ -1,0 +1,8 @@
+{
+    "id": "channeled_needle",
+    "name": "Channeled Needle",
+    "path": "propagation",
+    "description": "Characters' Basic ATK CRIT DMG increases by 40%.",
+    "rarity": 1,
+    "category": "offense"
+  }

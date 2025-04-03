@@ -1,0 +1,89 @@
+{
+  "id": "garment_of_coiled_wires",
+  "name": "Garment of Coiled Wires",
+  "description": "Demonstrates the HP recovery mechanism of Garment of Coiled Wires blessing after ultimate cast",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "recovery_effect": {
+        "id": "garment_recovery",
+        "type": "heal_trigger",
+        "heal_amount": 16,
+        "heal_type": "percentage_max_hp",
+        "trigger": "after_ultimate"
+      },
+      "event_type": [
+        "ability_used",
+        "ultimate_used",
+        "hp_recovered",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "handle_ability_used(actor: Unit, ability: Ability, target: Unit[]): void"
+          ]
+        },
+        "BlessingManager": {
+          "method": [
+            "has_blessing(unit: Unit, blessing_id: string): boolean",
+            "trigger_blessing(unit: Unit, blessing_id: string): void"
+          ]
+        },
+        "ResourceManager": {
+          "method": [
+            "recover_hp(unit: Unit, amount: number): number",
+            "calculate_max_hp_percentage(unit: Unit, percentage: number): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ability_used",
+        "check": [
+          "Is ability an ultimate?",
+          "Does user have garment_of_coiled_wires blessing?"
+        ],
+        "action": [
+          "Calculate heal amount (16% of max HP)",
+          "Apply heal to ability user",
+          "Emit blessing_triggered event",
+          "Emit hp_recovered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ultimate_handling": [
+        "function handle_ability_used(event: AbilityUsedEvent) {",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  if (!blessing_manager.has_blessing(event.actor, 'garment_of_coiled_wires')) return;",
+        "  ",
+        "  const heal_amount = resource_manager.calculate_max_hp_percentage(event.actor, 16);",
+        "  const healed_amount = resource_manager.recover_hp(event.actor, heal_amount);",
+        "  ",
+        "  blessing_manager.trigger_blessing(event.actor, 'garment_of_coiled_wires');",
+        "  emit_event('blessing_triggered', { target: event.actor, blessing: 'garment_of_coiled_wires' });",
+        "  emit_event('hp_recovered', { target: event.actor, amount: healed_amount });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Player unit's energy is fully consumed (0/120) after ultimate",
+      "Player unit's HP increases by 16% of max HP when ultimate is used",
+      "Blessing effect triggers immediately after ultimate cast",
+      "Blessing persists across turn and can trigger multiple time"
+    ],
+    "edge_case": [
+      "Blessing should trigger even if unit is at full HP",
+      "HP recovery should not exceed max_hp",
+      "HP recovery amount is based on max_hp, not current HP",
+      "Blessing should work for all player unit",
+      "Blessing should trigger every time an ultimate is used"
+    ]
+  }
+}

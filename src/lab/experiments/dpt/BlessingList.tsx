@@ -13,6 +13,19 @@ interface BlessingListProps {
   selectedBlessingId?: string;
 }
 
+const PATH_OPTIONS = [
+  'all',
+  'preservation',
+  'remembrance',
+  'nihility',
+  'abundance',
+  'theHunt',
+  'destruction',
+  'elation',
+  'propagation',
+  'erudition'
+] as const;
+
 const getRarityBackground = (rarity: number): string => {
   switch (true) {
     case rarity === 1: return '#f8f9fa';  // Very light gray
@@ -26,6 +39,8 @@ const getRarityBackground = (rarity: number): string => {
 
 const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, selectedBlessingId }) => {
   const [blessings, setBlessings] = useState<ExtendedBlessingPreview[]>([]);
+  const [filteredBlessings, setFilteredBlessings] = useState<ExtendedBlessingPreview[]>([]);
+  const [selectedPath, setSelectedPath] = useState<typeof PATH_OPTIONS[number]>('all');
   const [error, setError] = useState<string | null>(null);
   const [hoveredBlessing, setHoveredBlessing] = useState<ExtendedBlessingPreview | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
@@ -33,15 +48,69 @@ const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, selectedB
   useEffect(() => {
     const loadBlessings = async () => {
       try {
-        const previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>('./preview/*.json');
+        // Load blessings from all paths
         const blessingsMap = new Map<string, ExtendedBlessingPreview>();
-
-        for (const path in previewFiles) {
-          const module = await previewFiles[path]();
-          const blessing = module.default;
-          // Only add if not already in the map
-          if (!blessingsMap.has(blessing.id)) {
-            blessingsMap.set(blessing.id, blessing);
+        
+        // For each path (except 'all')
+        for (const path of PATH_OPTIONS.slice(1)) {
+          let previewFiles;
+          switch (path) {
+            case 'preservation':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/preservation/preview/*.json'
+              );
+              break;
+            case 'remembrance':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/remembrance/preview/*.json'
+              );
+              break;
+            case 'nihility':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/nihility/preview/*.json'
+              );
+              break;
+            case 'abundance':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/abundance/preview/*.json'
+              );
+              break;
+            case 'theHunt':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/theHunt/preview/*.json'
+              );
+              break;
+            case 'destruction':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/destruction/preview/*.json'
+              );
+              break;
+            case 'elation':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/elation/preview/*.json'
+              );
+              break;
+            case 'propagation':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/propagation/preview/*.json'
+              );
+              break;
+            case 'erudition':
+              previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>(
+                './blessings/erudition/preview/*.json'
+              );
+              break;
+            default:
+              previewFiles = {};
+          }
+          
+          for (const filePath in previewFiles) {
+            const module = await previewFiles[filePath]();
+            const blessing = module.default;
+            // Only add if not already in the map
+            if (!blessingsMap.has(blessing.id)) {
+              blessingsMap.set(blessing.id, blessing);
+            }
           }
         }
 
@@ -54,6 +123,7 @@ const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, selectedB
         });
 
         setBlessings(loadedBlessings);
+        setFilteredBlessings(loadedBlessings);
       } catch (error) {
         console.error('Failed to load blessings:', error);
         setError('Failed to load blessings');
@@ -62,6 +132,14 @@ const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, selectedB
 
     loadBlessings();
   }, []);
+
+  useEffect(() => {
+    if (selectedPath === 'all') {
+      setFilteredBlessings(blessings);
+    } else {
+      setFilteredBlessings(blessings.filter(blessing => blessing.path.toLowerCase() === selectedPath.toLowerCase()));
+    }
+  }, [selectedPath, blessings]);
 
   const handleMouseEnter = useCallback((event: React.MouseEvent, blessing: ExtendedBlessingPreview) => {
     setHoveredBlessing(blessing);
@@ -98,14 +176,36 @@ const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, selectedB
   return (
     <div style={{ padding: '1rem' }}>
       <h2 style={{ marginBottom: 10 }}>Blessings</h2>
+      
+      {/* Path Filter */}
+      <div style={{ marginBottom: '1rem' }}>
+        <select 
+          value={selectedPath}
+          onChange={(e) => setSelectedPath(e.target.value as typeof PATH_OPTIONS[number])}
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            borderRadius: '4px',
+            border: '1px solid #e0e0e0',
+            backgroundColor: '#fff'
+          }}
+        >
+          {PATH_OPTIONS.map(path => (
+            <option key={path} value={path}>
+              {path === 'all' ? 'All Paths' : path.charAt(0).toUpperCase() + path.slice(1)}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div style={{ 
         display: 'flex',
         flexDirection: 'column',
         gap: '0.5rem',
-        maxHeight: 'calc(100vh - 120px)',
+        maxHeight: 'calc(100vh - 180px)', // Adjusted for filter height
         overflowY: 'auto'
       }}>
-        {blessings.map(blessing => (
+        {filteredBlessings.map(blessing => (
           <div
             key={blessing.id}
             style={{
@@ -129,6 +229,14 @@ const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, selectedB
               justifyContent: 'space-between'
             }}>
               <span style={{ fontWeight: 'bold' }}>{blessing.name}</span>
+              <span style={{
+                fontSize: '0.8rem',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                backgroundColor: 'rgba(0,0,0,0.05)'
+              }}>
+                {blessing.path}
+              </span>
             </div>
           </div>
         ))}

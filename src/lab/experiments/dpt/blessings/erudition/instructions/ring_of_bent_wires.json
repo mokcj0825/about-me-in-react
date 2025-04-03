@@ -1,0 +1,150 @@
+{
+  "id": "ring_of_bent_wires",
+  "name": "Ring of Bent Wires",
+  "description": "Characters' Ultimate CRIT Rate increases by 18.0%.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "crit_rate_buff": {
+        "id": "bent_wires_crit_buff",
+        "type": "stat_modifier",
+        "stat": "crit_rate",
+        "value": 18,
+        "value_type": "percentage",
+        "condition": "ultimate_ability",
+        "duration": "permanent"
+      },
+      "event_type": [
+        "ability_start",
+        "ability_end",
+        "stat_modifier_applied",
+        "crit_check",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "apply_stat_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_stat_modifier(unit: Unit, modifier_id: string): void",
+            "has_stat_modifier(unit: Unit, modifier_id: string): boolean",
+            "calculate_crit_rate(unit: Unit, ability: Ability): number"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "handle_ability_start(source: Unit, ability: Ability): void",
+            "handle_ability_end(source: Unit, ability: Ability): void"
+          ]
+        },
+        "CombatCalculator": {
+          "method": [
+            "will_crit(unit: Unit, crit_rate: number): boolean",
+            "get_crit_multiplier(unit: Unit): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ability_start",
+        "check": [
+          "Does unit have ring_of_bent_wires blessing?",
+          "Is ability an Ultimate?"
+        ],
+        "action": [
+          "Apply 18% CRIT Rate buff for Ultimate",
+          "Emit stat_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "crit_check",
+        "check": [
+          "Does unit have ring_of_bent_wires blessing?",
+          "Is ability an Ultimate?",
+          "Is stat modifier active?"
+        ],
+        "action": [
+          "Include 18% bonus in CRIT Rate calculation"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ability_start_handling": [
+        "function handle_ability_start(event: AbilityStartEvent) {",
+        "  if (!has_blessing(event.source, 'ring_of_bent_wires')) return;",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  ",
+        "  const crit_modifier = {",
+        "    id: 'bent_wires_crit_buff',",
+        "    stat: 'crit_rate',",
+        "    value: 18,",
+        "    type: 'percentage',",
+        "    condition: 'ultimate_ability'",
+        "  };",
+        "  ",
+        "  if (!stat_modifier_manager.has_stat_modifier(event.source, 'bent_wires_crit_buff')) {",
+        "    stat_modifier_manager.apply_stat_modifier(event.source, crit_modifier);",
+        "    ",
+        "    emit_event('stat_modifier_applied', {",
+        "      unit: event.source,",
+        "      modifier: crit_modifier,",
+        "      source: 'ring_of_bent_wires'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'ring_of_bent_wires',",
+        "      trigger: 'ability_start',",
+        "      unit: event.source,",
+        "      detail: {",
+        "        crit_rate_increase: 18,",
+        "        ability: event.ability.id",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ],
+      "crit_check_handling": [
+        "function handle_crit_check(event: CritCheckEvent) {",
+        "  if (!has_blessing(event.source, 'ring_of_bent_wires')) return;",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  ",
+        "  const base_crit_rate = stat_modifier_manager.calculate_crit_rate(event.source, event.ability);",
+        "  const will_crit = combat_calculator.will_crit(event.source, base_crit_rate);",
+        "  ",
+        "  if (will_crit) {",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'ring_of_bent_wires',",
+        "      trigger: 'crit_check',",
+        "      unit: event.source,",
+        "      detail: {",
+        "        base_crit_rate: base_crit_rate,",
+        "        ability: event.ability.id,",
+        "        crit_occurred: true",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "18% CRIT Rate increase applied only to Ultimate ability",
+      "CRIT Rate buff persists between Ultimate use",
+      "Proper event emission for stat modification",
+      "Correct CRIT Rate calculation in combat",
+      "No CRIT Rate increase for non-Ultimate ability"
+    ],
+    "edge_case": [
+      "Multiple CRIT Rate buff stacking",
+      "CRIT Rate exceeding 100%",
+      "Ultimate interrupted before damage",
+      "Interaction with CRIT DMG modifier",
+      "CRIT Rate reduction effect",
+      "Multiple Ultimate in quick succession"
+    ]
+  }
+} 

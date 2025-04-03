@@ -1,0 +1,8 @@
+{
+    "id": "osseus_blade",
+    "name": "Osseus Blade",
+    "path": "propagation",
+    "description": "For each Blessing of Propagation in possession, increases all characters' Basic ATK DMG by 9%. This effect can stacked up to 6 time(s).",
+    "rarity": 1,
+    "category": "offense"
+  }

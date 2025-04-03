@@ -1,0 +1,132 @@
+{
+  "id": "mimesis_tactile_pathway",
+  "name": "Mimesis: Tactile Pathway",
+  "description": "After characters use an attack, they deal Additional DMG to the attacked enemy target(s). For every enemy target that was attacked, increase Additional DMG by 15.0% of the character's ATK.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "additional_damage": {
+        "id": "tactile_additional_dmg",
+        "type": "damage_modifier",
+        "scaling_stat": "atk",
+        "scaling_ratio": 15,
+        "value_type": "percentage",
+        "trigger": "after_attack",
+        "stack_type": "multiplicative_per_target"
+      },
+      "event_type": [
+        "attack_end",
+        "damage_dealt",
+        "additional_damage_dealt",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageCalculator": {
+          "method": [
+            "calculate_stat_based_damage(source: Unit, stat: string, ratio: number): number",
+            "get_target_hit(attack_event: AttackEvent): Unit[]",
+            "apply_damage(source: Unit, target: Unit, amount: number, type: string): void"
+          ]
+        },
+        "StatManager": {
+          "method": [
+            "get_stat(unit: Unit, stat: string): number",
+            "get_base_atk(unit: Unit): number",
+            "get_final_atk(unit: Unit): number"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_attack_ability(ability: Ability): boolean",
+            "get_ability_target(ability: Ability): Unit[]",
+            "is_valid_target(source: Unit, target: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "attack_end",
+        "check": [
+          "Does source have mimesis_tactile_pathway blessing?",
+          "Was this an attack ability?",
+          "Was any enemy hit?"
+        ],
+        "action": [
+          "Get list of hit enemy target",
+          "Calculate additional damage per target (15% ATK)",
+          "Apply additional damage to each target",
+          "Emit additional_damage_dealt event for each target",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "attack_end_handling": [
+        "function handle_attack_end(event: AttackEvent) {",
+        "  if (!has_blessing(event.source, 'mimesis_tactile_pathway')) return;",
+        "  if (!ability_handler.is_attack_ability(event.ability)) return;",
+        "  ",
+        "  const hit_target = damage_calculator.get_target_hit(event).filter(t => t.is_enemy);",
+        "  if (hit_target.length === 0) return;",
+        "  ",
+        "  const base_atk = stat_manager.get_final_atk(event.source);",
+        "  const damage_per_target = damage_calculator.calculate_stat_based_damage(",
+        "    event.source,",
+        "    'atk',",
+        "    15 * hit_target.length",
+        "  );",
+        "  ",
+        "  for (const target of hit_target) {",
+        "    damage_calculator.apply_damage(",
+        "      event.source,",
+        "      target,",
+        "      damage_per_target,",
+        "      'additional'",
+        "    );",
+        "    ",
+        "    emit_event('additional_damage_dealt', {",
+        "      source: event.source,",
+        "      target: target,",
+        "      amount: damage_per_target,",
+        "      type: 'tactile_pathway',",
+        "      scaling: {",
+        "        stat: 'atk',",
+        "        base: base_atk,",
+        "        ratio: 15 * hit_target.length",
+        "      }",
+        "    });",
+        "  }",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'mimesis_tactile_pathway',",
+        "    trigger: 'attack_end',",
+        "    source: event.source,",
+        "    detail: {",
+        "      target_count: hit_target.length,",
+        "      damage_per_target: damage_per_target",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Additional damage scales with number of target hit",
+      "Each target receives the full scaled damage",
+      "Damage properly scales from ATK stat",
+      "Only enemy target counts for scaling",
+      "Additional damage is applied after main attack damage"
+    ],
+    "edge_case": [
+      "Attack hitting both enemy and ally",
+      "Target becoming invalid during attack",
+      "Multiple attack in quick succession",
+      "Interaction with damage reduction effect",
+      "ATK change during attack resolution",
+      "Zero ATK edge case handling"
+    ]
+  }
+} 

@@ -1,0 +1,165 @@
+{
+  "id": "catalyst",
+  "name": "Catalyst",
+  "path": "propagation",
+  "description": "When an ally's Energy is full, their next Basic ATK deals 30% more DMG.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "damage_buff": {
+        "id": "catalyst_buff",
+        "type": "damage_modifier",
+        "damage_type": "basic_attack",
+        "value": 30,
+        "value_type": "percentage",
+        "condition": "energy_full",
+        "duration": 1,
+        "duration_type": "use",
+        "trigger": "energy_full"
+      },
+      "event_type": [
+        "energy_changed",
+        "basic_attack_start",
+        "basic_attack_end",
+        "damage_modifier_applied",
+        "damage_modifier_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageModifierManager": {
+          "method": [
+            "apply_damage_modifier(unit: Unit, modifier: DamageModifier): void",
+            "remove_damage_modifier(unit: Unit, modifier_id: string): void",
+            "has_damage_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "ResourceManager": {
+          "method": [
+            "get_current_energy(unit: Unit): number",
+            "get_max_energy(unit: Unit): number",
+            "on_energy_changed(callback: (unit: Unit) => void): void"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "on_basic_attack_start(callback: (unit: Unit) => void): void",
+            "on_basic_attack_end(callback: (unit: Unit) => void): void",
+            "is_basic_attack(ability: Ability): boolean"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_ally(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "energy_changed",
+        "check": [
+          "Is unit an ally?",
+          "Is energy at maximum?",
+          "Does unit already have the buff?"
+        ],
+        "action": [
+          "Apply 30% Basic ATK DMG buff",
+          "Emit damage_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "basic_attack_end",
+        "check": [
+          "Does unit have catalyst buff?",
+          "Was the ability a Basic ATK?"
+        ],
+        "action": [
+          "Remove Basic ATK DMG buff",
+          "Emit damage_modifier_removed event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "energy_change_handling": [
+        "function handle_energy_changed(unit: Unit) {",
+        "  if (!team_manager.is_ally(unit)) return;",
+        "  ",
+        "  const current_energy = resource_manager.get_current_energy(unit);",
+        "  const max_energy = resource_manager.get_max_energy(unit);",
+        "  const has_buff = damage_modifier_manager.has_damage_modifier(unit, 'catalyst_buff');",
+        "  ",
+        "  if (current_energy >= max_energy && !has_buff) {",
+        "    const damage_modifier = {",
+        "      id: 'catalyst_buff',",
+        "      type: 'damage_modifier',",
+        "      damage_type: 'basic_attack',",
+        "      value: 30,",
+        "      value_type: 'percentage',",
+        "      condition: 'energy_full',",
+        "      duration: 1,",
+        "      duration_type: 'use'",
+        "    };",
+        "    ",
+        "    damage_modifier_manager.apply_damage_modifier(unit, damage_modifier);",
+        "    ",
+        "    emit_event('damage_modifier_applied', {",
+        "      unit: unit,",
+        "      modifier: damage_modifier,",
+        "      source: 'catalyst'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'catalyst',",
+        "      trigger: 'energy_full',",
+        "      unit: unit,",
+        "      detail: {",
+        "        damage_increase: 30",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ],
+      "basic_attack_handling": [
+        "function handle_basic_attack_end(unit: Unit, ability: Ability) {",
+        "  if (!damage_modifier_manager.has_damage_modifier(unit, 'catalyst_buff')) return;",
+        "  if (!ability_handler.is_basic_attack(ability)) return;",
+        "  ",
+        "  damage_modifier_manager.remove_damage_modifier(unit, 'catalyst_buff');",
+        "  ",
+        "  emit_event('damage_modifier_removed', {",
+        "    unit: unit,",
+        "    modifier_id: 'catalyst_buff',",
+        "    source: 'catalyst'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'catalyst',",
+        "    trigger: 'basic_attack_end',",
+        "    unit: unit,",
+        "    detail: {",
+        "      buff_consumed: true",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Basic ATK DMG increases by exactly 30% when Energy is full",
+      "Buff is consumed after using Basic ATK",
+      "Buff is reapplied when Energy becomes full again",
+      "Only affects allies"
+    ],
+    "edge_case": [
+      "Energy becomes full during Basic ATK animation",
+      "Multiple allies have full Energy simultaneously",
+      "Character dies with buff active",
+      "Energy is depleted before Basic ATK is used",
+      "Multiple Basic ATKs queued while buff is active"
+    ]
+  }
+} 

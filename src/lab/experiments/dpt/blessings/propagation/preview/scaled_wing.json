@@ -1,0 +1,8 @@
+{
+    "id": "scaled_wing",
+    "name": "Scaled Wing",
+    "path": "propagation",
+    "description": "After characters use Basic ATKs, their SPD increases by 16% for 1 turn(s).",
+    "rarity": 1,
+    "category": "boost"
+  }

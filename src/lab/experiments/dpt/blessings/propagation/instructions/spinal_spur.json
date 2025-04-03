@@ -1,0 +1,136 @@
+{
+  "id": "spinal_spur",
+  "name": "Spinal Spur",
+  "path": "propagation",
+  "description": "Characters' Basic ATK CRIT Rate increases by 24%.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "crit_rate_buff": {
+        "id": "spinal_spur_buff",
+        "type": "stat_modifier",
+        "stat": "crit_rate",
+        "value": 24,
+        "value_type": "percentage",
+        "condition": "basic_attack_only",
+        "trigger": "character_added"
+      },
+      "event_type": [
+        "character_added",
+        "character_removed",
+        "stat_modifier_applied",
+        "stat_modifier_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "apply_stat_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_stat_modifier(unit: Unit, modifier_id: string): void",
+            "has_stat_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "CharacterManager": {
+          "method": [
+            "get_all_character(): Unit[]",
+            "on_character_added(callback: (unit: Unit) => void): void",
+            "on_character_removed(callback: (unit: Unit) => void): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "blessing_activated",
+        "check": [
+          "Get all current characters"
+        ],
+        "action": [
+          "Apply 24% CRIT Rate buff to each character",
+          "Emit stat_modifier_applied event for each character",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "character_added",
+        "check": [
+          "Is blessing active?"
+        ],
+        "action": [
+          "Apply 24% CRIT Rate buff to new character",
+          "Emit stat_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "apply_buff": [
+        "function apply_buff_to_character(unit: Unit) {",
+        "  if (!stat_modifier_manager.has_stat_modifier(unit, 'spinal_spur_buff')) {",
+        "    const crit_modifier = {",
+        "      id: 'spinal_spur_buff',",
+        "      stat: 'crit_rate',",
+        "      value: 24,",
+        "      type: 'percentage',",
+        "      condition: 'basic_attack_only'",
+        "    };",
+        "    ",
+        "    stat_modifier_manager.apply_stat_modifier(unit, crit_modifier);",
+        "    ",
+        "    emit_event('stat_modifier_applied', {",
+        "      unit: unit,",
+        "      modifier: crit_modifier,",
+        "      source: 'spinal_spur'",
+        "    });",
+        "  }",
+        "}"
+      ],
+      "blessing_activation": [
+        "function handle_blessing_activated() {",
+        "  const all_character = character_manager.get_all_character();",
+        "  ",
+        "  for (const unit of all_character) {",
+        "    apply_buff_to_character(unit);",
+        "  }",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'spinal_spur',",
+        "    trigger: 'blessing_activated',",
+        "    detail: {",
+        "      crit_rate_increase: 24",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "character_add": [
+        "function handle_character_added(unit: Unit) {",
+        "  apply_buff_to_character(unit);",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'spinal_spur',",
+        "    trigger: 'character_added',",
+        "    unit: unit,",
+        "    detail: {",
+        "      crit_rate_increase: 24",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Basic ATK CRIT Rate increases by exactly 24% for all characters",
+      "New characters receive the CRIT Rate buff when added",
+      "CRIT Rate buff persists through character swaps",
+      "Multiple instances of the blessing do not stack"
+    ],
+    "edge_case": [
+      "Character already has maximum CRIT Rate",
+      "Character is removed and re-added to team",
+      "Multiple characters added simultaneously",
+      "Blessing is deactivated and reactivated"
+    ]
+  }
+} 

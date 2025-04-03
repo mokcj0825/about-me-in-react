@@ -8,6 +8,7 @@ import GameTheaterv1_2 from "./experiments/gamev1_2/GameTheaterv1_2";
 import GameTheaterv1_3 from "./experiments/gamev1_3/GameTheaterv1_3";
 import GameTheaterv1_4 from "./experiments/gamev1_4/GameTheaterv1_4";
 import DptTheater from "./experiments/dpt/DptTheater";
+import EditorTheater from "./experiments/dptEditor/EditorTheater";
 
 const LabRoutes = () => {
   return (
@@ -20,6 +21,7 @@ const LabRoutes = () => {
       <Route path="/game-theater-v1_3" element={<GameTheaterv1_3 />} />
       <Route path="/game-theater-v1_4" element={<GameTheaterv1_4 />} />
       <Route path="/dpt" element={<DptTheater />} />
+      <Route path="/dpt-editor" element={<EditorTheater />} />
     </Routes>
   );
 };

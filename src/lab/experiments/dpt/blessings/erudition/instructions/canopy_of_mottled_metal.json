@@ -1,0 +1,111 @@
+{
+  "id": "canopy_of_mottled_metal",
+  "name": "Canopy of Mottled Metal",
+  "description": "Demonstrates the DEF increase mechanism of Canopy of Mottled Metal blessing after AoE ability use",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "buff": {
+        "id": "canopy_def_buff",
+        "type": "stat_modifier",
+        "stat": "def",
+        "value": 30,
+        "value_type": "percentage",
+        "duration": 2,
+        "stack_type": "refresh",
+        "trigger": "after_aoe"
+      },
+      "event_type": [
+        "ability_used",
+        "buff_applied",
+        "buff_removed",
+        "turn_start",
+        "turn_end"
+      ],
+      "required_interface": {
+        "BuffManager": {
+          "method": [
+            "apply_buff(target: Unit, buff: Buff): void",
+            "remove_buff(target: Unit, buff_id: string): void",
+            "update_buff_duration(unit: Unit): void",
+            "get_active_buff(unit: Unit): Buff[]"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_aoe_ability(ability: Ability): boolean",
+            "handle_ability_used(actor: Unit, ability: Ability, target: Unit[]): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ability_used",
+        "check": [
+          "Is ability AoE or splash type?",
+          "Does user have canopy_of_mottled_metal blessing?"
+        ],
+        "action": [
+          "Create new DEF buff instance",
+          "Apply buff to ability user",
+          "Emit buff_applied event"
+        ]
+      },
+      {
+        "trigger": "turn_end",
+        "action": [
+          "Update buff duration",
+          "Remove expired buff",
+          "Emit buff_removed event if buff expires"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "buff_application": [
+        "function handle_ability_used(event: AbilityUsedEvent) {",
+        "  if (!is_aoe_ability(event.ability)) return;",
+        "  if (!has_blessing(event.actor, 'canopy_of_mottled_metal')) return;",
+        "  ",
+        "  const buff = create_buff({",
+        "    id: 'canopy_def_buff',",
+        "    value: 30,",
+        "    duration: 2",
+        "  });",
+        "  ",
+        "  buff_manager.apply_buff(event.actor, buff);",
+        "  emit_event('buff_applied', { target: event.actor, buff });",
+        "}"
+      ],
+      "buff_update": [
+        "function handle_turn_end(event: TurnEndEvent) {",
+        "  for (const unit of get_all_unit()) {",
+        "    const expired_buff = buff_manager.update_buff_duration(unit);",
+        "    if (expired_buff) {",
+        "      buff_manager.remove_buff(unit, expired_buff.id);",
+        "      emit_event('buff_removed', { target: unit, buff: expired_buff });",
+        "    }",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Player unit's DEF increases by 30% after using an AoE skill or AoE ultimate",
+      "DEF buff lasts for exactly 2 turn",
+      "DEF buff is applied immediately after the AoE ability is used",
+      "DEF buff stacks multiplicatively with other DEF buff",
+      "DEF buff applies regardless of whether the ability is a skill or ultimate, as long as it's AoE"
+    ],
+    "edge_case": [
+      "Buff should be applied for both AoE and splash damage ability",
+      "Buff should not be applied for single-target ability",
+      "Buff duration should be tracked correctly across multiple turn",
+      "Buff should be removed exactly after 2 turn, not before or after",
+      "Multiple instance of the same buff should refresh the duration",
+      "DEF buff should affect incoming damage calculation correctly"
+    ]
+  }
+}

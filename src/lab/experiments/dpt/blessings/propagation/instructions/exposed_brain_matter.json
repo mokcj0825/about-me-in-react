@@ -1,0 +1,133 @@
+{
+  "id": "exposed_brain_matter",
+  "name": "Exposed Brain Matter",
+  "path": "propagation",
+  "description": "The DMG dealt by Basic ATK will deal DMG equal to 30% of the original DMG to a random adjacent target.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "splash_damage": {
+        "id": "exposed_brain_matter_effect",
+        "type": "damage_effect",
+        "damage_source": "basic_attack",
+        "value": 30,
+        "value_type": "percentage",
+        "target_type": "random_adjacent",
+        "trigger": "damage_dealt"
+      },
+      "event_type": [
+        "basic_attack_damage_dealt",
+        "damage_effect_triggered",
+        "target_selected",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageHandler": {
+          "method": [
+            "deal_damage(source: Unit, target: Unit, amount: number, type: string): void",
+            "get_damage_dealt(source: Unit, target: Unit): number",
+            "on_damage_dealt(callback: (data: { source: Unit, target: Unit, amount: number, type: string }) => void): void"
+          ]
+        },
+        "TargetingManager": {
+          "method": [
+            "get_adjacent_units(unit: Unit): Unit[]",
+            "get_random_unit(units: Unit[]): Unit",
+            "is_valid_target(unit: Unit): boolean"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_basic_attack(ability: Ability): boolean"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_enemy(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "basic_attack_damage_dealt",
+        "check": [
+          "Was the damage from a Basic ATK?",
+          "Are there any adjacent targets?",
+          "Is there at least one valid target?"
+        ],
+        "action": [
+          "Get all adjacent units",
+          "Select random adjacent target",
+          "Calculate 30% of original damage",
+          "Deal splash damage to selected target",
+          "Emit damage_effect_triggered event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "damage_handling": [
+        "function handle_damage_dealt({ source, target, amount, type }: { source: Unit, target: Unit, amount: number, type: string }) {",
+        "  if (!ability_handler.is_basic_attack(type)) return;",
+        "  ",
+        "  const adjacent_units = targeting_manager.get_adjacent_units(target);",
+        "  const valid_targets = adjacent_units.filter(unit => {",
+        "    return team_manager.is_enemy(unit) && targeting_manager.is_valid_target(unit);",
+        "  });",
+        "  ",
+        "  if (valid_targets.length === 0) return;",
+        "  ",
+        "  const selected_target = targeting_manager.get_random_unit(valid_targets);",
+        "  ",
+        "  emit_event('target_selected', {",
+        "    source: source,",
+        "    target: selected_target,",
+        "    effect: 'exposed_brain_matter'",
+        "  });",
+        "  ",
+        "  const splash_damage = Math.floor(amount * 0.3);",
+        "  damage_handler.deal_damage(source, selected_target, splash_damage, 'exposed_brain_matter');",
+        "  ",
+        "  emit_event('damage_effect_triggered', {",
+        "    source: source,",
+        "    target: selected_target,",
+        "    effect_id: 'exposed_brain_matter_effect',",
+        "    original_damage: amount,",
+        "    splash_damage: splash_damage",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'exposed_brain_matter',",
+        "    trigger: 'basic_attack_damage_dealt',",
+        "    source: source,",
+        "    target: selected_target,",
+        "    detail: {",
+        "      original_damage: amount,",
+        "      splash_damage: splash_damage,",
+        "      splash_percentage: 30",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Splash damage is exactly 30% of original Basic ATK damage",
+      "Only triggers on Basic ATK damage",
+      "Only selects from adjacent targets",
+      "Target selection is random when multiple targets are available",
+      "Only affects valid enemy targets"
+    ],
+    "edge_case": [
+      "No adjacent targets available",
+      "All adjacent targets are invalid",
+      "Original damage is 0",
+      "Target dies before splash damage applies",
+      "Multiple Basic ATKs in quick succession",
+      "Splash damage triggering other effects"
+    ]
+  }
+} 

@@ -1,0 +1,8 @@
+{
+    "id": "exposed_brain_matter",
+    "name": "Exposed Brain Matter",
+    "path": "propagation",
+    "description": "The DMG dealt by Basic ATK will deal DMG equal to 30% of the original DMG to a random adjacent target.",
+    "rarity": 2,
+    "category": "offense"
+  }

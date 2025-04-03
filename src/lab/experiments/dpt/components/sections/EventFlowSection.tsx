@@ -11,11 +11,11 @@ const EventFlowSection: React.FC<EventFlowSectionProps> = ({ instruction }) => (
     {instruction.implementation.event_flow.map((flow, index) => (
       <div key={index} style={{ marginBottom: "1rem" }}>
         <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1rem" }}>Trigger: {flow.trigger}</h3>
-        {flow.checks && (
+        {flow.check && (
           <>
             <h4 style={{ margin: "0.5rem 0", fontSize: "0.875rem" }}>Checks:</h4>
             <ul style={{ margin: "0 0 0.5rem 0", paddingLeft: "1.5rem" }}>
-              {flow.checks.map((check, idx) => (
+              {flow.check.map((check, idx) => (
                 <li key={idx}>{check}</li>
               ))}
             </ul>
@@ -23,7 +23,7 @@ const EventFlowSection: React.FC<EventFlowSectionProps> = ({ instruction }) => (
         )}
         <h4 style={{ margin: "0.5rem 0", fontSize: "0.875rem" }}>Actions:</h4>
         <ul style={{ margin: 0, paddingLeft: "1.5rem" }}>
-          {flow.actions.map((action, idx) => (
+          {flow.action.map((action, idx) => (
             <li key={idx}>{action}</li>
           ))}
         </ul>

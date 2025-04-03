@@ -1,0 +1,8 @@
+{
+    "id": "intersegmental_membrane",
+    "name": "Intersegmental Membrane",
+    "path": "propagation",
+    "description": "For each Skill Point a character consumes, the DMG received by them reduces by 8% for 1 turn(s). This effect can be stacked up to 2 time(s).",
+    "rarity": 2,
+    "category": "defense"
+  }

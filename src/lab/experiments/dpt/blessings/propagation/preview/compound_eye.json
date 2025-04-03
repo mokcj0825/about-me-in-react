@@ -1,0 +1,8 @@
+{
+    "id": "compound_eye",
+    "name": "Compound Eye",
+    "path": "propagation",
+    "description": "After entering battle, recovers 1 Skill Point after each ally's turn. This effect can be triggered up to 3 time(s) across all allies.",
+    "rarity": 1,
+    "category": "recovery"
+  }

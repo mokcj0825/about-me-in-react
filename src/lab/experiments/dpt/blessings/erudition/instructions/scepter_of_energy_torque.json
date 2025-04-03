@@ -1,0 +1,152 @@
+{
+  "id": "scepter_of_energy_torque",
+  "name": "Scepter of Energy Torque",
+  "description": "Characters' Ultimate CRIT DMG increases by 30.0%.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "crit_dmg_buff": {
+        "id": "energy_torque_buff",
+        "type": "stat_modifier",
+        "stat": "crit_damage",
+        "value": 30,
+        "value_type": "percentage",
+        "condition": "ultimate_ability",
+        "duration": "permanent"
+      },
+      "event_type": [
+        "ability_start",
+        "ability_end",
+        "stat_modifier_applied",
+        "crit_damage_calculation",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "apply_stat_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_stat_modifier(unit: Unit, modifier_id: string): void",
+            "has_stat_modifier(unit: Unit, modifier_id: string): boolean",
+            "calculate_crit_damage(unit: Unit, ability: Ability): number"
+          ]
+        },
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "handle_ability_start(source: Unit, ability: Ability): void",
+            "handle_ability_end(source: Unit, ability: Ability): void"
+          ]
+        },
+        "CombatCalculator": {
+          "method": [
+            "apply_crit_damage(damage: number, crit_damage: number): number",
+            "get_crit_multiplier(unit: Unit): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ability_start",
+        "check": [
+          "Does unit have scepter_of_energy_torque blessing?",
+          "Is ability an Ultimate?"
+        ],
+        "action": [
+          "Apply 30% CRIT DMG buff for Ultimate",
+          "Emit stat_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "crit_damage_calculation",
+        "check": [
+          "Does unit have scepter_of_energy_torque blessing?",
+          "Is ability an Ultimate?",
+          "Is stat modifier active?"
+        ],
+        "action": [
+          "Include 30% bonus in CRIT DMG calculation",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ability_start_handling": [
+        "function handle_ability_start(event: AbilityStartEvent) {",
+        "  if (!has_blessing(event.source, 'scepter_of_energy_torque')) return;",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  ",
+        "  const crit_dmg_modifier = {",
+        "    id: 'energy_torque_buff',",
+        "    stat: 'crit_damage',",
+        "    value: 30,",
+        "    type: 'percentage',",
+        "    condition: 'ultimate_ability'",
+        "  };",
+        "  ",
+        "  if (!stat_modifier_manager.has_stat_modifier(event.source, 'energy_torque_buff')) {",
+        "    stat_modifier_manager.apply_stat_modifier(event.source, crit_dmg_modifier);",
+        "    ",
+        "    emit_event('stat_modifier_applied', {",
+        "      unit: event.source,",
+        "      modifier: crit_dmg_modifier,",
+        "      source: 'scepter_of_energy_torque'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'scepter_of_energy_torque',",
+        "      trigger: 'ability_start',",
+        "      unit: event.source,",
+        "      detail: {",
+        "        crit_damage_increase: 30,",
+        "        ability: event.ability.id",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ],
+      "crit_damage_calculation_handling": [
+        "function handle_crit_damage_calculation(event: CritDamageCalculationEvent) {",
+        "  if (!has_blessing(event.source, 'scepter_of_energy_torque')) return;",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  ",
+        "  const base_crit_damage = stat_modifier_manager.calculate_crit_damage(event.source, event.ability);",
+        "  const final_damage = combat_calculator.apply_crit_damage(event.damage, base_crit_damage);",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'scepter_of_energy_torque',",
+        "    trigger: 'crit_damage_calculation',",
+        "    unit: event.source,",
+        "    detail: {",
+        "      base_crit_damage: base_crit_damage,",
+        "      ability: event.ability.id,",
+        "      original_damage: event.damage,",
+        "      final_damage: final_damage",
+        "    }",
+        "  });",
+        "  ",
+        "  return final_damage;",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "30% CRIT DMG increase applied only to Ultimate ability",
+      "CRIT DMG buff persists between Ultimate use",
+      "Proper event emission for stat modification",
+      "Correct CRIT DMG calculation in combat",
+      "No CRIT DMG increase for non-Ultimate ability"
+    ],
+    "edge_case": [
+      "Multiple CRIT DMG buff stacking",
+      "CRIT DMG calculation order",
+      "Ultimate interrupted before damage",
+      "Interaction with CRIT Rate modifier",
+      "CRIT DMG reduction effect",
+      "Multiple Ultimate in quick succession"
+    ]
+  }
+} 

@@ -1,0 +1,138 @@
+{
+  "id": "bci_34_gray_matter",
+  "name": "BCI-34 Gray Matter",
+  "description": "When entering battle, charges the Brain in a Vat by 65.0%. Breaking an enemy's Weakness charges the Brain in a Vat by 35.0%.",
+  "rarity": 3,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "initial_charge": {
+        "id": "bci_initial_charge",
+        "type": "resource_modifier",
+        "resource": "brain_in_vat",
+        "value": 65,
+        "value_type": "percentage",
+        "trigger": "battle_start"
+      },
+      "weakness_break_charge": {
+        "id": "bci_weakness_charge",
+        "type": "resource_modifier",
+        "resource": "brain_in_vat",
+        "value": 35,
+        "value_type": "percentage",
+        "trigger": "on_weakness_break"
+      },
+      "event_type": [
+        "battle_start",
+        "weakness_break_applied",
+        "brain_in_vat_charged",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "BrainInVatManager": {
+          "method": [
+            "charge_vat(amount: number, type: 'flat' | 'percentage'): number",
+            "get_current_charge(): number",
+            "get_max_charge(): number"
+          ]
+        },
+        "BattleStateManager": {
+          "method": [
+            "on_battle_start(): void",
+            "is_in_battle(): boolean"
+          ]
+        },
+        "WeaknessBreakHandler": {
+          "method": [
+            "on_weakness_break(target: Unit): void",
+            "is_weakness_broken(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "battle_start",
+        "check": [
+          "Does player have bci_34_gray_matter blessing?"
+        ],
+        "action": [
+          "Calculate initial charge amount (65% of max)",
+          "Apply charge to Brain in Vat",
+          "Emit brain_in_vat_charged event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "weakness_break_applied",
+        "check": [
+          "Does player have bci_34_gray_matter blessing?",
+          "Is target an enemy?"
+        ],
+        "action": [
+          "Calculate weakness break charge amount (35% of max)",
+          "Apply charge to Brain in Vat",
+          "Emit brain_in_vat_charged event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "battle_start_handling": [
+        "function handle_battle_start() {",
+        "  if (!has_blessing('bci_34_gray_matter')) return;",
+        "  ",
+        "  const charge_amount = brain_in_vat_manager.get_max_charge() * 0.65;",
+        "  const actual_charge = brain_in_vat_manager.charge_vat(charge_amount, 'percentage');",
+        "  ",
+        "  emit_event('brain_in_vat_charged', {",
+        "    amount: actual_charge,",
+        "    source: 'bci_34_gray_matter',",
+        "    trigger: 'battle_start'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'bci_34_gray_matter',",
+        "    trigger: 'battle_start'",
+        "  });",
+        "}"
+      ],
+      "weakness_break_handling": [
+        "function handle_weakness_break(event: WeaknessBreakEvent) {",
+        "  if (!has_blessing('bci_34_gray_matter')) return;",
+        "  if (!event.target.is_enemy) return;",
+        "  ",
+        "  const charge_amount = brain_in_vat_manager.get_max_charge() * 0.35;",
+        "  const actual_charge = brain_in_vat_manager.charge_vat(charge_amount, 'percentage');",
+        "  ",
+        "  emit_event('brain_in_vat_charged', {",
+        "    amount: actual_charge,",
+        "    source: 'bci_34_gray_matter',",
+        "    trigger: 'weakness_break'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'bci_34_gray_matter',",
+        "    trigger: 'weakness_break'",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Brain in Vat is charged by 65% at battle start",
+      "Brain in Vat is charged by 35% when breaking an enemy's Weakness",
+      "Both charge effect works independently",
+      "Charge is properly capped at maximum Brain in Vat capacity",
+      "Event is emitted in correct order"
+    ],
+    "edge_case": [
+      "Multiple enemy becoming Weakness Broken simultaneously",
+      "Battle start charge when Brain in Vat is not empty",
+      "Interaction with other Brain in Vat charging effect",
+      "Weakness Break charge when Brain in Vat is near full",
+      "Effect persistence across multiple battle"
+    ]
+  }
+} 

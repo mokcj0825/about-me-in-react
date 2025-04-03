@@ -1,0 +1,163 @@
+{
+  "id": "osseus_blade",
+  "name": "Osseus Blade",
+  "path": "propagation",
+  "description": "For each Blessing of Propagation in possession, increases all characters' Basic ATK DMG by 9%. This effect can stacked up to 6 time(s).",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "damage_buff": {
+        "id": "osseus_blade_buff",
+        "type": "damage_modifier",
+        "damage_type": "basic_attack",
+        "value": 9,
+        "value_type": "percentage",
+        "condition": "propagation_count",
+        "max_stack": 6,
+        "trigger": "blessing_count_changed"
+      },
+      "event_type": [
+        "blessing_added",
+        "blessing_removed",
+        "character_added",
+        "damage_modifier_applied",
+        "damage_modifier_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageModifierManager": {
+          "method": [
+            "apply_damage_modifier(unit: Unit, modifier: DamageModifier): void",
+            "remove_damage_modifier(unit: Unit, modifier_id: string): void",
+            "has_damage_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "BlessingManager": {
+          "method": [
+            "count_blessing_by_path(path: string): number",
+            "on_blessing_added(callback: (blessing: Blessing) => void): void",
+            "on_blessing_removed(callback: (blessing: Blessing) => void): void"
+          ]
+        },
+        "CharacterManager": {
+          "method": [
+            "get_all_character(): Unit[]",
+            "on_character_added(callback: (unit: Unit) => void): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "blessing_count_changed",
+        "check": [
+          "Count total Propagation blessing",
+          "Is count within max stack limit?"
+        ],
+        "action": [
+          "Calculate damage increase based on stack count",
+          "Apply damage modifier to all character",
+          "Emit damage_modifier_applied event for each character",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "character_added",
+        "check": [
+          "Does blessing have active stacks?"
+        ],
+        "action": [
+          "Apply current damage modifier to new character",
+          "Emit damage_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "blessing_count_handling": [
+        "function handle_blessing_count_changed() {",
+        "  const propagation_count = blessing_manager.count_blessing_by_path('propagation');",
+        "  const stack_count = Math.min(propagation_count, 6);",
+        "  ",
+        "  const damage_modifier = {",
+        "    id: 'osseus_blade_buff',",
+        "    damage_type: 'basic_attack',",
+        "    value: stack_count * 9,",
+        "    type: 'percentage',",
+        "    condition: 'propagation_count'",
+        "  };",
+        "  ",
+        "  const all_character = character_manager.get_all_character();",
+        "  ",
+        "  for (const unit of all_character) {",
+        "    damage_modifier_manager.apply_damage_modifier(unit, damage_modifier);",
+        "    ",
+        "    emit_event('damage_modifier_applied', {",
+        "      unit: unit,",
+        "      modifier: damage_modifier,",
+        "      source: 'osseus_blade'",
+        "    });",
+        "  }",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'osseus_blade',",
+        "    trigger: 'blessing_count_changed',",
+        "    detail: {",
+        "      stack_count: stack_count,",
+        "      damage_increase: stack_count * 9",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "character_add_handling": [
+        "function handle_character_added(unit: Unit) {",
+        "  const propagation_count = blessing_manager.count_blessing_by_path('propagation');",
+        "  const stack_count = Math.min(propagation_count, 6);",
+        "  ",
+        "  if (stack_count > 0) {",
+        "    const damage_modifier = {",
+        "      id: 'osseus_blade_buff',",
+        "      damage_type: 'basic_attack',",
+        "      value: stack_count * 9,",
+        "      type: 'percentage',",
+        "      condition: 'propagation_count'",
+        "    };",
+        "    ",
+        "    damage_modifier_manager.apply_damage_modifier(unit, damage_modifier);",
+        "    ",
+        "    emit_event('damage_modifier_applied', {",
+        "      unit: unit,",
+        "      modifier: damage_modifier,",
+        "      source: 'osseus_blade'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'osseus_blade',",
+        "      trigger: 'character_added',",
+        "      unit: unit,",
+        "      detail: {",
+        "        stack_count: stack_count,",
+        "        damage_increase: stack_count * 9",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Basic ATK DMG increases by 9% for each Propagation blessing",
+      "Effect stacks correctly up to 6 times (54% maximum)",
+      "All character receive the damage buff",
+      "Buff updates when Propagation blessing are added or removed"
+    ],
+    "edge_case": [
+      "Having more than 6 Propagation blessing",
+      "Removing Propagation blessing",
+      "Adding new character after buff is active",
+      "Multiple blessing change in quick succession"
+    ]
+  }
+} 

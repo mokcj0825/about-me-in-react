@@ -1,0 +1,162 @@
+{
+  "id": "vep_18_occipital_lobe",
+  "name": "VEP-18 Occipital Lobe",
+  "description": "The All-Type RES PEN for characters' Ultimate DMG increases by 20.0%. When Ultimate is used, for every hit enemy target, the All-Type RES PEN for the next Ultimate's DMG will additionally increase by 3.0%.",
+  "rarity": 3,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "base_pen_buff": {
+        "id": "vep_base_pen",
+        "type": "stat_modifier",
+        "stat": "all_res_pen",
+        "value": 20,
+        "value_type": "percentage",
+        "condition": "ultimate_damage",
+        "stack_type": "base"
+      },
+      "hit_pen_buff": {
+        "id": "vep_hit_pen",
+        "type": "stat_modifier",
+        "stat": "all_res_pen",
+        "value": 3,
+        "value_type": "percentage",
+        "condition": "next_ultimate",
+        "stack_type": "additive",
+        "trigger": "on_ultimate_hit"
+      },
+      "hit_counter": {
+        "type": "counter",
+        "reset_on": "ultimate_used",
+        "track_per_source": true
+      },
+      "event_type": [
+        "ability_used",
+        "ability_hit",
+        "stat_modified",
+        "ultimate_start",
+        "ultimate_end",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "AbilityHandler": {
+          "method": [
+            "is_ultimate_ability(ability: Ability): boolean",
+            "get_hit_target(ability_event: AbilityEvent): Unit[]",
+            "is_ability_damage(damage_source: any): boolean"
+          ]
+        },
+        "StatManager": {
+          "method": [
+            "modify_stat(unit: Unit, stat: string, value: number, type: 'flat' | 'percentage'): void",
+            "get_stat_modifier(unit: Unit, stat: string): number",
+            "clear_stat_modifier(unit: Unit, modifier_id: string): void"
+          ]
+        },
+        "HitCounter": {
+          "method": [
+            "increment_hit_count(source_id: string): void",
+            "get_hit_count(source_id: string): number",
+            "reset_hit_count(source_id: string): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ultimate_start",
+        "check": [
+          "Does source have vep_18_occipital_lobe blessing?"
+        ],
+        "action": [
+          "Apply base 20% RES PEN buff",
+          "Get stored hit count from previous ultimate",
+          "Apply additional RES PEN based on previous hit",
+          "Reset hit counter",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "ability_hit",
+        "check": [
+          "Is ability an Ultimate?",
+          "Does source have vep_18_occipital_lobe blessing?",
+          "Is target an enemy?"
+        ],
+        "action": [
+          "Increment hit counter",
+          "Store hit count for next ultimate"
+        ]
+      },
+      {
+        "trigger": "ultimate_end",
+        "check": [
+          "Does source have vep_18_occipital_lobe blessing?"
+        ],
+        "action": [
+          "Store final hit count for next ultimate"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ultimate_start_handling": [
+        "function handle_ultimate_start(event: AbilityEvent) {",
+        "  if (!has_blessing(event.source, 'vep_18_occipital_lobe')) return;",
+        "  ",
+        "  // Apply base penetration",
+        "  stat_manager.modify_stat(event.source, 'all_res_pen', 20, 'percentage');",
+        "  ",
+        "  // Apply bonus from previous ultimate hit",
+        "  const previous_hit = hit_counter.get_hit_count(event.source.id);",
+        "  if (previous_hit > 0) {",
+        "    const bonus_pen = previous_hit * 3;",
+        "    stat_manager.modify_stat(event.source, 'all_res_pen', bonus_pen, 'percentage');",
+        "  }",
+        "  ",
+        "  // Reset counter for new ultimate",
+        "  hit_counter.reset_hit_count(event.source.id);",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: event.source,",
+        "    stat: 'all_res_pen',",
+        "    value: 20 + (previous_hit * 3),",
+        "    source: 'vep_18_occipital_lobe'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'vep_18_occipital_lobe',",
+        "    trigger: 'ultimate_start',",
+        "    source: event.source",
+        "  });",
+        "}"
+      ],
+      "hit_handling": [
+        "function handle_ability_hit(event: AbilityHitEvent) {",
+        "  if (!ability_handler.is_ultimate_ability(event.ability)) return;",
+        "  if (!has_blessing(event.source, 'vep_18_occipital_lobe')) return;",
+        "  if (!event.target.is_enemy) return;",
+        "  ",
+        "  hit_counter.increment_hit_count(event.source.id);",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Base 20% RES PEN is applied to Ultimate damage",
+      "Each enemy hit by Ultimate adds 3% RES PEN to next Ultimate",
+      "Hit counter properly tracks and resets between Ultimate",
+      "Multiple hit on same target is counted separately",
+      "Bonus penetration is properly applied on next Ultimate use"
+    ],
+    "edge_case": [
+      "Multiple Ultimate used in quick succession",
+      "Ultimate interrupted before completion",
+      "Hit on shielded/invulnerable target",
+      "Interaction with other RES PEN effect",
+      "Ultimate missing all target",
+      "Hit counting with multi-hit Ultimate ability"
+    ]
+  }
+} 
