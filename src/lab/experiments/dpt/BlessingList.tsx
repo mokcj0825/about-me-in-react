@@ -1,46 +1,71 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Blessing } from './type/BlessingData';
+/// <reference types="vite/client" />
+import React, { useEffect, useState, useCallback } from 'react';
 import BlessingPreviewCard from './components/BlessingPreviewCard';
 import { BlessingPreview } from './type/BlessingPreview';
 
+interface ExtendedBlessingPreview extends BlessingPreview {
+  rarity: number;
+  category: string;
+}
+
 interface BlessingListProps {
-  onSelectBlessing: (blessingId: string) => void;
+  onSelectBlessing: (id: string) => void;
   selectedBlessingId?: string;
 }
 
-export const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, selectedBlessingId }) => {
-  const [availableBlessings, setAvailableBlessings] = useState<Blessing[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hoveredBlessing, setHoveredBlessing] = useState<BlessingPreview | null>(null);
+const getRarityBackground = (rarity: number): string => {
+  switch (true) {
+    case rarity === 1: return '#f8f9fa';  // Very light gray
+    case rarity === 2: return '#e3f2fd';  // Very light blue
+    case rarity === 3: return '#fff8e1';  // Very light gold
+    case rarity === 4: return '#f3e5f5';  // Very light purple
+    case rarity === 5: return '#fbe9e7';  // Very light orange
+    default: return '#ffebee';  // Very light red
+  }
+};
+
+const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, selectedBlessingId }) => {
+  const [blessings, setBlessings] = useState<ExtendedBlessingPreview[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [hoveredBlessing, setHoveredBlessing] = useState<ExtendedBlessingPreview | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    const loadAvailableBlessings = async () => {
+    const loadBlessings = async () => {
       try {
-        const blessingCatalog = await import('./data/blessing-data.json');
-        setAvailableBlessings(blessingCatalog.blessings);
-        
-        if (!selectedBlessingId && blessingCatalog.blessings.length > 0) {
-          onSelectBlessing(blessingCatalog.blessings[0].id);
+        const previewFiles = import.meta.glob<{ default: ExtendedBlessingPreview }>('./preview/*.json');
+        const blessingsMap = new Map<string, ExtendedBlessingPreview>();
+
+        for (const path in previewFiles) {
+          const module = await previewFiles[path]();
+          const blessing = module.default;
+          // Only add if not already in the map
+          if (!blessingsMap.has(blessing.id)) {
+            blessingsMap.set(blessing.id, blessing);
+          }
         }
+
+        // Convert map to array and sort
+        const loadedBlessings = Array.from(blessingsMap.values()).sort((a, b) => {
+          if (b.rarity !== a.rarity) {
+            return b.rarity - a.rarity;
+          }
+          return a.name.localeCompare(b.name);
+        });
+
+        setBlessings(loadedBlessings);
       } catch (error) {
-        console.error('Error loading blessing catalog:', error);
-      } finally {
-        setIsLoading(false);
+        console.error('Failed to load blessings:', error);
+        setError('Failed to load blessings');
       }
     };
 
-    loadAvailableBlessings();
+    loadBlessings();
   }, []);
 
-  const handleMouseEnter = useCallback(async (event: React.MouseEvent, blessingId: string) => {
-    try {
-      const previewData = await import(/* webpackMode: "eager" */ `./preview/${blessingId}.json`);
-      setHoveredBlessing(previewData.default);
-      setMousePosition({ x: event.clientX, y: event.clientY });
-    } catch (err) {
-      console.error('Failed to load blessing preview:', err);
-    }
+  const handleMouseEnter = useCallback((event: React.MouseEvent, blessing: ExtendedBlessingPreview) => {
+    setHoveredBlessing(blessing);
+    setMousePosition({ x: event.clientX, y: event.clientY });
   }, []);
 
   const handleMouseMove = useCallback((event: React.MouseEvent) => {
@@ -54,8 +79,8 @@ export const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, se
     setMousePosition(null);
   }, []);
 
-  if (isLoading) {
-    return <div style={{ padding: '20px' }}>Loading available blessings...</div>;
+  if (error) {
+    return <div style={{ padding: '1rem', color: 'red' }}>{error}</div>;
   }
 
   const previewStyle = mousePosition ? {
@@ -71,39 +96,40 @@ export const BlessingList: React.FC<BlessingListProps> = ({ onSelectBlessing, se
   } : {};
 
   return (
-    <div style={{ 
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      <h2 style={{ 
-        padding: '20px',
-        margin: 0,
-        borderBottom: '1px solid #eee'
-      }}>Available Blessings</h2>
-      <div style={{
-        flex: 1,
-        overflowY: 'auto',
-        padding: '20px'
+    <div style={{ padding: '1rem' }}>
+      <h2 style={{ marginBottom: 10 }}>Blessings</h2>
+      <div style={{ 
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.5rem',
+        maxHeight: 'calc(100vh - 120px)',
+        overflowY: 'auto'
       }}>
-        {availableBlessings.map(blessing => (
-          <div 
-            key={blessing.id} 
+        {blessings.map(blessing => (
+          <div
+            key={blessing.id}
             style={{
-              padding: '12px 16px',
-              marginBottom: '8px',
-              border: '1px solid #ddd',
+              padding: '0.75rem',
               borderRadius: '4px',
+              backgroundColor: selectedBlessingId === blessing.id 
+                ? '#e8f5e9'  // Light green for selected
+                : getRarityBackground(blessing.rarity),
+              border: '1px solid #e0e0e0',
               cursor: 'pointer',
-              backgroundColor: blessing.id === selectedBlessingId ? '#e6f3ff' : '#fff',
-              transition: 'all 0.2s ease'
+              transition: 'background-color 0.2s'
             }}
-            onClick={() => onSelectBlessing(blessing.id)}
-            onMouseEnter={(e) => handleMouseEnter(e, blessing.id)}
+            onMouseEnter={(e) => handleMouseEnter(e, blessing)}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
+            onClick={() => onSelectBlessing(blessing.id)}
           >
-            {blessing.name}
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <span style={{ fontWeight: 'bold' }}>{blessing.name}</span>
+            </div>
           </div>
         ))}
       </div>

@@ -2,5 +2,7 @@
   "id": "garment_of_coiled_wires",
   "name": "Garment of Coiled Wires",
   "path": "erudition",
+  "rarity": 1,
+  "category": "defense",
   "description": "After characters use their Ultimate, they restore HP equal to 16.0% of their Max HP"
 }
