@@ -10,7 +10,7 @@ import Header from './Header';
 import WorkingSkills from './WorkingSkills';
 import LanguageProficiency from "./LanguageProficiency";
 import HydroRedirections from "./Redirections";
-import HydroContracts from "./HydroContracts";
+import HydroContacts from "./HydroContacts";
 
 interface HydroThemeContainerProps extends Omit<BaseThemeContainerProps, 'theme'> {
   onDarkModeToggle: (isDark: boolean) => void;
@@ -171,7 +171,7 @@ const HydroThemeContainer: React.FC<HydroThemeContainerProps> = ({
           scrollSnapAlign: 'start',
           scrollSnapStop: 'always'
         }}>
-          <HydroContracts darkMode={darkMode} />
+          <HydroContacts darkMode={darkMode} />
         </div>
       </div>
       <HydroThemeSelector 

@@ -1,6 +1,7 @@
 import React from 'react';
 import DullThemeContainer from './dull/components/DullThemeContainer';
 import HydroThemeContainer from './hydro/components/HydroThemeContainer';
+import SynthwaveRetroverseContainer from './synthwave-retroverse/components/SynthwaveRetroverseContainer';
 import { ThemeType } from './ThemeType';
 
 interface ThemeContainerProps {
@@ -18,6 +19,12 @@ const ThemeContainer: React.FC<ThemeContainerProps> = ({
 }) => {
   const renderThemeContainer = () => {
     switch(currentTheme) {
+      case 'synthwave-retroverse':
+        return <SynthwaveRetroverseContainer
+          darkMode={darkMode}
+          onDarkModeToggle={onDarkModeToggle}
+          onThemeChange={onThemeChange}
+        />;
       case 'hydro':
         return <HydroThemeContainer 
           darkMode={darkMode} 

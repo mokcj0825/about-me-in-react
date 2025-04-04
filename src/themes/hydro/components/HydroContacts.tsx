@@ -76,7 +76,7 @@ const linkStyles = (darkMode: boolean) => ({
   textAlign: 'center' as const
 });
 
-const HydroContracts: React.FC<Props> = ({darkMode}: Props) => {
+const HydroContacts: React.FC<Props> = ({darkMode}: Props) => {
   const [displayText, setDisplayText] = useState('Contact me');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -156,4 +156,4 @@ const HydroContracts: React.FC<Props> = ({darkMode}: Props) => {
   );
 }
 
-export default HydroContracts;
+export default HydroContacts;
