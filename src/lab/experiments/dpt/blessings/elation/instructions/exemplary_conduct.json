@@ -1,0 +1,187 @@
+{
+  "id": "exemplary_conduct",
+  "name": "Exemplary Conduct",
+  "path": "elation",
+  "description": "Increases the DMG of follow-up attacks by 9% for each Elation Blessing. This effect can stack up to a max of 6 time(s).",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "damage_modifier": {
+        "id": "exemplary_conduct_damage",
+        "type": "damage_modifier",
+        "damage_type": "all",
+        "value_per_stack": 9,
+        "max_stacks": 6,
+        "modifier_type": "percentage",
+        "condition": "follow_up_attack",
+        "apply_timing": "pre_damage"
+      },
+      "event_type": [
+        "follow_up_attack_start",
+        "follow_up_attack_end",
+        "damage_modified",
+        "blessing_count_changed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: DamageModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_damage_multiplier(unit: Unit): number"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_start(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "on_follow_up_attack_end(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean"
+          ]
+        },
+        "BlessingManager": {
+          "method": [
+            "get_blessing_count(path: string): number",
+            "on_blessing_count_changed(callback: (data: { path: string, count: number }) => void): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_start",
+        "check": [
+          "Is unit alive?",
+          "Is this a follow-up attack?",
+          "Are there any Elation blessings?"
+        ],
+        "action": [
+          "Calculate stacks based on Elation blessing count",
+          "Apply damage increase based on stacks",
+          "Emit damage_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "follow_up_attack_end",
+        "check": [
+          "Was damage modified?"
+        ],
+        "action": [
+          "Remove damage increase",
+          "Emit damage_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_start_handler": [
+        "function handle_follow_up_attack_start({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const elation_count = blessing_manager.get_blessing_count('elation');",
+        "  if (elation_count === 0) return;",
+        "  ",
+        "  const stacks = Math.min(elation_count, 6);",
+        "  const damage_increase = stacks * 9;",
+        "  ",
+        "  const base_multiplier = damage_modifier_manager.get_damage_multiplier(unit);",
+        "  ",
+        "  damage_modifier_manager.add_modifier(unit, {",
+        "    id: 'exemplary_conduct_damage',",
+        "    type: 'damage_modifier',",
+        "    damage_type: 'all',",
+        "    value: damage_increase,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  emit_event('damage_modified', {",
+        "    unit: unit,",
+        "    modifier_id: 'exemplary_conduct_damage',",
+        "    value: damage_increase,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'exemplary_conduct',",
+        "    trigger: 'follow_up_attack_start',",
+        "    source: unit,",
+        "    detail: {",
+        "      base_multiplier: base_multiplier,",
+        "      elation_blessings: elation_count,",
+        "      active_stacks: stacks,",
+        "      damage_increase: damage_increase,",
+        "      final_multiplier: damage_modifier_manager.get_damage_multiplier(unit)",
+        "      target_unit: target.id",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "follow_up_end_handler": [
+        "function handle_follow_up_attack_end({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!damage_modifier_manager.has_modifier(unit, 'exemplary_conduct_damage')) return;",
+        "  ",
+        "  const final_multiplier = damage_modifier_manager.get_damage_multiplier(unit);",
+        "  const elation_count = blessing_manager.get_blessing_count('elation');",
+        "  const stacks = Math.min(elation_count, 6);",
+        "  const damage_decrease = stacks * 9;",
+        "  ",
+        "  damage_modifier_manager.remove_modifier(unit, 'exemplary_conduct_damage');",
+        "  ",
+        "  emit_event('damage_modified', {",
+        "    unit: unit,",
+        "    modifier_id: 'exemplary_conduct_damage',",
+        "    value: -damage_decrease,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'exemplary_conduct',",
+        "    trigger: 'follow_up_attack_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      removed_increase: damage_decrease,",
+        "      final_multiplier: damage_modifier_manager.get_damage_multiplier(unit),",
+        "      previous_multiplier: final_multiplier,",
+        "      elation_blessings: elation_count",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "blessing_count_handler": [
+        "function handle_blessing_count_changed({ path, count }: { path: string, count: number }) {",
+        "  if (path !== 'elation') return;",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'exemplary_conduct',",
+        "    trigger: 'blessing_count_changed',",
+        "    detail: {",
+        "      path: path,",
+        "      new_count: count,",
+        "      max_possible_increase: Math.min(count, 6) * 9",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Damage increase scales with Elation blessing count",
+      "Each stack provides exactly 9% damage increase",
+      "Stacks are capped at 6",
+      "Buff is applied only during follow-up attacks",
+      "Buff updates when Elation blessing count changes"
+    ],
+    "edge_case": [
+      "No Elation blessings present",
+      "Elation blessing count changes during combat",
+      "Maximum stack count reached",
+      "Unit dies during follow-up attack",
+      "Follow-up attack is interrupted",
+      "Multiple follow-up attacks in succession"
+    ]
+  }
+} 

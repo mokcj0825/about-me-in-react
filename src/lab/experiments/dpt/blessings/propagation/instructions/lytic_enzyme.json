@@ -1,0 +1,184 @@
+{
+  "id": "lytic_enzyme",
+  "name": "Lytic Enzyme",
+  "path": "propagation",
+  "description": "Increases the DMG caused by Spores bursting. The DMG increased is equal to 35% of the original DMG. After the target enemy was defeated, the Spores they were carrying will spread to targets adjacent to them.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "spore_damage": {
+        "id": "lytic_enzyme_boost",
+        "type": "damage_modifier",
+        "damage_source": "spore_burst",
+        "value": 35,
+        "value_type": "percentage",
+        "condition": "spore_burst",
+        "trigger": "spore_burst"
+      },
+      "spore_spread": {
+        "id": "lytic_enzyme_spread",
+        "type": "effect_modifier",
+        "effect": "spore_transfer",
+        "condition": "target_defeated",
+        "target_type": "adjacent",
+        "trigger": "unit_defeated"
+      },
+      "event_type": [
+        "spore_burst",
+        "unit_defeated",
+        "damage_modifier_applied",
+        "spore_transferred",
+        "target_selected",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageHandler": {
+          "method": [
+            "modify_damage(amount: number, modifier: DamageModifier): number",
+            "on_damage_dealt(callback: (data: { source: Unit, target: Unit, amount: number, type: string }) => void): void"
+          ]
+        },
+        "SporeManager": {
+          "method": [
+            "get_spore_count(unit: Unit): number",
+            "transfer_spores(from: Unit, to: Unit): void",
+            "on_spore_burst(callback: (data: { spore_id: string, target: Unit, damage: number }) => void): void"
+          ]
+        },
+        "TargetingManager": {
+          "method": [
+            "get_adjacent_units(unit: Unit): Unit[]",
+            "get_random_unit(units: Unit[]): Unit",
+            "is_valid_target(unit: Unit): boolean"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_enemy(unit: Unit): boolean",
+            "on_unit_defeated(callback: (unit: Unit) => void): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "spore_burst",
+        "check": [
+          "Is damage source a Spore burst?",
+          "Is target an enemy?"
+        ],
+        "action": [
+          "Calculate 35% bonus damage",
+          "Apply increased damage",
+          "Emit damage_modifier_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "unit_defeated",
+        "check": [
+          "Was unit an enemy?",
+          "Did unit have any Spores?",
+          "Are there valid adjacent targets?"
+        ],
+        "action": [
+          "Get all adjacent enemies",
+          "Filter for valid targets",
+          "Transfer Spores to random adjacent target",
+          "Emit spore_transferred event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "spore_burst_handling": [
+        "function handle_spore_burst({ spore_id, target, damage }: { spore_id: string, target: Unit, damage: number }) {",
+        "  if (!team_manager.is_enemy(target)) return;",
+        "  ",
+        "  const bonus_damage = Math.floor(damage * 0.35);",
+        "  ",
+        "  emit_event('damage_modifier_applied', {",
+        "    target: target,",
+        "    modifier: {",
+        "      id: 'lytic_enzyme_boost',",
+        "      type: 'damage_modifier',",
+        "      value: bonus_damage",
+        "    },",
+        "    source: 'lytic_enzyme'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'lytic_enzyme',",
+        "    trigger: 'spore_burst',",
+        "    target: target,",
+        "    detail: {",
+        "      spore_id: spore_id,",
+        "      original_damage: damage,",
+        "      bonus_damage: bonus_damage",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "defeat_handling": [
+        "function handle_unit_defeated(unit: Unit) {",
+        "  if (!team_manager.is_enemy(unit)) return;",
+        "  ",
+        "  const spore_count = spore_manager.get_spore_count(unit);",
+        "  if (spore_count <= 0) return;",
+        "  ",
+        "  const adjacent_units = targeting_manager.get_adjacent_units(unit);",
+        "  const valid_targets = adjacent_units.filter(target => {",
+        "    return team_manager.is_enemy(target) && targeting_manager.is_valid_target(target);",
+        "  });",
+        "  ",
+        "  if (valid_targets.length === 0) return;",
+        "  ",
+        "  const selected_target = targeting_manager.get_random_unit(valid_targets);",
+        "  ",
+        "  emit_event('target_selected', {",
+        "    source: unit,",
+        "    target: selected_target,",
+        "    effect: 'spore_transfer'",
+        "  });",
+        "  ",
+        "  spore_manager.transfer_spores(unit, selected_target);",
+        "  ",
+        "  emit_event('spore_transferred', {",
+        "    from: unit,",
+        "    to: selected_target,",
+        "    amount: spore_count,",
+        "    source: 'lytic_enzyme'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'lytic_enzyme',",
+        "    trigger: 'unit_defeated',",
+        "    source: unit,",
+        "    target: selected_target,",
+        "    detail: {",
+        "      spores_transferred: spore_count",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Spore burst damage increases by exactly 35%",
+      "Spores transfer to adjacent enemies on defeat",
+      "Only one adjacent enemy receives the Spores",
+      "All Spores are transferred from defeated unit",
+      "Only affects enemy targets"
+    ],
+    "edge_case": [
+      "Multiple Spores burst simultaneously",
+      "No valid adjacent targets when unit dies",
+      "Unit dies with no Spores",
+      "Multiple adjacent targets available",
+      "Target dies during Spore transfer",
+      "Damage calculation with other modifiers"
+    ]
+  }
+} 

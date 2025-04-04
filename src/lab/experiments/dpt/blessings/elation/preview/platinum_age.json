@@ -1,0 +1,8 @@
+{
+    "id": "platinum_age",
+    "name": "Platinum Age",
+    "path": "elation",
+    "description": "After characters launch follow-up attacks, increase their DEF by 40% for 1 turn(s).",
+    "rarity": 1,
+    "category": "defense"
+  }

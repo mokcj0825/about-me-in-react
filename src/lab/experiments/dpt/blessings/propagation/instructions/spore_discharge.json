@@ -1,0 +1,139 @@
+{
+  "id": "spore_discharge",
+  "name": "Spore Discharge",
+  "path": "propagation",
+  "description": "For each Skill Point a character consumes, all enemies will gain 1 Spore(s).",
+  "rarity": 3,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "spore_application": {
+        "id": "spore_discharge_effect",
+        "type": "effect_modifier",
+        "effect": "spore",
+        "count": 1,
+        "targets": "all_enemies",
+        "trigger": "skill_point_consumed"
+      },
+      "event_type": [
+        "skill_point_consumed",
+        "spore_applied",
+        "target_selected",
+        "effect_modifier_applied",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "SporeManager": {
+          "method": [
+            "apply_spores(source: Unit, target: Unit, count: number): void",
+            "can_receive_spores(unit: Unit): boolean"
+          ]
+        },
+        "SkillPointManager": {
+          "method": [
+            "on_skill_point_consumed(callback: (data: { unit: Unit, amount: number }) => void): void"
+          ]
+        },
+        "TargetingManager": {
+          "method": [
+            "get_all_enemies(): Unit[]",
+            "is_valid_target(unit: Unit): boolean"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_enemy(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "skill_point_consumed",
+        "check": [
+          "Are there any valid enemy targets?",
+          "Can any targets receive Spores?"
+        ],
+        "action": [
+          "Get all enemy units",
+          "Filter for valid Spore targets",
+          "Apply 1 Spore to each valid target",
+          "Emit spore_applied event for each target",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "skill_point_consumption_handler": [
+        "function handle_skill_point_consumed({ unit, amount }: { unit: Unit, amount: number }) {",
+        "  const all_enemies = targeting_manager.get_all_enemies();",
+        "  ",
+        "  const valid_targets = all_enemies.filter(enemy => {",
+        "    return targeting_manager.is_valid_target(enemy) &&",
+        "           spore_manager.can_receive_spores(enemy);",
+        "  });",
+        "  ",
+        "  if (valid_targets.length === 0) return;",
+        "  ",
+        "  let spores_applied = 0;",
+        "  ",
+        "  for (const target of valid_targets) {",
+        "    emit_event('target_selected', {",
+        "      source: unit,",
+        "      target: target,",
+        "      effect: 'spore'",
+        "    });",
+        "    ",
+        "    spore_manager.apply_spores(unit, target, 1);",
+        "    spores_applied++;",
+        "    ",
+        "    emit_event('spore_applied', {",
+        "      source: unit,",
+        "      target: target,",
+        "      count: 1",
+        "    });",
+        "    ",
+        "    emit_event('effect_modifier_applied', {",
+        "      source: unit,",
+        "      target: target,",
+        "      modifier: {",
+        "        id: 'spore_discharge_effect',",
+        "        type: 'effect_modifier',",
+        "        effect: 'spore',",
+        "        count: 1",
+        "      }",
+        "    });",
+        "  }",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'spore_discharge',",
+        "    trigger: 'skill_point_consumed',",
+        "    source: unit,",
+        "    detail: {",
+        "      sp_consumed: amount,",
+        "      targets_affected: spores_applied,",
+        "      total_spores_applied: spores_applied",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Spores are applied for each Skill Point consumption",
+      "All valid enemy targets receive exactly 1 Spore",
+      "Only valid enemy targets are selected",
+      "Spores are applied immediately after Skill Point consumption",
+      "Effect triggers once per Skill Point consumption"
+    ],
+    "edge_case": [
+      "No valid targets available",
+      "Multiple Skill Point consumptions in succession",
+      "Target dies during Spore application",
+      "Target reaches maximum Spore capacity",
+      "All enemies already have maximum Spores",
+      "Skill Point consumption with insufficient points"
+    ]
+  }
+} 

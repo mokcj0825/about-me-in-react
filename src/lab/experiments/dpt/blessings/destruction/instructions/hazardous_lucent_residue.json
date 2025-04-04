@@ -1,0 +1,121 @@
+{
+  "id": "hazardous_lucent_residue",
+  "name": "Hazardous Lucent Residue",
+  "path": "destruction",
+  "description": "After a character uses their Ultimate, they gain a Shield that can absorb DMG equal to 25% of the HP difference between their Max HP and current HP, lasting for 2 turn(s).",
+  "rarity": 2,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "shield_config": {
+        "shield_id": "hazardous_lucent_shield",
+        "hp_diff_multiplier": 0.25,
+        "duration": 2,
+        "apply_timing": "post_ultimate"
+      },
+      "event_type": [
+        "ultimate_used",
+        "shield_applied",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "ShieldManager": {
+          "method": [
+            "apply_shield(unit: Unit, shield: Shield): void",
+            "remove_shield(unit: Unit, shield_id: string): void",
+            "has_shield(unit: Unit, shield_id: string): boolean"
+          ]
+        },
+        "HPManager": {
+          "method": [
+            "get_current_hp(unit: Unit): number",
+            "get_max_hp(unit: Unit): number",
+            "get_hp_difference(unit: Unit): number"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ultimate_used",
+        "check": [
+          "Is unit alive?",
+          "Was Ultimate successfully used?"
+        ],
+        "action": [
+          "Calculate HP difference",
+          "Calculate shield value",
+          "Apply shield",
+          "Emit shield_applied event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ultimate_handler": [
+        "function handle_ultimate_used({ unit, skill_data }: { unit: Unit, skill_data: SkillData }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const hp_difference = hp_manager.get_hp_difference(unit);",
+        "  const shield_value = Math.floor(hp_difference * 0.25);",
+        "  ",
+        "  const shield_id = 'hazardous_lucent_shield';",
+        "  if (shield_manager.has_shield(unit, shield_id)) {",
+        "    shield_manager.remove_shield(unit, shield_id);",
+        "  }",
+        "  ",
+        "  const shield = {",
+        "    id: shield_id,",
+        "    value: shield_value,",
+        "    duration: 2,",
+        "    source: 'hazardous_lucent_residue'",
+        "  };",
+        "  ",
+        "  shield_manager.apply_shield(unit, shield);",
+        "  ",
+        "  emit_event('shield_applied', {",
+        "    unit: unit,",
+        "    shield_id: shield_id,",
+        "    shield_value: shield_value,",
+        "    duration: 2",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'hazardous_lucent_residue',",
+        "    trigger: 'ultimate_used',",
+        "    source: unit,",
+        "    detail: {",
+        "      hp_difference: hp_difference,",
+        "      shield_value: shield_value,",
+        "      duration: 2,",
+        "      skill_data: skill_data",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Shield triggers after Ultimate use",
+      "Shield value is 25% of HP difference",
+      "Shield lasts for 2 turns",
+      "Works with any Ultimate skill",
+      "Properly calculates HP difference",
+      "Shield refreshes on subsequent Ultimate uses"
+    ],
+    "edge_case": [
+      "Ultimate interrupted or failed",
+      "Multiple Ultimate uses in succession",
+      "Shield duration stacking",
+      "HP changes during Ultimate animation",
+      "Interaction with other shield effects",
+      "Ultimate use at full HP"
+    ]
+  }
+} 

@@ -1,0 +1,8 @@
+{
+    "id": "scythe_limbs",
+    "name": "Scythe Limbs",
+    "path": "propagation",
+    "description": "After a character uses their Ultimate, the next time they consume Skill Points, it will be considered as 1 additional Skill Point being consumed. For each Skill Point consumed, the character's CRIT DMG increases by 40%. This effect can stack up to 2 time(s), lasting until the character uses an attack.",
+    "rarity": 3,
+    "category": "offense"
+  }

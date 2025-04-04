@@ -1,0 +1,8 @@
+{
+    "id": "spore_discharge",
+    "name": "Spore Discharge",
+    "path": "propagation",
+    "description": "For eacFor each Skill Point a character consumes, all enemies will gain 1 Spore(s).h Skill Point recovered, apply 1 Spore to 2 random enemy target(s).",
+    "rarity": 3,
+    "category": "boost"
+  }

@@ -1,0 +1,8 @@
+{
+    "id": "metabolic_cavity",
+    "name": "Metabolic Cavity",
+    "path": "propagation",
+    "description": "For each Spore that bursts, heals the character with the lowest HP by 10% of their Max HP.",
+    "rarity": 2,
+    "category": "recovery"
+  }

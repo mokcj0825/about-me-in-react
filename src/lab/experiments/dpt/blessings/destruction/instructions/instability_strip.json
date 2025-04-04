@@ -1,0 +1,138 @@
+{
+  "id": "instability_strip",
+  "name": "Instability Strip",
+  "path": "destruction",
+  "description": "When characters are hit or losing HP, regenerates 4 Energy.",
+  "rarity": 1,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "energy_config": {
+        "energy_gain": 4,
+        "trigger_conditions": ["on_hit", "on_hp_loss"]
+      },
+      "event_type": [
+        "damage_taken",
+        "hp_changed",
+        "energy_gained",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "EnergyManager": {
+          "method": [
+            "add_energy(unit: Unit, amount: number): void",
+            "get_current_energy(unit: Unit): number",
+            "get_max_energy(unit: Unit): number"
+          ]
+        },
+        "HPManager": {
+          "method": [
+            "get_current_hp(unit: Unit): number",
+            "get_previous_hp(unit: Unit): number"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "damage_taken",
+        "check": [
+          "Is unit alive?",
+          "Was damage greater than 0?"
+        ],
+        "action": [
+          "Add Energy",
+          "Emit energy_gained event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "hp_changed",
+        "check": [
+          "Is unit alive?",
+          "Was HP loss not from damage taken?"
+        ],
+        "action": [
+          "Add Energy",
+          "Emit energy_gained event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "damage_handler": [
+        "function handle_damage_taken({ unit, damage }: { unit: Unit, damage: number }) {",
+        "  if (!unit.is_alive() || damage <= 0) return;",
+        "  ",
+        "  energy_manager.add_energy(unit, 4);",
+        "  ",
+        "  emit_event('energy_gained', {",
+        "    unit: unit,",
+        "    amount: 4,",
+        "    source: 'instability_strip',",
+        "    trigger: 'damage_taken'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'instability_strip',",
+        "    trigger: 'damage_taken',",
+        "    source: unit,",
+        "    detail: {",
+        "      damage_taken: damage,",
+        "      energy_gained: 4",
+        "    }",
+        "  });",
+        "}",
+        "",
+        "function handle_hp_changed({ unit, old_hp, new_hp }: { unit: Unit, old_hp: number, new_hp: number }) {",
+        "  if (!unit.is_alive() || new_hp >= old_hp) return;",
+        "  ",
+        "  // Only trigger if HP loss wasn't from damage (to avoid double trigger)",
+        "  if (hp_manager.get_previous_hp(unit) === old_hp) {",
+        "    energy_manager.add_energy(unit, 4);",
+        "    ",
+        "    emit_event('energy_gained', {",
+        "      unit: unit,",
+        "      amount: 4,",
+        "      source: 'instability_strip',",
+        "      trigger: 'hp_loss'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'instability_strip',",
+        "      trigger: 'hp_loss',",
+        "      source: unit,",
+        "      detail: {",
+        "        hp_loss: old_hp - new_hp,",
+        "        energy_gained: 4",
+        "      }",
+        "    });",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Triggers on damage taken",
+      "Triggers on HP loss from other sources",
+      "Adds exactly 4 Energy per trigger",
+      "Works with multiple hits in succession",
+      "Properly tracks different HP loss sources",
+      "Doesn't exceed max Energy"
+    ],
+    "edge_case": [
+      "Multiple damage sources in same frame",
+      "HP loss without damage",
+      "Zero damage hits",
+      "Energy cap interactions",
+      "Death during Energy gain",
+      "Simultaneous triggers from damage and HP loss"
+    ]
+  }
+} 

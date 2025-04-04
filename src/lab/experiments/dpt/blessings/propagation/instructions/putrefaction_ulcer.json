@@ -1,0 +1,157 @@
+{
+  "id": "putrefaction_ulcer",
+  "name": "Putrefaction Ulcer",
+  "path": "propagation",
+  "description": "Changes the number of times Spores can spread after bursting to 2 times. Can also spread to the original bearer of Spores.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "spore_spread_modifier": {
+        "id": "putrefaction_ulcer_spread",
+        "type": "effect_modifier",
+        "effect": "spore_spread",
+        "spread_count": 2,
+        "allow_original_bearer": true,
+        "condition": "spore_burst",
+        "trigger": "spore_burst"
+      },
+      "event_type": [
+        "spore_burst",
+        "spore_spread_start",
+        "spore_spread_complete",
+        "target_selected",
+        "effect_modifier_applied",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "SporeManager": {
+          "method": [
+            "get_spore_count(unit: Unit): number",
+            "get_original_bearer(spore_id: string): Unit",
+            "can_receive_spores(unit: Unit): boolean",
+            "spread_spores(spore_id: string, from: Unit, to: Unit): void",
+            "on_spore_burst(callback: (data: { spore_id: string, source: Unit }) => void): void"
+          ]
+        },
+        "TargetingManager": {
+          "method": [
+            "get_adjacent_units(unit: Unit): Unit[]",
+            "get_random_units(units: Unit[], count: number): Unit[]",
+            "is_valid_target(unit: Unit): boolean"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_enemy(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "spore_burst",
+        "check": [
+          "Are there any valid adjacent targets?",
+          "Are there any Spores to spread?"
+        ],
+        "action": [
+          "Get all adjacent units",
+          "Include original bearer in target pool",
+          "Select up to 2 random targets",
+          "Spread Spores to selected targets",
+          "Emit spore_spread_complete event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "spore_spread_handling": [
+        "function handle_spore_burst({ spore_id, source }: { spore_id: string, source: Unit }) {",
+        "  const adjacent_units = targeting_manager.get_adjacent_units(source);",
+        "  const original_bearer = spore_manager.get_original_bearer(spore_id);",
+        "  ",
+        "  // Create target pool including original bearer if valid",
+        "  let valid_targets = adjacent_units.filter(unit => {",
+        "    return team_manager.is_enemy(unit) && ",
+        "           targeting_manager.is_valid_target(unit) &&",
+        "           spore_manager.can_receive_spores(unit);",
+        "  });",
+        "  ",
+        "  if (original_bearer && ",
+        "      team_manager.is_enemy(original_bearer) && ",
+        "      targeting_manager.is_valid_target(original_bearer) &&",
+        "      spore_manager.can_receive_spores(original_bearer)) {",
+        "    valid_targets.push(original_bearer);",
+        "  }",
+        "  ",
+        "  if (valid_targets.length === 0) return;",
+        "  ",
+        "  emit_event('spore_spread_start', {",
+        "    spore_id: spore_id,",
+        "    source: source,",
+        "    available_targets: valid_targets.length",
+        "  });",
+        "  ",
+        "  const spread_count = Math.min(2, valid_targets.length);",
+        "  const selected_targets = targeting_manager.get_random_units(valid_targets, spread_count);",
+        "  ",
+        "  for (const target of selected_targets) {",
+        "    emit_event('target_selected', {",
+        "      source: source,",
+        "      target: target,",
+        "      effect: 'spore_spread'",
+        "    });",
+        "    ",
+        "    spore_manager.spread_spores(spore_id, source, target);",
+        "  }",
+        "  ",
+        "  emit_event('spore_spread_complete', {",
+        "    spore_id: spore_id,",
+        "    source: source,",
+        "    targets: selected_targets,",
+        "    spread_count: spread_count",
+        "  });",
+        "  ",
+        "  emit_event('effect_modifier_applied', {",
+        "    source: source,",
+        "    modifier: {",
+        "      id: 'putrefaction_ulcer_spread',",
+        "      type: 'effect_modifier',",
+        "      spread_count: spread_count",
+        "    }",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'putrefaction_ulcer',",
+        "    trigger: 'spore_burst',",
+        "    source: source,",
+        "    detail: {",
+        "      spore_id: spore_id,",
+        "      spread_count: spread_count,",
+        "      includes_original_bearer: selected_targets.includes(original_bearer)",
+        "      total_targets: valid_targets.length",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Spores spread exactly 2 times after bursting",
+      "Original bearer can be selected as spread target",
+      "Each spread target is selected randomly",
+      "Only spreads to valid enemy targets",
+      "Spreads immediately after Spore burst"
+    ],
+    "edge_case": [
+      "Less than 2 valid targets available",
+      "Original bearer is only valid target",
+      "Original bearer dies before spread",
+      "Multiple Spores burst simultaneously",
+      "Target becomes invalid during spread",
+      "Maximum Spore capacity reached on target"
+    ]
+  }
+} 

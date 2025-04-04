@@ -1,0 +1,132 @@
+{
+  "id": "aiden_gravitational_rainbow",
+  "name": "Aiden Gravitational Rainbow",
+  "path": "elation",
+  "description": "When a character launches follow-up attacks on enemies, the enemies' action is delayed by 12%.",
+  "rarity": 2,
+  "category": "hinder",
+  "implementation": {
+    "data_structure": {
+      "action_delay": {
+        "id": "aiden_gravitational_rainbow_delay",
+        "type": "action_delay",
+        "value": 12,
+        "modifier_type": "percentage",
+        "condition": "on_follow_up_hit",
+        "apply_timing": "post_damage",
+        "target_type": "enemy"
+      },
+      "event_type": [
+        "follow_up_attack_hit",
+        "action_delay_applied",
+        "action_speed_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "ActionSpeedManager": {
+          "method": [
+            "add_delay(unit: Unit, value: number): void",
+            "get_current_delay(unit: Unit): number",
+            "get_base_speed(unit: Unit): number",
+            "calculate_effective_speed(unit: Unit): number"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_hit(callback: (data: { unit: Unit, target: Unit, hit_index: number }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean",
+            "get_hit_count(attack_id: string): number"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_enemy(unit: Unit): boolean",
+            "is_alive(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_hit",
+        "check": [
+          "Is attacker alive?",
+          "Is target alive?",
+          "Is target an enemy?",
+          "Was this a follow-up attack?"
+        ],
+        "action": [
+          "Apply action delay to target",
+          "Calculate new effective speed",
+          "Emit action_delay_applied event",
+          "Emit action_speed_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_hit_handler": [
+        "function handle_follow_up_attack_hit({ unit, target, hit_index }: { unit: Unit, target: Unit, hit_index: number }) {",
+        "  if (!unit.is_alive() || !target.is_alive()) return;",
+        "  if (!unit_manager.is_enemy(target)) return;",
+        "  ",
+        "  const base_speed = action_speed_manager.get_base_speed(target);",
+        "  const current_delay = action_speed_manager.get_current_delay(target);",
+        "  ",
+        "  action_speed_manager.add_delay(target, 12);",
+        "  ",
+        "  const new_delay = action_speed_manager.get_current_delay(target);",
+        "  const effective_speed = action_speed_manager.calculate_effective_speed(target);",
+        "  ",
+        "  emit_event('action_delay_applied', {",
+        "    unit: target,",
+        "    source: unit,",
+        "    delay_value: 12,",
+        "    modifier_type: 'percentage',",
+        "    source_blessing: 'aiden_gravitational_rainbow'",
+        "  });",
+        "  ",
+        "  emit_event('action_speed_modified', {",
+        "    unit: target,",
+        "    base_speed: base_speed,",
+        "    previous_delay: current_delay,",
+        "    new_delay: new_delay,",
+        "    effective_speed: effective_speed",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'aiden_gravitational_rainbow',",
+        "    trigger: 'follow_up_attack_hit',",
+        "    source: unit,",
+        "    detail: {",
+        "      target_unit: target.id,",
+        "      hit_index: hit_index,",
+        "      base_speed: base_speed,",
+        "      previous_delay: current_delay,",
+        "      applied_delay: 12,",
+        "      final_delay: new_delay,",
+        "      effective_speed: effective_speed",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Action delay applies only on follow-up attacks",
+      "Delay value is exactly 12%",
+      "Only affects enemy targets",
+      "Applies to each hit of multi-hit follow-ups",
+      "Properly stacks with other speed modifiers"
+    ],
+    "edge_case": [
+      "Target dies during follow-up attack",
+      "Multiple follow-up attacks in succession",
+      "Follow-up attack is interrupted",
+      "Target already has action delay effects",
+      "Target has action speed buffs",
+      "Target becomes immune to delays mid-attack"
+    ]
+  }
+} 

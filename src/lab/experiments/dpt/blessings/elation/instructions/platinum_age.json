@@ -1,0 +1,180 @@
+{
+  "id": "platinum_age",
+  "name": "Platinum Age",
+  "path": "elation",
+  "description": "After characters launch follow-up attacks, increase their DEF by 40% for 1 turn(s).",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "defense_buff": {
+        "id": "platinum_age_defense",
+        "type": "stat_modifier",
+        "stat": "defense",
+        "value": 40,
+        "modifier_type": "percentage",
+        "duration": 1,
+        "duration_type": "turns",
+        "trigger": "follow_up_attack"
+      },
+      "event_type": [
+        "follow_up_attack",
+        "turn_end",
+        "stat_modified",
+        "buff_applied",
+        "buff_removed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "has_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack(callback: (data: { unit: Unit, target: Unit }) => void): void"
+          ]
+        },
+        "TurnManager": {
+          "method": [
+            "get_current_turn(): number",
+            "on_turn_end(callback: (data: { turn: number }) => void): void"
+          ]
+        },
+        "BuffManager": {
+          "method": [
+            "track_duration(buff_id: string, duration: number): void",
+            "decrease_duration(buff_id: string): void",
+            "remove_expired_buffs(unit: Unit): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack",
+        "check": [
+          "Is unit alive?",
+          "Does unit not already have the defense buff?"
+        ],
+        "action": [
+          "Apply DEF buff to unit",
+          "Set buff duration to 1 turn",
+          "Emit buff_applied event",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "turn_end",
+        "check": [
+          "Does unit have active defense buff?",
+          "Has buff duration expired?"
+        ],
+        "action": [
+          "Decrease buff duration",
+          "Remove expired buff if duration is 0",
+          "Emit buff_removed event if buff was removed",
+          "Emit stat_modified event if buff was removed",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_handler": [
+        "function handle_follow_up_attack({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive() || stat_modifier_manager.has_modifier(unit, 'platinum_age_defense')) return;",
+        "  ",
+        "  stat_modifier_manager.add_modifier(unit, {",
+        "    id: 'platinum_age_defense',",
+        "    type: 'stat_modifier',",
+        "    stat: 'defense',",
+        "    value: 40,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  buff_manager.track_duration('platinum_age_defense', 1);",
+        "  ",
+        "  emit_event('buff_applied', {",
+        "    unit: unit,",
+        "    buff_id: 'platinum_age_defense',",
+        "    duration: 1",
+        "  });",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: unit,",
+        "    stat: 'defense',",
+        "    value: 40,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'platinum_age',",
+        "    trigger: 'follow_up_attack',",
+        "    source: unit,",
+        "    detail: {",
+        "      defense_increase: 40,",
+        "      duration: 1,",
+        "      target_unit: unit.id",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "turn_end_handler": [
+        "function handle_turn_end({ turn }: { turn: number }) {",
+        "  const affected_units = get_units_with_modifier('platinum_age_defense');",
+        "  ",
+        "  for (const unit of affected_units) {",
+        "    buff_manager.decrease_duration('platinum_age_defense');",
+        "    ",
+        "    if (buff_manager.get_duration('platinum_age_defense') <= 0) {",
+        "      stat_modifier_manager.remove_modifier(unit, 'platinum_age_defense');",
+        "      ",
+        "      emit_event('buff_removed', {",
+        "        unit: unit,",
+        "        buff_id: 'platinum_age_defense'",
+        "      });",
+        "      ",
+        "      emit_event('stat_modified', {",
+        "        unit: unit,",
+        "        stat: 'defense',",
+        "        value: -40,",
+        "        modifier_type: 'percentage'",
+        "      });",
+        "      ",
+        "      emit_event('blessing_triggered', {",
+        "        blessing: 'platinum_age',",
+        "        trigger: 'turn_end',",
+        "        source: unit,",
+        "        detail: {",
+        "          buff_removed: true,",
+        "          final_turn: turn",
+        "        }",
+        "      });",
+        "    }",
+        "  }",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "DEF buff is applied after follow-up attack",
+      "Buff provides exactly 40% DEF increase",
+      "Buff lasts exactly 1 turn",
+      "Buff is removed at the end of duration",
+      "Buff is not reapplied while active"
+    ],
+    "edge_case": [
+      "Multiple follow-up attacks in one turn",
+      "Unit dies with active buff",
+      "Turn ends immediately after buff application",
+      "Follow-up attack while buff is active",
+      "Combat ends while buff is active",
+      "Incoming damage during buff duration"
+    ]
+  }
+} 

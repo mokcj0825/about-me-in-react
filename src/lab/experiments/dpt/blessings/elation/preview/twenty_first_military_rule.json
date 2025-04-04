@@ -1,0 +1,8 @@
+{
+    "id": "twenty_first_military_rule",
+    "name": "Twenty-First Military Rule",
+    "path": "elation",
+    "description": "After a character launches follow-up attacks, there is a 65% fixed chance to recover 1 Skill Point.",
+    "rarity": 2,
+    "category": "boost"
+  }

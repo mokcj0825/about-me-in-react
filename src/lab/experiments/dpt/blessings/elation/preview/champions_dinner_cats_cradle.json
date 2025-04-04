@@ -1,0 +1,8 @@
+{
+    "id": "champions_dinner_cats_cradle",
+    "name": "Champion's Dinner: Cat's Cradle",
+    "path": "elation",
+    "description": "When characters deal DMG to an enemy with their Ultimate, this attack is considered a follow-up attack. Increases the DMG of follow-up attacks by 15%.",
+    "rarity": 3,
+    "category": "offense"
+  }

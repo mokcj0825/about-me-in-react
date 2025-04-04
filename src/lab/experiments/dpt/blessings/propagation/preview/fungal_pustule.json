@@ -1,0 +1,8 @@
+{
+    "id": "fungal_pustule",
+    "name": "Fungal Pustule",
+    "path": "propagation",
+    "description": "For each Skill Point recovered, apply 1 Spore to 2 random enemy target(s).",
+    "rarity": 3,
+    "category": "boost"
+  }

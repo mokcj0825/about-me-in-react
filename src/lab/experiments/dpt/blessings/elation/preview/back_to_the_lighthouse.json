@@ -1,0 +1,8 @@
+{
+    "id": "back_to_the_lighthouse",
+    "name": "Back to the Lighthouse",
+    "path": "elation",
+    "description": "When a character deals DMG to an enemy with a follow-up attack, increases their Energy Regeneration Rate by 24%.",
+    "rarity": 1,
+    "category": "boost"
+  }

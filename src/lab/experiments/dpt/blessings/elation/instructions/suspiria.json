@@ -1,0 +1,150 @@
+{
+  "id": "suspiria",
+  "name": "Suspiria",
+  "path": "elation",
+  "description": "Increases the DMG of follow-up attacks by 26%.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "damage_modifier": {
+        "id": "suspiria_damage",
+        "type": "damage_modifier",
+        "damage_type": "all",
+        "value": 26,
+        "modifier_type": "percentage",
+        "condition": "follow_up_attack",
+        "apply_timing": "pre_damage"
+      },
+      "event_type": [
+        "follow_up_attack_start",
+        "follow_up_attack_end",
+        "damage_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: DamageModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_damage_multiplier(unit: Unit): number"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_start(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "on_follow_up_attack_end(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_start",
+        "check": [
+          "Is unit alive?",
+          "Is this a follow-up attack?"
+        ],
+        "action": [
+          "Apply damage increase",
+          "Emit damage_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "follow_up_attack_end",
+        "check": [
+          "Was damage modified?"
+        ],
+        "action": [
+          "Remove damage increase",
+          "Emit damage_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_start_handler": [
+        "function handle_follow_up_attack_start({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const base_multiplier = damage_modifier_manager.get_damage_multiplier(unit);",
+        "  ",
+        "  damage_modifier_manager.add_modifier(unit, {",
+        "    id: 'suspiria_damage',",
+        "    type: 'damage_modifier',",
+        "    damage_type: 'all',",
+        "    value: 26,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  emit_event('damage_modified', {",
+        "    unit: unit,",
+        "    modifier_id: 'suspiria_damage',",
+        "    value: 26,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'suspiria',",
+        "    trigger: 'follow_up_attack_start',",
+        "    source: unit,",
+        "    detail: {",
+        "      base_multiplier: base_multiplier,",
+        "      increase: 26,",
+        "      final_multiplier: damage_modifier_manager.get_damage_multiplier(unit)",
+        "      target_unit: target.id",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "follow_up_end_handler": [
+        "function handle_follow_up_attack_end({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!damage_modifier_manager.has_modifier(unit, 'suspiria_damage')) return;",
+        "  ",
+        "  const final_multiplier = damage_modifier_manager.get_damage_multiplier(unit);",
+        "  ",
+        "  damage_modifier_manager.remove_modifier(unit, 'suspiria_damage');",
+        "  ",
+        "  emit_event('damage_modified', {",
+        "    unit: unit,",
+        "    modifier_id: 'suspiria_damage',",
+        "    value: -26,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'suspiria',",
+        "    trigger: 'follow_up_attack_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      removed_increase: 26,",
+        "      final_multiplier: damage_modifier_manager.get_damage_multiplier(unit)",
+        "      previous_multiplier: final_multiplier",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Damage is increased only during follow-up attacks",
+      "Increase is exactly 26%",
+      "Buff is applied before damage calculations",
+      "Buff is removed after follow-up attack ends",
+      "Multiple follow-up attacks each get the increase"
+    ],
+    "edge_case": [
+      "Unit dies during follow-up attack",
+      "Follow-up attack is interrupted",
+      "Multiple follow-up attacks in succession",
+      "Other damage modifiers are active",
+      "Follow-up attack misses or is dodged",
+      "Target has damage reduction effects"
+    ]
+  }
+} 

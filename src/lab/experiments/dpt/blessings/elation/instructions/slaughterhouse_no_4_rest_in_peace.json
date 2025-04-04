@@ -1,0 +1,141 @@
+{
+  "id": "slaughterhouse_no_4_rest_in_peace",
+  "name": "Slaughterhouse No. 4: Rest in Peace",
+  "path": "elation",
+  "description": "When characters launch follow-up attacks to an enemy, deals Aftertaste DMG equal to 80% of their ATK to the enemy being hit. If the enemy also has their Weakness Broken, then deals DMG for 1 extra time(s).",
+  "rarity": 3,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "aftertaste_damage": {
+        "id": "slaughterhouse_4_aftertaste",
+        "type": "aftertaste_damage",
+        "base_stat": "ATK",
+        "value": 80,
+        "modifier_type": "percentage",
+        "condition": "on_follow_up_hit",
+        "apply_timing": "post_damage",
+        "bonus_application": {
+          "condition": "weakness_broken",
+          "count": 1
+        }
+      },
+      "event_type": [
+        "follow_up_attack_hit",
+        "aftertaste_applied",
+        "weakness_break_checked",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "AftertasteManager": {
+          "method": [
+            "apply_aftertaste(source: Unit, target: Unit, damage: number): void",
+            "get_aftertaste_type(): string",
+            "calculate_aftertaste_damage(source: Unit, base_stat: string, percentage: number): number"
+          ]
+        },
+        "WeaknessManager": {
+          "method": [
+            "is_weakness_broken(unit: Unit): boolean",
+            "get_break_status(unit: Unit): WeaknessStatus"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_hit(callback: (data: { unit: Unit, target: Unit, hit_index: number }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean",
+            "is_enemy(unit: Unit): boolean",
+            "get_stat(unit: Unit, stat: string): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_hit",
+        "check": [
+          "Is attacker alive?",
+          "Is target alive?",
+          "Is target an enemy?",
+          "Was this a follow-up attack?"
+        ],
+        "action": [
+          "Calculate base Aftertaste damage",
+          "Check target weakness break status",
+          "Apply Aftertaste damage",
+          "Apply bonus application if weakness broken",
+          "Emit aftertaste_applied event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_hit_handler": [
+        "function handle_follow_up_attack_hit({ unit, target, hit_index }: { unit: Unit, target: Unit, hit_index: number }) {",
+        "  if (!unit.is_alive() || !target.is_alive()) return;",
+        "  if (!unit_manager.is_enemy(target)) return;",
+        "  ",
+        "  const base_atk = unit_manager.get_stat(unit, 'ATK');",
+        "  const aftertaste_damage = aftertaste_manager.calculate_aftertaste_damage(unit, 'ATK', 80);",
+        "  const is_broken = weakness_manager.is_weakness_broken(target);",
+        "  const applications = is_broken ? 2 : 1;",
+        "  ",
+        "  for (let i = 0; i < applications; i++) {",
+        "    aftertaste_manager.apply_aftertaste(unit, target, aftertaste_damage);",
+        "    ",
+        "    emit_event('aftertaste_applied', {",
+        "      source: unit,",
+        "      target: target,",
+        "      damage: aftertaste_damage,",
+        "      type: aftertaste_manager.get_aftertaste_type(),",
+        "      application_index: i",
+        "    });",
+        "  }",
+        "  ",
+        "  emit_event('weakness_break_checked', {",
+        "    unit: target,",
+        "    is_broken: is_broken,",
+        "    break_status: weakness_manager.get_break_status(target)",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'slaughterhouse_no_4_rest_in_peace',",
+        "    trigger: 'follow_up_attack_hit',",
+        "    source: unit,",
+        "    detail: {",
+        "      target_unit: target.id,",
+        "      base_atk: base_atk,",
+        "      aftertaste_damage: aftertaste_damage,",
+        "      weakness_broken: is_broken,",
+        "      applications: applications,",
+        "      hit_index: hit_index",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Aftertaste damage is 80% of ATK",
+      "Applies on follow-up attack hits",
+      "Double application on broken targets",
+      "Only affects enemy targets",
+      "Properly calculates ATK-based damage",
+      "Correctly checks weakness break status"
+    ],
+    "edge_case": [
+      "Target dies during applications",
+      "Multiple follow-up hits",
+      "Weakness break status changes mid-attack",
+      "ATK changes during applications",
+      "Target becomes invulnerable",
+      "Interaction with other Aftertaste effects"
+    ]
+  }
+} 

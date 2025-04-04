@@ -1,0 +1,124 @@
+{
+  "id": "orbital_redshift",
+  "name": "Orbital Redshift",
+  "path": "destruction",
+  "description": "Increases Max HP by 16%.",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "hp_modifier": {
+        "id": "orbital_redshift_hp",
+        "type": "stat_modifier",
+        "stat": "max_hp",
+        "value": 16,
+        "modifier_type": "percentage",
+        "apply_timing": "immediate"
+      },
+      "event_type": [
+        "blessing_obtained",
+        "stat_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_stat_multiplier(unit: Unit, stat: string): number"
+          ]
+        },
+        "HPManager": {
+          "method": [
+            "get_max_hp(unit: Unit): number",
+            "scale_current_hp(unit: Unit, ratio: number): void"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "get_all_units(): Unit[]",
+            "is_alive(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "blessing_obtained",
+        "check": [
+          "Are there valid units?"
+        ],
+        "action": [
+          "Get all units",
+          "Apply HP modifier to each unit",
+          "Scale current HP",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "blessing_obtained_handler": [
+        "function handle_blessing_obtained() {",
+        "  const units = unit_manager.get_all_units();",
+        "  ",
+        "  units.forEach(unit => {",
+        "    if (!unit.is_alive()) return;",
+        "    ",
+        "    const base_max_hp = hp_manager.get_max_hp(unit);",
+        "    const modifier_id = 'orbital_redshift_hp';",
+        "    ",
+        "    stat_modifier_manager.add_modifier(unit, {",
+        "      id: modifier_id,",
+        "      type: 'stat_modifier',",
+        "      stat: 'max_hp',",
+        "      value: 16,",
+        "      modifier_type: 'percentage'",
+        "    });",
+        "    ",
+        "    const new_multiplier = stat_modifier_manager.get_stat_multiplier(unit, 'max_hp');",
+        "    hp_manager.scale_current_hp(unit, 1.16); // Scale current HP by same ratio",
+        "    ",
+        "    emit_event('stat_modified', {",
+        "      unit: unit,",
+        "      stat: 'max_hp',",
+        "      modifier_id: modifier_id,",
+        "      base_value: base_max_hp,",
+        "      bonus_value: base_max_hp * 0.16,",
+        "      final_multiplier: new_multiplier",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'orbital_redshift',",
+        "      trigger: 'blessing_obtained',",
+        "      source: unit,",
+        "      detail: {",
+        "        base_max_hp: base_max_hp,",
+        "        hp_increase: base_max_hp * 0.16,",
+        "        final_multiplier: new_multiplier",
+        "      }",
+        "    });",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Max HP increases by exactly 16%",
+      "Current HP scales proportionally",
+      "Applies to all valid units",
+      "Stacks correctly with other HP modifiers",
+      "Persists through battle transitions",
+      "Updates immediately on blessing obtain"
+    ],
+    "edge_case": [
+      "Multiple HP modifiers interaction",
+      "Rounding of HP values",
+      "Application during HP changes",
+      "Dead unit handling",
+      "HP scaling precision",
+      "Order of operations with other modifiers"
+    ]
+  }
+} 

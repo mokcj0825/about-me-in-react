@@ -1,0 +1,184 @@
+{
+  "id": "champions_dinner_cats_cradle",
+  "name": "Champion's Dinner: Cat's Cradle",
+  "path": "elation",
+  "description": "When characters deal DMG to an enemy with their Ultimate, this attack is considered a follow-up attack. Increases the DMG of follow-up attacks by 15%.",
+  "rarity": 3,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "attack_conversion": {
+        "id": "cats_cradle_ultimate_conversion",
+        "type": "attack_type_conversion",
+        "from_type": "ultimate",
+        "to_type": "follow_up",
+        "condition": "on_ultimate_start",
+        "apply_timing": "pre_attack"
+      },
+      "damage_modifier": {
+        "id": "cats_cradle_damage_boost",
+        "type": "damage_modifier",
+        "value": 15,
+        "modifier_type": "percentage",
+        "damage_type": "all",
+        "condition": "is_follow_up",
+        "apply_timing": "pre_damage"
+      },
+      "event_type": [
+        "ultimate_attack_start",
+        "follow_up_attack_start",
+        "attack_type_converted",
+        "damage_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "AttackTypeManager": {
+          "method": [
+            "convert_attack_type(attack_id: string, from_type: string, to_type: string): void",
+            "get_attack_type(attack_id: string): string",
+            "on_ultimate_attack_start(callback: (data: { unit: Unit, target: Unit, attack_id: string }) => void): void"
+          ]
+        },
+        "DamageModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: DamageModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_damage_multiplier(unit: Unit): number",
+            "has_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "is_follow_up_attack(attack_id: string): boolean",
+            "on_follow_up_attack_start(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "on_follow_up_attack_end(callback: (data: { unit: Unit, target: Unit }) => void): void"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean",
+            "is_enemy(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ultimate_attack_start",
+        "check": [
+          "Is attacker alive?",
+          "Is target an enemy?",
+          "Is this an ultimate attack?"
+        ],
+        "action": [
+          "Convert ultimate to follow-up type",
+          "Emit attack_type_converted event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "follow_up_attack_start",
+        "check": [
+          "Is attacker alive?",
+          "Is this a follow-up attack?",
+          "Does unit not have damage modifier?"
+        ],
+        "action": [
+          "Apply damage increase",
+          "Emit damage_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ultimate_handler": [
+        "function handle_ultimate_attack_start({ unit, target, attack_id }: { unit: Unit, target: Unit, attack_id: string }) {",
+        "  if (!unit.is_alive() || !target.is_alive()) return;",
+        "  if (!unit_manager.is_enemy(target)) return;",
+        "  ",
+        "  const current_type = attack_type_manager.get_attack_type(attack_id);",
+        "  if (current_type !== 'ultimate') return;",
+        "  ",
+        "  attack_type_manager.convert_attack_type(attack_id, 'ultimate', 'follow_up');",
+        "  ",
+        "  emit_event('attack_type_converted', {",
+        "    attack_id: attack_id,",
+        "    from_type: 'ultimate',",
+        "    to_type: 'follow_up',",
+        "    source: unit,",
+        "    target: target",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'champions_dinner_cats_cradle',",
+        "    trigger: 'ultimate_attack_start',",
+        "    source: unit,",
+        "    detail: {",
+        "      attack_id: attack_id,",
+        "      target_unit: target.id,",
+        "      converted_to_follow_up: true",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "follow_up_handler": [
+        "function handle_follow_up_attack_start({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const modifier_id = 'cats_cradle_damage_boost';",
+        "  if (damage_modifier_manager.has_modifier(unit, modifier_id)) return;",
+        "  ",
+        "  const base_multiplier = damage_modifier_manager.get_damage_multiplier(unit);",
+        "  ",
+        "  damage_modifier_manager.add_modifier(unit, {",
+        "    id: modifier_id,",
+        "    type: 'damage_modifier',",
+        "    damage_type: 'all',",
+        "    value: 15,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  const new_multiplier = damage_modifier_manager.get_damage_multiplier(unit);",
+        "  ",
+        "  emit_event('damage_modified', {",
+        "    unit: unit,",
+        "    modifier_id: modifier_id,",
+        "    value: 15,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'champions_dinner_cats_cradle',",
+        "    trigger: 'follow_up_attack_start',",
+        "    source: unit,",
+        "    detail: {",
+        "      target_unit: target.id,",
+        "      base_multiplier: base_multiplier,",
+        "      damage_increase: 15,",
+        "      final_multiplier: new_multiplier",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Ultimate attacks are converted to follow-up type",
+      "Follow-up damage increase is exactly 15%",
+      "Damage increase applies to all follow-ups",
+      "Conversion happens before damage calculation",
+      "Properly tracks attack type changes",
+      "Damage modifier stacks correctly"
+    ],
+    "edge_case": [
+      "Multiple ultimates in succession",
+      "Ultimate interrupted during conversion",
+      "Follow-up attack interrupted",
+      "Unit dies during attack",
+      "Interaction with other attack type modifiers",
+      "Interaction with other damage modifiers"
+    ]
+  }
+} 

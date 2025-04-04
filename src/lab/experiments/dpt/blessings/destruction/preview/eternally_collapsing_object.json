@@ -1,0 +1,8 @@
+{
+    "id": "eternally_collapsing_object",
+    "name": "Eternally Collapsing Object",
+    "path": "destruction",
+    "description": "For every 1% of HP lost by a character, their Effect RES increases by 0.30%.",
+    "rarity": 1,
+    "category": "boost"
+  }

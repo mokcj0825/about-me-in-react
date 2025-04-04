@@ -1,0 +1,8 @@
+{
+    "id": "12_monkeys_and_angry_men",
+    "name": "12 Monkeys and Angry Men",
+    "path": "elation",
+    "description": "When a character deals DMG to an enemy with a follow-up attack, DMG for this follow-up attack increases by 4%.",
+    "rarity": 2,
+    "category": "offense"
+  }

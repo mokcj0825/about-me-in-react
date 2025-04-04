@@ -1,0 +1,8 @@
+{
+    "id": "instability_strip",
+    "name": "Instability Strip",
+    "path": "destruction",
+    "description": "When characters are hit or losing HP, regenerates 4 Energy.",
+    "rarity": 1,
+    "category": "boost"
+  }

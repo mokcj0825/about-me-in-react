@@ -1,0 +1,8 @@
+{
+    "id": "doctor_of_love",
+    "name": "Doctor of Love",
+    "path": "elation",
+    "description": "After a character launches a follow-up attack, restores their HP by 10% of their Max HP.",
+    "rarity": 1,
+    "category": "defense"
+  }

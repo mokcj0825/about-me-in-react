@@ -1,0 +1,185 @@
+{
+  "id": "just_keep_on_crying",
+  "name": "Just Keep on Crying!",
+  "path": "elation",
+  "description": "For every 1 Type of Aftertaste DMG the enemy received, increases the DMG taken by them by 8% until the end of their next action.",
+  "rarity": 2,
+  "category": "hinder",
+  "implementation": {
+    "data_structure": {
+      "damage_taken_modifier": {
+        "id": "just_keep_crying_vulnerability",
+        "type": "damage_taken_modifier",
+        "value_per_stack": 8,
+        "modifier_type": "percentage",
+        "duration_type": "next_action",
+        "stack_type": "aftertaste_types",
+        "condition": "on_aftertaste_applied",
+        "apply_timing": "pre_damage"
+      },
+      "event_type": [
+        "aftertaste_applied",
+        "aftertaste_types_changed",
+        "damage_taken_modified",
+        "action_started",
+        "action_ended",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageTakenManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: DamageTakenModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_damage_taken_multiplier(unit: Unit): number",
+            "has_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "AftertasteManager": {
+          "method": [
+            "get_aftertaste_types(unit: Unit): string[]",
+            "on_aftertaste_applied(callback: (data: { target: Unit, type: string }) => void): void",
+            "on_aftertaste_removed(callback: (data: { target: Unit, type: string }) => void): void"
+          ]
+        },
+        "ActionManager": {
+          "method": [
+            "on_action_start(callback: (data: { unit: Unit }) => void): void",
+            "on_action_end(callback: (data: { unit: Unit }) => void): void",
+            "is_action_in_progress(unit: Unit): boolean"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "aftertaste_applied",
+        "check": [
+          "Is target alive?",
+          "Is this a new aftertaste type?",
+          "Does target have the vulnerability debuff?"
+        ],
+        "action": [
+          "Get current aftertaste types",
+          "Calculate new damage taken increase",
+          "Apply or update vulnerability debuff",
+          "Emit damage_taken_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "action_end",
+        "check": [
+          "Is unit alive?",
+          "Does unit have the vulnerability debuff?"
+        ],
+        "action": [
+          "Remove vulnerability debuff",
+          "Emit damage_taken_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "aftertaste_handler": [
+        "function handle_aftertaste_applied({ target, type }: { target: Unit, type: string }) {",
+        "  if (!target.is_alive()) return;",
+        "  ",
+        "  const aftertaste_types = aftertaste_manager.get_aftertaste_types(target);",
+        "  const modifier_id = 'just_keep_crying_vulnerability';",
+        "  ",
+        "  const vulnerability_increase = aftertaste_types.length * 8;",
+        "  ",
+        "  if (damage_taken_manager.has_modifier(target, modifier_id)) {",
+        "    damage_taken_manager.remove_modifier(target, modifier_id);",
+        "  }",
+        "  ",
+        "  damage_taken_manager.add_modifier(target, {",
+        "    id: modifier_id,",
+        "    type: 'damage_taken_modifier',",
+        "    value: vulnerability_increase,",
+        "    modifier_type: 'percentage',",
+        "    duration: 'next_action'",
+        "  });",
+        "  ",
+        "  const new_multiplier = damage_taken_manager.get_damage_taken_multiplier(target);",
+        "  ",
+        "  emit_event('damage_taken_modified', {",
+        "    unit: target,",
+        "    modifier_id: modifier_id,",
+        "    increase_value: vulnerability_increase,",
+        "    final_multiplier: new_multiplier",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'just_keep_on_crying',",
+        "    trigger: 'aftertaste_applied',",
+        "    source: target,",
+        "    detail: {",
+        "      aftertaste_types: aftertaste_types,",
+        "      type_count: aftertaste_types.length,",
+        "      increase_per_type: 8,",
+        "      total_increase: vulnerability_increase,",
+        "      final_multiplier: new_multiplier",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "action_end_handler": [
+        "function handle_action_end({ unit }: { unit: Unit }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const modifier_id = 'just_keep_crying_vulnerability';",
+        "  if (!damage_taken_manager.has_modifier(unit, modifier_id)) return;",
+        "  ",
+        "  const current_multiplier = damage_taken_manager.get_damage_taken_multiplier(unit);",
+        "  ",
+        "  damage_taken_manager.remove_modifier(unit, modifier_id);",
+        "  ",
+        "  const new_multiplier = damage_taken_manager.get_damage_taken_multiplier(unit);",
+        "  ",
+        "  emit_event('damage_taken_modified', {",
+        "    unit: unit,",
+        "    modifier_id: modifier_id,",
+        "    previous_multiplier: current_multiplier,",
+        "    final_multiplier: new_multiplier,",
+        "    is_removal: true",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'just_keep_on_crying',",
+        "    trigger: 'action_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      previous_multiplier: current_multiplier,",
+        "      final_multiplier: new_multiplier,",
+        "      debuff_removed: true",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Damage taken increase scales with number of Aftertaste types",
+      "Each type increases damage taken by exactly 8%",
+      "Debuff persists until target's next action",
+      "Debuff updates when new Aftertaste types are applied",
+      "Properly removes debuff after action completion"
+    ],
+    "edge_case": [
+      "Multiple Aftertaste types applied simultaneously",
+      "Aftertaste type removed before action",
+      "Action interrupted or cancelled",
+      "Unit dies with active debuff",
+      "New Aftertaste type during existing debuff",
+      "Multiple actions queued in succession",
+      "Interaction with damage reduction effects"
+    ]
+  }
+} 

@@ -1,0 +1,202 @@
+{
+  "id": "scythe_limbs",
+  "name": "Scythe Limbs",
+  "path": "propagation",
+  "description": "After a character uses their Ultimate, the next time they consume Skill Points, it will be considered as 1 additional Skill Point being consumed. For each Skill Point consumed, the character's CRIT DMG increases by 40%. This effect can stack up to 2 time(s), lasting until the character uses an attack.",
+  "rarity": 3,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "ultimate_tracker": {
+        "id": "scythe_limbs_ultimate_tracker",
+        "type": "state_tracker",
+        "tracked_state": "ultimate_used",
+        "reset_on": "skill_point_consumed"
+      },
+      "skill_point_modifier": {
+        "id": "scythe_limbs_sp_modifier",
+        "type": "resource_modifier",
+        "resource": "skill_points",
+        "additional_consumption": 1,
+        "condition": "ultimate_used",
+        "max_triggers": 1
+      },
+      "crit_dmg_buff": {
+        "id": "scythe_limbs_crit_buff",
+        "type": "stat_modifier",
+        "stat": "crit_dmg",
+        "value": 40,
+        "stack_type": "additive",
+        "max_stacks": 2,
+        "duration": "until_attack",
+        "trigger": "skill_point_consumed"
+      },
+      "event_type": [
+        "ultimate_used",
+        "skill_point_consumed",
+        "attack_start",
+        "stat_modified",
+        "resource_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_modifier_stacks(unit: Unit, modifier_id: string): number"
+          ]
+        },
+        "SkillPointManager": {
+          "method": [
+            "get_skill_points(unit: Unit): number",
+            "modify_consumption(unit: Unit, amount: number): void",
+            "on_skill_point_consumed(callback: (data: { unit: Unit, amount: number }) => void): void"
+          ]
+        },
+        "UltimateManager": {
+          "method": [
+            "on_ultimate_used(callback: (data: { unit: Unit }) => void): void"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_attack_start(callback: (data: { unit: Unit, attack_type: string }) => void): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "ultimate_used",
+        "action": [
+          "Set ultimate_used state for unit",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "skill_point_consumed",
+        "check": [
+          "Is ultimate_used state active?",
+          "Are current stacks less than max_stacks?"
+        ],
+        "action": [
+          "Add 1 to skill point consumption",
+          "Apply CRIT DMG buff",
+          "Reset ultimate_used state",
+          "Emit stat_modified event",
+          "Emit resource_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "attack_start",
+        "action": [
+          "Remove all CRIT DMG buff stacks",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "ultimate_handler": [
+        "function handle_ultimate_used({ unit }: { unit: Unit }) {",
+        "  unit.setState('ultimate_used', true);",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'scythe_limbs',",
+        "    trigger: 'ultimate_used',",
+        "    source: unit",
+        "  });",
+        "}"
+      ],
+      "skill_point_handler": [
+        "function handle_skill_point_consumed({ unit, amount }: { unit: Unit, amount: number }) {",
+        "  if (!unit.getState('ultimate_used')) return;",
+        "  ",
+        "  const current_stacks = stat_modifier_manager.get_modifier_stacks(unit, 'scythe_limbs_crit_buff');",
+        "  if (current_stacks >= 2) return;",
+        "  ",
+        "  skill_point_manager.modify_consumption(unit, amount + 1);",
+        "  ",
+        "  stat_modifier_manager.add_modifier(unit, {",
+        "    id: 'scythe_limbs_crit_buff',",
+        "    type: 'stat_modifier',",
+        "    stat: 'crit_dmg',",
+        "    value: 40",
+        "  });",
+        "  ",
+        "  unit.setState('ultimate_used', false);",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: unit,",
+        "    stat: 'crit_dmg',",
+        "    value: 40,",
+        "    source: 'scythe_limbs'",
+        "  });",
+        "  ",
+        "  emit_event('resource_modified', {",
+        "    unit: unit,",
+        "    resource: 'skill_points',",
+        "    amount: 1,",
+        "    type: 'additional_consumption'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'scythe_limbs',",
+        "    trigger: 'skill_point_consumed',",
+        "    source: unit,",
+        "    detail: {",
+        "      additional_sp_consumed: 1,",
+        "      crit_dmg_increase: 40,",
+        "      current_stacks: current_stacks + 1",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "attack_handler": [
+        "function handle_attack_start({ unit }: { unit: Unit }) {",
+        "  const stacks = stat_modifier_manager.get_modifier_stacks(unit, 'scythe_limbs_crit_buff');",
+        "  if (stacks === 0) return;",
+        "  ",
+        "  stat_modifier_manager.remove_modifier(unit, 'scythe_limbs_crit_buff');",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: unit,",
+        "    stat: 'crit_dmg',",
+        "    value: -40 * stacks,",
+        "    source: 'scythe_limbs'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'scythe_limbs',",
+        "    trigger: 'attack_start',",
+        "    source: unit,",
+        "    detail: {",
+        "      removed_stacks: stacks,",
+        "      total_crit_dmg_removed: 40 * stacks",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Ultimate usage is correctly tracked",
+      "Additional Skill Point consumption occurs only once after Ultimate",
+      "CRIT DMG buff stacks up to 2 times",
+      "CRIT DMG buff is removed upon any attack",
+      "Each stack provides exactly 40% CRIT DMG",
+      "Ultimate tracking resets after Skill Point consumption"
+    ],
+    "edge_case": [
+      "Ultimate used multiple times before Skill Point consumption",
+      "Skill Points consumed with max stacks",
+      "Attack occurs with no stacks",
+      "Multiple attacks in succession",
+      "Unit dies with active stacks",
+      "Skill Point consumption with insufficient points"
+    ]
+  }
+} 

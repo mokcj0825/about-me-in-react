@@ -1,0 +1,128 @@
+{
+  "id": "twenty_first_military_rule",
+  "name": "Twenty-First Military Rule",
+  "path": "elation",
+  "description": "After a character launches follow-up attacks, there is a 65% fixed chance to recover 1 Skill Point.",
+  "rarity": 2,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "skill_point_recovery": {
+        "id": "twenty_first_military_rule_sp",
+        "type": "skill_point_recovery",
+        "value": 1,
+        "trigger_chance": 65,
+        "chance_type": "fixed",
+        "condition": "after_follow_up",
+        "apply_timing": "post_attack"
+      },
+      "event_type": [
+        "follow_up_attack_end",
+        "skill_point_recovered",
+        "blessing_triggered",
+        "random_roll_performed"
+      ],
+      "required_interface": {
+        "SkillPointManager": {
+          "method": [
+            "add_skill_points(unit: Unit, amount: number): void",
+            "get_skill_points(unit: Unit): number",
+            "get_max_skill_points(unit: Unit): number"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_end(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean"
+          ]
+        },
+        "RandomManager": {
+          "method": [
+            "roll_chance(chance: number): boolean",
+            "get_last_roll(): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_end",
+        "check": [
+          "Is unit alive?",
+          "Was this a follow-up attack?",
+          "Is unit at max Skill Points?"
+        ],
+        "action": [
+          "Roll for Skill Point recovery chance",
+          "If successful, recover Skill Point",
+          "Emit skill_point_recovered event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_end_handler": [
+        "function handle_follow_up_attack_end({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const current_sp = skill_point_manager.get_skill_points(unit);",
+        "  const max_sp = skill_point_manager.get_max_skill_points(unit);",
+        "  ",
+        "  if (current_sp >= max_sp) return;",
+        "  ",
+        "  const roll_success = random_manager.roll_chance(65);",
+        "  const roll_value = random_manager.get_last_roll();",
+        "  ",
+        "  emit_event('random_roll_performed', {",
+        "    blessing: 'twenty_first_military_rule',",
+        "    roll_type: 'skill_point_recovery',",
+        "    chance: 65,",
+        "    roll: roll_value,",
+        "    success: roll_success",
+        "  });",
+        "  ",
+        "  if (!roll_success) return;",
+        "  ",
+        "  skill_point_manager.add_skill_points(unit, 1);",
+        "  ",
+        "  emit_event('skill_point_recovered', {",
+        "    unit: unit,",
+        "    amount: 1,",
+        "    source: 'twenty_first_military_rule',",
+        "    trigger: 'follow_up_end'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'twenty_first_military_rule',",
+        "    trigger: 'follow_up_attack_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      skill_points_before: current_sp,",
+        "      skill_points_after: current_sp + 1,",
+        "      max_skill_points: max_sp,",
+        "      roll_value: roll_value,",
+        "      target_unit: target.id",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Skill Point recovery triggers only after follow-up attacks",
+      "Recovery chance is exactly 65%",
+      "Recovers exactly 1 Skill Point on success",
+      "Cannot exceed maximum Skill Points",
+      "Random roll is properly tracked and logged"
+    ],
+    "edge_case": [
+      "Unit at maximum Skill Points",
+      "Unit dies during follow-up attack",
+      "Multiple follow-up attacks in succession",
+      "Follow-up attack is interrupted",
+      "Random number generator edge cases",
+      "Skill Point recovery during multi-hit follow-ups"
+    ]
+  }
+} 

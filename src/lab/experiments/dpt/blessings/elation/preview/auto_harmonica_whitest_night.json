@@ -1,0 +1,8 @@
+{
+    "id": "auto_harmonica_whitest_night",
+    "name": "Auto-Harmonica: Whitest Night",
+    "path": "elation",
+    "description": "After a character launches a follow-up attack, they deal Aftertaste DMG equal to 55% of their ATK for 1 to 3 time(s).",
+    "rarity": 3,
+    "category": "offense"
+  }

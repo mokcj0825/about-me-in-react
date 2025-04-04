@@ -1,0 +1,124 @@
+{
+  "id": "doctor_of_love",
+  "name": "Doctor of Love",
+  "path": "elation",
+  "description": "After a character launches a follow-up attack, restores their HP by 10% of their Max HP.",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "hp_restore": {
+        "id": "doctor_of_love_heal",
+        "type": "resource_modifier",
+        "resource": "hp",
+        "value": 10,
+        "modifier_type": "percentage",
+        "base_stat": "max_hp",
+        "trigger": "follow_up_attack"
+      },
+      "event_type": [
+        "follow_up_attack",
+        "hp_restored",
+        "resource_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "ResourceManager": {
+          "method": [
+            "get_max_hp(unit: Unit): number",
+            "get_current_hp(unit: Unit): number",
+            "restore_hp(unit: Unit, amount: number): void"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack(callback: (data: { unit: Unit, target: Unit }) => void): void"
+          ]
+        },
+        "HealingManager": {
+          "method": [
+            "can_receive_healing(unit: Unit): boolean",
+            "modify_healing(unit: Unit, amount: number): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack",
+        "check": [
+          "Is unit alive?",
+          "Is unit not at max HP?",
+          "Can unit receive healing?"
+        ],
+        "action": [
+          "Calculate heal amount based on max HP",
+          "Apply healing modification effects",
+          "Restore HP to unit",
+          "Emit hp_restored event",
+          "Emit resource_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_handler": [
+        "function handle_follow_up_attack({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive() || !healing_manager.can_receive_healing(unit)) return;",
+        "  ",
+        "  const max_hp = resource_manager.get_max_hp(unit);",
+        "  const current_hp = resource_manager.get_current_hp(unit);",
+        "  ",
+        "  if (current_hp >= max_hp) return;",
+        "  ",
+        "  let heal_amount = Math.floor(max_hp * 0.10);",
+        "  heal_amount = healing_manager.modify_healing(unit, heal_amount);",
+        "  ",
+        "  resource_manager.restore_hp(unit, heal_amount);",
+        "  ",
+        "  emit_event('hp_restored', {",
+        "    unit: unit,",
+        "    amount: heal_amount,",
+        "    source: 'doctor_of_love'",
+        "  });",
+        "  ",
+        "  emit_event('resource_modified', {",
+        "    unit: unit,",
+        "    resource: 'hp',",
+        "    amount: heal_amount,",
+        "    type: 'restore'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'doctor_of_love',",
+        "    trigger: 'follow_up_attack',",
+        "    source: unit,",
+        "    detail: {",
+        "      heal_amount: heal_amount,",
+        "      max_hp: max_hp,",
+        "      heal_percentage: 10,",
+        "      final_hp: Math.min(max_hp, current_hp + heal_amount)",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "HP is restored after follow-up attack",
+      "Heal amount is exactly 10% of max HP",
+      "Healing is affected by healing modification effects",
+      "Only heals if unit is not at max HP",
+      "Healing occurs immediately after follow-up attack"
+    ],
+    "edge_case": [
+      "Multiple follow-up attacks in one turn",
+      "Unit dies before healing applies",
+      "Unit is at max HP",
+      "Healing is modified by other effects",
+      "Healing would exceed max HP",
+      "Unit has healing reduction effects"
+    ]
+  }
+} 
