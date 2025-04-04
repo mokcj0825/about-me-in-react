@@ -1,0 +1,136 @@
+{
+  "id": "reflection",
+  "name": "Reflection",
+  "path": "destruction",
+  "description": "When struck with a killing blow, instead of becoming downed, characters immediately restore HP by 1% of their Max HP. The allied team can only trigger this effect 1 time(s) per battle.",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "revival_config": {
+        "hp_restore_percent": 1,
+        "max_team_triggers": 1,
+        "trigger_timing": "pre_death"
+      },
+      "trigger_tracking": {
+        "type": "battle_scoped",
+        "key": "reflection_used",
+        "reset_on": "battle_end"
+      },
+      "event_type": [
+        "pre_unit_death",
+        "hp_restored",
+        "blessing_triggered",
+        "battle_ended"
+      ],
+      "required_interface": {
+        "HPManager": {
+          "method": [
+            "get_max_hp(unit: Unit): number",
+            "set_hp(unit: Unit, amount: number): void",
+            "is_lethal_damage(unit: Unit, damage: number): boolean"
+          ]
+        },
+        "BattleManager": {
+          "method": [
+            "is_battle_active(): boolean",
+            "get_battle_data(): BattleData",
+            "prevent_death(unit: Unit): void"
+          ]
+        },
+        "StateManager": {
+          "method": [
+            "get_battle_state(key: string): any",
+            "set_battle_state(key: string, value: any): void",
+            "clear_battle_state(key: string): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "pre_unit_death",
+        "check": [
+          "Is battle active?",
+          "Has effect not been used this battle?",
+          "Is damage lethal?"
+        ],
+        "action": [
+          "Prevent death",
+          "Calculate HP restore",
+          "Apply HP restore",
+          "Mark effect as used",
+          "Emit hp_restored event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "battle_ended",
+        "check": [
+          "Was effect used?"
+        ],
+        "action": [
+          "Reset trigger tracking"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "death_prevention_handler": [
+        "function handle_pre_unit_death({ unit, damage }: { unit: Unit, damage: number }) {",
+        "  if (!battle_manager.is_battle_active()) return;",
+        "  if (state_manager.get_battle_state('reflection_used')) return;",
+        "  if (!hp_manager.is_lethal_damage(unit, damage)) return;",
+        "  ",
+        "  battle_manager.prevent_death(unit);",
+        "  ",
+        "  const max_hp = hp_manager.get_max_hp(unit);",
+        "  const restore_amount = Math.ceil(max_hp * 0.01);",
+        "  ",
+        "  hp_manager.set_hp(unit, restore_amount);",
+        "  state_manager.set_battle_state('reflection_used', true);",
+        "  ",
+        "  emit_event('hp_restored', {",
+        "    unit: unit,",
+        "    amount: restore_amount,",
+        "    source: 'reflection',",
+        "    prevented_death: true",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'reflection',",
+        "    trigger: 'pre_unit_death',",
+        "    source: unit,",
+        "    detail: {",
+        "      prevented_damage: damage,",
+        "      max_hp: max_hp,",
+        "      restored_hp: restore_amount,",
+        "      first_trigger: true",
+        "    }",
+        "  });",
+        "}",
+        "",
+        "function handle_battle_end() {",
+        "  state_manager.clear_battle_state('reflection_used');",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Prevents death once per battle",
+      "Restores exactly 1% of max HP",
+      "Only triggers on lethal damage",
+      "Works for any team member",
+      "Resets between battles",
+      "Properly tracks team-wide usage"
+    ],
+    "edge_case": [
+      "Multiple deaths in same frame",
+      "HP restore rounding",
+      "Death prevention timing",
+      "Battle state reset timing",
+      "Interaction with other death prevention effects",
+      "Multiple damage sources causing death"
+    ]
+  }
+} 

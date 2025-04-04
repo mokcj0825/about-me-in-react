@@ -1,0 +1,167 @@
+{
+  "id": "the_painted_albatross",
+  "name": "The Painted Albatross",
+  "path": "elation",
+  "description": "For each enemy hit by a character's follow-up attack, the character deals Additional DMG equal to 24% of their ATK to all enemies hit.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "additional_damage": {
+        "id": "painted_albatross_damage",
+        "type": "additional_damage",
+        "base_stat": "ATK",
+        "value_per_target": 24,
+        "modifier_type": "percentage",
+        "damage_type": "additional",
+        "condition": "follow_up_end",
+        "apply_timing": "post_damage",
+        "target_type": "all_hit_enemies"
+      },
+      "event_type": [
+        "follow_up_attack_end",
+        "follow_up_attack_hit",
+        "additional_damage_dealt",
+        "blessing_triggered",
+        "targets_tracked"
+      ],
+      "required_interface": {
+        "DamageCalculator": {
+          "method": [
+            "calculate_additional_damage(source: Unit, base_stat: string, percentage: number): number",
+            "apply_damage(source: Unit, target: Unit, damage: number, type: string): void"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_end(callback: (data: { unit: Unit, targets: Unit[] }) => void): void",
+            "on_follow_up_attack_hit(callback: (data: { unit: Unit, target: Unit, hit_index: number }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean",
+            "get_hit_targets(attack_id: string): Unit[]"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_enemy(unit: Unit): boolean",
+            "is_alive(unit: Unit): boolean",
+            "get_stat(unit: Unit, stat: string): number"
+          ]
+        },
+        "TargetTracker": {
+          "method": [
+            "track_target(attack_id: string, target: Unit): void",
+            "get_tracked_targets(attack_id: string): Unit[]",
+            "clear_tracked_targets(attack_id: string): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_hit",
+        "check": [
+          "Is attacker alive?",
+          "Is target alive?",
+          "Is target an enemy?",
+          "Was this a follow-up attack?"
+        ],
+        "action": [
+          "Track hit target",
+          "Emit targets_tracked event"
+        ]
+      },
+      {
+        "trigger": "follow_up_attack_end",
+        "check": [
+          "Is attacker alive?",
+          "Were any enemies hit?",
+          "Was this a follow-up attack?"
+        ],
+        "action": [
+          "Get all hit targets",
+          "Calculate additional damage based on number of targets",
+          "Apply additional damage to all targets",
+          "Clear tracked targets",
+          "Emit additional_damage_dealt event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_hit_handler": [
+        "function handle_follow_up_attack_hit({ unit, target, hit_index }: { unit: Unit, target: Unit, hit_index: number }) {",
+        "  if (!unit.is_alive() || !target.is_alive()) return;",
+        "  if (!unit_manager.is_enemy(target)) return;",
+        "  ",
+        "  target_tracker.track_target(unit.current_attack_id, target);",
+        "  ",
+        "  emit_event('targets_tracked', {",
+        "    attack_id: unit.current_attack_id,",
+        "    hit_index: hit_index,",
+        "    target: target.id",
+        "  });",
+        "}"
+      ],
+      "follow_up_end_handler": [
+        "function handle_follow_up_attack_end({ unit, targets }: { unit: Unit, targets: Unit[] }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const hit_targets = target_tracker.get_tracked_targets(unit.current_attack_id);",
+        "  if (hit_targets.length === 0) return;",
+        "  ",
+        "  const base_atk = unit_manager.get_stat(unit, 'ATK');",
+        "  const damage_per_target = damage_calculator.calculate_additional_damage(unit, 'ATK', 24);",
+        "  const total_additional_damage = damage_per_target * hit_targets.length;",
+        "  ",
+        "  for (const target of hit_targets) {",
+        "    if (!target.is_alive()) continue;",
+        "    ",
+        "    damage_calculator.apply_damage(unit, target, total_additional_damage, 'additional');",
+        "    ",
+        "    emit_event('additional_damage_dealt', {",
+        "      source: unit,",
+        "      target: target,",
+        "      damage: total_additional_damage,",
+        "      damage_type: 'additional',",
+        "      base_stat: 'ATK',",
+        "      multiplier: hit_targets.length * 0.24",
+        "    });",
+        "  }",
+        "  ",
+        "  target_tracker.clear_tracked_targets(unit.current_attack_id);",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'the_painted_albatross',",
+        "    trigger: 'follow_up_attack_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      targets_hit: hit_targets.map(t => t.id),",
+        "      target_count: hit_targets.length,",
+        "      base_atk: base_atk,",
+        "      damage_per_target: damage_per_target,",
+        "      total_additional_damage: total_additional_damage",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Additional damage scales with number of enemies hit",
+      "Each enemy receives the full scaled damage",
+      "Damage is calculated as 24% of ATK per enemy hit",
+      "Only triggers on follow-up attacks",
+      "Properly tracks all hit targets",
+      "Applies damage after follow-up attack completes"
+    ],
+    "edge_case": [
+      "No enemies hit during follow-up",
+      "Some targets die before additional damage",
+      "Multiple follow-up attacks in succession",
+      "Follow-up attack is interrupted",
+      "Target becomes invulnerable before additional damage",
+      "ATK value changes during follow-up sequence"
+    ]
+  }
+} 

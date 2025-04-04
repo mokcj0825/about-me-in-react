@@ -1,0 +1,143 @@
+{
+  "id": "portrait_of_a_man_on_fire",
+  "name": "Portrait of A Man On Fire",
+  "path": "elation",
+  "description": "When causing Aftertaste DMG to an enemy, characters deal additional Aftertaste DMG of different Types for 1 time(s), at DMG values equal to 60% of the original DMG.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "additional_aftertaste": {
+        "id": "portrait_man_fire_aftertaste",
+        "type": "additional_aftertaste_damage",
+        "value_multiplier": 60,
+        "modifier_type": "percentage",
+        "trigger_count": 1,
+        "condition": "on_aftertaste_damage",
+        "apply_timing": "post_damage",
+        "requires_different_type": true
+      },
+      "event_type": [
+        "aftertaste_damage_dealt",
+        "additional_aftertaste_applied",
+        "blessing_triggered",
+        "damage_calculated"
+      ],
+      "required_interface": {
+        "AftertasteManager": {
+          "method": [
+            "apply_aftertaste(source: Unit, target: Unit, type: string, damage: number): void",
+            "get_aftertaste_types(unit: Unit): string[]",
+            "get_available_types(): string[]",
+            "on_aftertaste_damage_dealt(callback: (data: { source: Unit, target: Unit, type: string, damage: number }) => void): void"
+          ]
+        },
+        "DamageCalculator": {
+          "method": [
+            "calculate_percentage_value(base_value: number, percentage: number): number",
+            "get_damage_value(damage_instance: DamageInstance): number"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean",
+            "is_enemy(unit: Unit): boolean"
+          ]
+        },
+        "TriggerTracker": {
+          "method": [
+            "has_triggered(blessing_id: string, target: Unit): boolean",
+            "mark_triggered(blessing_id: string, target: Unit): void",
+            "reset_triggers(blessing_id: string): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "aftertaste_damage_dealt",
+        "check": [
+          "Is source alive?",
+          "Is target alive?",
+          "Is target an enemy?",
+          "Has blessing not triggered for this target?",
+          "Are there available different aftertaste types?"
+        ],
+        "action": [
+          "Calculate additional damage",
+          "Select different aftertaste type",
+          "Apply additional aftertaste damage",
+          "Mark trigger used",
+          "Emit additional_aftertaste_applied event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "aftertaste_damage_handler": [
+        "function handle_aftertaste_damage_dealt({ source, target, type, damage }: { source: Unit, target: Unit, type: string, damage: number }) {",
+        "  if (!source.is_alive() || !target.is_alive()) return;",
+        "  if (!unit_manager.is_enemy(target)) return;",
+        "  ",
+        "  const blessing_id = 'portrait_of_a_man_on_fire';",
+        "  if (trigger_tracker.has_triggered(blessing_id, target)) return;",
+        "  ",
+        "  const current_types = aftertaste_manager.get_aftertaste_types(target);",
+        "  const available_types = aftertaste_manager.get_available_types()",
+        "    .filter(t => t !== type && !current_types.includes(t));",
+        "  ",
+        "  if (available_types.length === 0) return;",
+        "  ",
+        "  const additional_damage = damage_calculator.calculate_percentage_value(damage, 60);",
+        "  const new_type = available_types[0];",
+        "  ",
+        "  aftertaste_manager.apply_aftertaste(source, target, new_type, additional_damage);",
+        "  ",
+        "  trigger_tracker.mark_triggered(blessing_id, target);",
+        "  ",
+        "  emit_event('additional_aftertaste_applied', {",
+        "    source: source,",
+        "    target: target,",
+        "    original_type: type,",
+        "    new_type: new_type,",
+        "    original_damage: damage,",
+        "    additional_damage: additional_damage",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: blessing_id,",
+        "    trigger: 'aftertaste_damage_dealt',",
+        "    source: source,",
+        "    detail: {",
+        "      target_unit: target.id,",
+        "      original_type: type,",
+        "      new_type: new_type,",
+        "      original_damage: damage,",
+        "      damage_multiplier: 0.6,",
+        "      additional_damage: additional_damage,",
+        "      available_types: available_types",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Additional Aftertaste damage is 60% of original",
+      "Only triggers once per target",
+      "Uses a different Aftertaste type than original",
+      "Only triggers on enemy targets",
+      "Properly calculates damage values",
+      "Correctly selects available Aftertaste types"
+    ],
+    "edge_case": [
+      "No different Aftertaste types available",
+      "Target dies before additional damage",
+      "Multiple Aftertaste damages in succession",
+      "Target already has all Aftertaste types",
+      "Original damage is zero or negative",
+      "Interaction with damage modifiers"
+    ]
+  }
+} 

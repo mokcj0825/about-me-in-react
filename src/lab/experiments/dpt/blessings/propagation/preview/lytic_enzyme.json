@@ -1,0 +1,8 @@
+{
+    "id": "lytic_enzyme",
+    "name": "Lytic Enzyme",
+    "path": "propagation",
+    "description": "Increases the DMG caused by Spores bursting. The DMG increased is equal to 35% of the original DMG. After the target enemy was defeated, the Spores they were carrying will spread to targets adjacent to them.",
+    "rarity": 2,
+    "category": "offense"
+  }

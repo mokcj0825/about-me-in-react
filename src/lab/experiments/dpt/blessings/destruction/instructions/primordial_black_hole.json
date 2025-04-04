@@ -1,0 +1,150 @@
+{
+  "id": "primordial_black_hole",
+  "name": "Primordial Black Hole",
+  "path": "destruction",
+  "description": "Characters gain a 5% ATK increase for each Destruction Blessing. This effect can stack up to a max of 6 time(s).",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "atk_modifier": {
+        "id": "primordial_black_hole_atk",
+        "type": "stat_modifier",
+        "stat": "atk",
+        "value_per_stack": 5,
+        "max_stacks": 6,
+        "modifier_type": "percentage",
+        "apply_timing": "immediate"
+      },
+      "event_type": [
+        "blessing_obtained",
+        "blessing_removed",
+        "stat_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_stat_multiplier(unit: Unit, stat: string): number"
+          ]
+        },
+        "BlessingManager": {
+          "method": [
+            "get_blessings_by_path(path: string): Blessing[]",
+            "on_blessing_change(callback: (data: { added?: Blessing, removed?: Blessing }) => void): void"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "get_all_units(): Unit[]",
+            "is_alive(unit: Unit): boolean",
+            "get_stat(unit: Unit, stat: string): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "blessing_obtained",
+        "check": [
+          "Is obtained blessing from Destruction path?",
+          "Are there valid units?"
+        ],
+        "action": [
+          "Calculate new stack count",
+          "Update ATK modifier for all units",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "blessing_removed",
+        "check": [
+          "Was removed blessing from Destruction path?",
+          "Are there valid units?"
+        ],
+        "action": [
+          "Calculate new stack count",
+          "Update ATK modifier for all units",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "blessing_change_handler": [
+        "function handle_blessing_change({ added, removed }: { added?: Blessing, removed?: Blessing }) {",
+        "  if ((added && added.path !== 'destruction') && (removed && removed.path !== 'destruction')) return;",
+        "  ",
+        "  const destruction_blessings = blessing_manager.get_blessings_by_path('destruction');",
+        "  const stack_count = Math.min(destruction_blessings.length, 6);",
+        "  const atk_bonus = stack_count * 5;",
+        "  ",
+        "  const units = unit_manager.get_all_units();",
+        "  units.forEach(unit => {",
+        "    if (!unit.is_alive()) return;",
+        "    ",
+        "    const base_atk = unit_manager.get_stat(unit, 'atk');",
+        "    const modifier_id = 'primordial_black_hole_atk';",
+        "    ",
+        "    stat_modifier_manager.remove_modifier(unit, modifier_id);",
+        "    ",
+        "    if (stack_count > 0) {",
+        "      stat_modifier_manager.add_modifier(unit, {",
+        "        id: modifier_id,",
+        "        type: 'stat_modifier',",
+        "        stat: 'atk',",
+        "        value: atk_bonus,",
+        "        modifier_type: 'percentage'",
+        "      });",
+        "    }",
+        "    ",
+        "    const new_multiplier = stat_modifier_manager.get_stat_multiplier(unit, 'atk');",
+        "    ",
+        "    emit_event('stat_modified', {",
+        "      unit: unit,",
+        "      stat: 'atk',",
+        "      modifier_id: modifier_id,",
+        "      base_value: base_atk,",
+        "      bonus_value: base_atk * (atk_bonus / 100),",
+        "      final_multiplier: new_multiplier",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'primordial_black_hole',",
+        "      trigger: added ? 'blessing_obtained' : 'blessing_removed',",
+        "      source: unit,",
+        "      detail: {",
+        "        stack_count: stack_count,",
+        "        max_stacks: 6,",
+        "        atk_bonus_percent: atk_bonus,",
+        "        base_atk: base_atk,",
+        "        final_multiplier: new_multiplier",
+        "      }",
+        "    });",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "ATK increases by 5% per Destruction blessing",
+      "Stacks up to 6 times maximum",
+      "Updates on blessing obtain/remove",
+      "Applies to all valid units",
+      "Stacks correctly with other ATK modifiers",
+      "Only counts Destruction path blessings"
+    ],
+    "edge_case": [
+      "Multiple blessing changes in same frame",
+      "Blessing removal order",
+      "Stack count at cap",
+      "Non-Destruction blessing changes",
+      "ATK modifier order of operations",
+      "Unit state during blessing changes"
+    ]
+  }
+} 

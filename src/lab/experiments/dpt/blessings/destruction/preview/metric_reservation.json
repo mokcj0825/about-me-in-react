@@ -1,0 +1,8 @@
+{
+    "id": "metric_reservation",
+    "name": "Metric Reservation",
+    "path": "destruction",
+    "description": "Upon entering battle, characters gain a Shield that can absorb DMG equal to 36% the HP difference between the character's Max HP and current HP, lasting for 2 turn(s).",
+    "rarity": 1,
+    "category": "defense"
+  }

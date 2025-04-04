@@ -1,0 +1,8 @@
+{
+    "id": "hazardous_lucent_residue",
+    "name": "Hazardous Lucent Residue",
+    "path": "destruction",
+    "description": "After a character uses their Ultimate, they gain a Shield that can absorb DMG equal to 25% of the HP difference between their Max HP and current HP, lasting for 2 turn(s).",
+    "rarity": 2,
+    "category": "defense"
+  }

@@ -1,0 +1,8 @@
+{
+    "id": "putrefaction_ulcer",
+    "name": "Putrefaction Ulcer",
+    "path": "propagation",
+    "description": "Changes the number of times Spores can spread after bursting to 2 times. Can also spread to the original bearer of Spores.",
+    "rarity": 2,
+    "category": "offense"
+  }

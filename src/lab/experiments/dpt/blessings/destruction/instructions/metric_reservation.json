@@ -1,0 +1,124 @@
+{
+  "id": "metric_reservation",
+  "name": "Metric Reservation",
+  "path": "destruction",
+  "description": "Upon entering battle, characters gain a Shield that can absorb DMG equal to 36% the HP difference between the character's Max HP and current HP, lasting for 2 turn(s).",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "shield_config": {
+        "shield_id": "metric_reservation_shield",
+        "hp_diff_multiplier": 0.36,
+        "duration": 2,
+        "apply_timing": "battle_start"
+      },
+      "event_type": [
+        "battle_started",
+        "shield_applied",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "ShieldManager": {
+          "method": [
+            "apply_shield(unit: Unit, shield: Shield): void",
+            "remove_shield(unit: Unit, shield_id: string): void",
+            "has_shield(unit: Unit, shield_id: string): boolean"
+          ]
+        },
+        "HPManager": {
+          "method": [
+            "get_current_hp(unit: Unit): number",
+            "get_max_hp(unit: Unit): number",
+            "get_hp_difference(unit: Unit): number"
+          ]
+        },
+        "BattleManager": {
+          "method": [
+            "get_all_units(): Unit[]",
+            "is_battle_active(): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "battle_started",
+        "check": [
+          "Is battle active?",
+          "Are there valid units?"
+        ],
+        "action": [
+          "Get all battle units",
+          "Calculate shield value for each unit",
+          "Apply shields",
+          "Emit shield_applied event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "battle_start_handler": [
+        "function handle_battle_start() {",
+        "  if (!battle_manager.is_battle_active()) return;",
+        "  ",
+        "  const units = battle_manager.get_all_units();",
+        "  units.forEach(unit => {",
+        "    const hp_difference = hp_manager.get_hp_difference(unit);",
+        "    const shield_value = Math.floor(hp_difference * 0.36);",
+        "    ",
+        "    const shield_id = 'metric_reservation_shield';",
+        "    if (shield_manager.has_shield(unit, shield_id)) {",
+        "      shield_manager.remove_shield(unit, shield_id);",
+        "    }",
+        "    ",
+        "    const shield = {",
+        "      id: shield_id,",
+        "      value: shield_value,",
+        "      duration: 2,",
+        "      source: 'metric_reservation'",
+        "    };",
+        "    ",
+        "    shield_manager.apply_shield(unit, shield);",
+        "    ",
+        "    emit_event('shield_applied', {",
+        "      unit: unit,",
+        "      shield_id: shield_id,",
+        "      shield_value: shield_value,",
+        "      duration: 2",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'metric_reservation',",
+        "      trigger: 'battle_started',",
+        "      source: unit,",
+        "      detail: {",
+        "        hp_difference: hp_difference,",
+        "        shield_value: shield_value,",
+        "        duration: 2",
+        "      }",
+        "    });",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Shield applies at battle start",
+      "Shield value is 36% of HP difference",
+      "Shield lasts for 2 turns",
+      "Applies to all valid units in battle",
+      "Shield value updates correctly with HP changes",
+      "Duration tracking works properly"
+    ],
+    "edge_case": [
+      "Unit at full HP (no shield value)",
+      "Unit at 1 HP (maximum shield value)",
+      "Multiple battles in succession",
+      "Shield duration edge cases",
+      "Interaction with other shield effects",
+      "Battle start timing edge cases"
+    ]
+  }
+} 

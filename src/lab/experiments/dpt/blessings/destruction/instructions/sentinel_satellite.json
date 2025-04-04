@@ -1,0 +1,161 @@
+{
+  "id": "sentinel_satellite",
+  "name": "Sentinel Satellite",
+  "path": "destruction",
+  "description": "When the character's HP is lower than 50%, they gain a Shield that can absorb DMG equal to 20% of their Max HP for 2 turn(s). This effect can only be triggered 1 time(s) by each character per battle.",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "shield_config": {
+        "shield_id": "sentinel_satellite_shield",
+        "hp_threshold": 0.50,
+        "max_hp_multiplier": 0.20,
+        "duration": 2,
+        "max_triggers": 1
+      },
+      "trigger_tracking": {
+        "type": "battle_scoped",
+        "key": "sentinel_satellite_used",
+        "reset_on": "battle_end"
+      },
+      "event_type": [
+        "hp_changed",
+        "shield_applied",
+        "blessing_triggered",
+        "battle_ended"
+      ],
+      "required_interface": {
+        "ShieldManager": {
+          "method": [
+            "apply_shield(unit: Unit, shield: Shield): void",
+            "remove_shield(unit: Unit, shield_id: string): void",
+            "has_shield(unit: Unit, shield_id: string): boolean"
+          ]
+        },
+        "HPManager": {
+          "method": [
+            "get_current_hp(unit: Unit): number",
+            "get_max_hp(unit: Unit): number",
+            "get_hp_percentage(unit: Unit): number"
+          ]
+        },
+        "BattleManager": {
+          "method": [
+            "is_battle_active(): boolean",
+            "get_battle_data(): BattleData"
+          ]
+        },
+        "StateManager": {
+          "method": [
+            "get_unit_state(unit: Unit, key: string): any",
+            "set_unit_state(unit: Unit, key: string, value: any): void",
+            "clear_unit_state(unit: Unit, key: string): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "hp_changed",
+        "check": [
+          "Is battle active?",
+          "Is unit alive?",
+          "Has HP dropped below threshold?",
+          "Has shield not been used this battle?"
+        ],
+        "action": [
+          "Calculate shield value",
+          "Apply shield",
+          "Mark shield as used",
+          "Emit shield_applied event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "battle_ended",
+        "check": [
+          "Are there tracked units?"
+        ],
+        "action": [
+          "Clear trigger tracking state"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "hp_change_handler": [
+        "function handle_hp_changed({ unit, old_hp, new_hp }: { unit: Unit, old_hp: number, new_hp: number }) {",
+        "  if (!battle_manager.is_battle_active() || !unit.is_alive()) return;",
+        "  ",
+        "  const hp_percent = hp_manager.get_hp_percentage(unit);",
+        "  const has_triggered = state_manager.get_unit_state(unit, 'sentinel_satellite_used') === true;",
+        "  ",
+        "  if (hp_percent < 50 && !has_triggered) {",
+        "    const max_hp = hp_manager.get_max_hp(unit);",
+        "    const shield_value = Math.floor(max_hp * 0.20);",
+        "    ",
+        "    const shield_id = 'sentinel_satellite_shield';",
+        "    if (shield_manager.has_shield(unit, shield_id)) {",
+        "      shield_manager.remove_shield(unit, shield_id);",
+        "    }",
+        "    ",
+        "    const shield = {",
+        "      id: shield_id,",
+        "      value: shield_value,",
+        "      duration: 2,",
+        "      source: 'sentinel_satellite'",
+        "    };",
+        "    ",
+        "    shield_manager.apply_shield(unit, shield);",
+        "    state_manager.set_unit_state(unit, 'sentinel_satellite_used', true);",
+        "    ",
+        "    emit_event('shield_applied', {",
+        "      unit: unit,",
+        "      shield_id: shield_id,",
+        "      shield_value: shield_value,",
+        "      duration: 2",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'sentinel_satellite',",
+        "      trigger: 'hp_changed',",
+        "      source: unit,",
+        "      detail: {",
+        "        current_hp_percent: hp_percent,",
+        "        max_hp: max_hp,",
+        "        shield_value: shield_value,",
+        "        duration: 2",
+        "        first_trigger: true",
+        "      }",
+        "    });",
+        "  }",
+        "}",
+        "",
+        "function handle_battle_end() {",
+        "  const battle_data = battle_manager.get_battle_data();",
+        "  battle_data.units.forEach(unit => {",
+        "    state_manager.clear_unit_state(unit, 'sentinel_satellite_used');",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Shield triggers when HP drops below 50%",
+      "Shield value is 20% of max HP",
+      "Shield lasts for 2 turns",
+      "Only triggers once per battle per unit",
+      "Shield value calculated correctly",
+      "Trigger state resets between battles"
+    ],
+    "edge_case": [
+      "Multiple HP drops below 50%",
+      "HP recovery above 50% then drop again",
+      "Battle end with active shield",
+      "Multiple units triggering simultaneously",
+      "Shield duration edge cases",
+      "Battle state reset timing"
+    ]
+  }
+} 

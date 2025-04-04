@@ -1,0 +1,8 @@
+{
+    "id": "sentinel_satellite",
+    "name": "Sentinel Satellite",
+    "path": "destruction",
+    "description": "When the character's HP is lower than 50%, they gain a Shield that can absorb DMG equal to 20% of their Max HP for 2 turn(s). This effect can only be triggered 1 time(s) by each character per battle.",
+    "rarity": 1,
+    "category": "defense"
+  }

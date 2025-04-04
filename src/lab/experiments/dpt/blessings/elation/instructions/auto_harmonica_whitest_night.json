@@ -1,0 +1,148 @@
+{
+  "id": "auto_harmonica_whitest_night",
+  "name": "Auto-Harmonica: Whitest Night",
+  "path": "elation",
+  "description": "After a character launches a follow-up attack, they deal Aftertaste DMG equal to 55% of their ATK for 1 to 3 time(s).",
+  "rarity": 3,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "aftertaste_damage": {
+        "id": "auto_harmonica_aftertaste",
+        "type": "aftertaste_damage",
+        "base_stat": "ATK",
+        "value": 55,
+        "modifier_type": "percentage",
+        "condition": "after_follow_up",
+        "apply_timing": "post_attack",
+        "random_applications": {
+          "min": 1,
+          "max": 3
+        }
+      },
+      "event_type": [
+        "follow_up_attack_end",
+        "aftertaste_applied",
+        "random_roll_performed",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "AftertasteManager": {
+          "method": [
+            "apply_aftertaste(source: Unit, target: Unit, damage: number): void",
+            "get_aftertaste_type(): string",
+            "calculate_aftertaste_damage(source: Unit, base_stat: string, percentage: number): number"
+          ]
+        },
+        "RandomManager": {
+          "method": [
+            "roll_between(min: number, max: number): number",
+            "get_last_roll(): number"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_end(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean",
+            "get_last_hit_target(unit: Unit): Unit"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean",
+            "is_enemy(unit: Unit): boolean",
+            "get_stat(unit: Unit, stat: string): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_end",
+        "check": [
+          "Is attacker alive?",
+          "Is target alive?",
+          "Is target an enemy?",
+          "Was this a follow-up attack?"
+        ],
+        "action": [
+          "Roll for number of applications",
+          "Calculate Aftertaste damage",
+          "Apply Aftertaste damage multiple times",
+          "Emit aftertaste_applied events",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_end_handler": [
+        "function handle_follow_up_attack_end({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive() || !target.is_alive()) return;",
+        "  if (!unit_manager.is_enemy(target)) return;",
+        "  ",
+        "  const applications = random_manager.roll_between(1, 3);",
+        "  const roll_value = random_manager.get_last_roll();",
+        "  ",
+        "  emit_event('random_roll_performed', {",
+        "    blessing: 'auto_harmonica_whitest_night',",
+        "    roll_type: 'application_count',",
+        "    min: 1,",
+        "    max: 3,",
+        "    roll: roll_value,",
+        "    result: applications",
+        "  });",
+        "  ",
+        "  const base_atk = unit_manager.get_stat(unit, 'ATK');",
+        "  const aftertaste_damage = aftertaste_manager.calculate_aftertaste_damage(unit, 'ATK', 55);",
+        "  ",
+        "  for (let i = 0; i < applications; i++) {",
+        "    if (!target.is_alive()) break;",
+        "    ",
+        "    aftertaste_manager.apply_aftertaste(unit, target, aftertaste_damage);",
+        "    ",
+        "    emit_event('aftertaste_applied', {",
+        "      source: unit,",
+        "      target: target,",
+        "      damage: aftertaste_damage,",
+        "      type: aftertaste_manager.get_aftertaste_type(),",
+        "      application_index: i,",
+        "      total_applications: applications",
+        "    });",
+        "  }",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'auto_harmonica_whitest_night',",
+        "    trigger: 'follow_up_attack_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      target_unit: target.id,",
+        "      base_atk: base_atk,",
+        "      aftertaste_damage: aftertaste_damage,",
+        "      rolled_applications: applications,",
+        "      completed_applications: target.is_alive() ? applications : i",
+        "      roll_value: roll_value",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Aftertaste damage is 55% of ATK",
+      "Random applications between 1 and 3",
+      "Applies after follow-up attack ends",
+      "Only affects enemy targets",
+      "Properly calculates ATK-based damage",
+      "Correctly tracks application count"
+    ],
+    "edge_case": [
+      "Target dies during applications",
+      "Multiple follow-up attacks in succession",
+      "Target becomes invulnerable mid-applications",
+      "ATK changes during applications",
+      "Random number generator edge cases",
+      "Interaction with other Aftertaste effects"
+    ]
+  }
+} 

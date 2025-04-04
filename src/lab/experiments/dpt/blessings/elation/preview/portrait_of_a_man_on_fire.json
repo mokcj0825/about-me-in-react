@@ -1,0 +1,8 @@
+{
+    "id": "portrait_of_a_man_on_fire",
+    "name": "Portrait of A Man On Fire",
+    "path": "elation",
+    "description": "When causing Aftertaste DMG to an enemy, characters deal additional Aftertaste DMG of different Types for 1 time(s), at DMG values equal to 60% of the original DMG.",
+    "rarity": 2,
+    "category": "offense"
+  }

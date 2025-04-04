@@ -1,0 +1,131 @@
+{
+  "id": "12_monkeys_and_angry_men",
+  "name": "12 Monkeys and Angry Men",
+  "path": "elation",
+  "description": "When a character deals DMG to an enemy with a follow-up attack, DMG for this follow-up attack increases by 4%.",
+  "rarity": 2,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "damage_modifier": {
+        "id": "12_monkeys_damage_increase",
+        "type": "damage_modifier",
+        "value": 4,
+        "modifier_type": "percentage",
+        "damage_type": "all",
+        "condition": "on_follow_up_hit",
+        "apply_timing": "pre_damage",
+        "target_type": "enemy"
+      },
+      "event_type": [
+        "follow_up_attack_start",
+        "follow_up_attack_hit",
+        "damage_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "DamageModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: DamageModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_damage_multiplier(unit: Unit): number",
+            "has_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_start(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "on_follow_up_attack_hit(callback: (data: { unit: Unit, target: Unit, hit_index: number }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean",
+            "get_hit_count(attack_id: string): number"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_enemy(unit: Unit): boolean",
+            "is_alive(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_hit",
+        "check": [
+          "Is attacker alive?",
+          "Is target alive?",
+          "Is target an enemy?",
+          "Was this a follow-up attack?",
+          "Has damage modifier not been applied yet?"
+        ],
+        "action": [
+          "Apply damage increase",
+          "Emit damage_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_hit_handler": [
+        "function handle_follow_up_attack_hit({ unit, target, hit_index }: { unit: Unit, target: Unit, hit_index: number }) {",
+        "  if (!unit.is_alive() || !target.is_alive()) return;",
+        "  if (!unit_manager.is_enemy(target)) return;",
+        "  ",
+        "  const modifier_id = '12_monkeys_damage_increase';",
+        "  if (damage_modifier_manager.has_modifier(unit, modifier_id)) return;",
+        "  ",
+        "  const base_multiplier = damage_modifier_manager.get_damage_multiplier(unit);",
+        "  ",
+        "  damage_modifier_manager.add_modifier(unit, {",
+        "    id: modifier_id,",
+        "    type: 'damage_modifier',",
+        "    damage_type: 'all',",
+        "    value: 4,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  const new_multiplier = damage_modifier_manager.get_damage_multiplier(unit);",
+        "  ",
+        "  emit_event('damage_modified', {",
+        "    unit: unit,",
+        "    modifier_id: modifier_id,",
+        "    value: 4,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up',",
+        "    hit_index: hit_index",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: '12_monkeys_and_angry_men',",
+        "    trigger: 'follow_up_attack_hit',",
+        "    source: unit,",
+        "    detail: {",
+        "      target_unit: target.id,",
+        "      hit_index: hit_index,",
+        "      base_multiplier: base_multiplier,",
+        "      damage_increase: 4,",
+        "      final_multiplier: new_multiplier",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Damage increase applies only on follow-up attacks",
+      "Increase value is exactly 4%",
+      "Only triggers on enemy targets",
+      "Applies to each follow-up attack independently",
+      "Properly stacks with other damage modifiers"
+    ],
+    "edge_case": [
+      "Target dies during follow-up attack",
+      "Multiple follow-up attacks in succession",
+      "Follow-up attack is interrupted",
+      "Target becomes invulnerable mid-attack",
+      "Damage modifier already exists",
+      "Multiple hits in the same follow-up attack"
+    ]
+  }
+} 

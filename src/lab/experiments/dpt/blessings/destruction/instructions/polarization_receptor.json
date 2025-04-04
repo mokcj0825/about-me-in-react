@@ -1,0 +1,137 @@
+{
+  "id": "polarization_receptor",
+  "name": "Polarization Receptor",
+  "path": "destruction",
+  "description": "For every 1% of HP lost by a character, their DEF increases by 0.40%.",
+  "rarity": 1,
+  "category": "defense",
+  "implementation": {
+    "data_structure": {
+      "def_modifier": {
+        "id": "polarization_receptor_def",
+        "type": "stat_modifier",
+        "stat": "def",
+        "value_per_percent": 0.40,
+        "modifier_type": "percentage",
+        "scaling_source": "hp_loss_percent",
+        "condition": "on_hp_change",
+        "apply_timing": "immediate"
+      },
+      "event_type": [
+        "hp_changed",
+        "stat_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_stat_multiplier(unit: Unit, stat: string): number",
+            "has_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "HPManager": {
+          "method": [
+            "get_current_hp(unit: Unit): number",
+            "get_max_hp(unit: Unit): number",
+            "get_hp_percentage(unit: Unit): number",
+            "on_hp_changed(callback: (data: { unit: Unit, old_hp: number, new_hp: number }) => void): void"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean",
+            "get_stat(unit: Unit, stat: string): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "hp_changed",
+        "check": [
+          "Is unit alive?",
+          "Has HP percentage changed?"
+        ],
+        "action": [
+          "Calculate HP loss percentage",
+          "Calculate new DEF bonus",
+          "Update DEF modifier",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "hp_change_handler": [
+        "function handle_hp_changed({ unit, old_hp, new_hp }: { unit: Unit, old_hp: number, new_hp: number }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const hp_percent = hp_manager.get_hp_percentage(unit);",
+        "  const hp_loss_percent = 100 - hp_percent;",
+        "  const def_bonus = hp_loss_percent * 0.40;",
+        "  ",
+        "  const modifier_id = 'polarization_receptor_def';",
+        "  if (stat_modifier_manager.has_modifier(unit, modifier_id)) {",
+        "    stat_modifier_manager.remove_modifier(unit, modifier_id);",
+        "  }",
+        "  ",
+        "  const base_def = unit_manager.get_stat(unit, 'def');",
+        "  ",
+        "  stat_modifier_manager.add_modifier(unit, {",
+        "    id: modifier_id,",
+        "    type: 'stat_modifier',",
+        "    stat: 'def',",
+        "    value: def_bonus,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  const new_multiplier = stat_modifier_manager.get_stat_multiplier(unit, 'def');",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: unit,",
+        "    stat: 'def',",
+        "    modifier_id: modifier_id,",
+        "    base_value: base_def,",
+        "    bonus_value: def_bonus,",
+        "    final_multiplier: new_multiplier",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'polarization_receptor',",
+        "    trigger: 'hp_changed',",
+        "    source: unit,",
+        "    detail: {",
+        "      old_hp: old_hp,",
+        "      new_hp: new_hp,",
+        "      current_hp_percent: hp_percent,",
+        "      hp_loss_percent: hp_loss_percent,",
+        "      def_bonus: def_bonus,",
+        "      base_def: base_def,",
+        "      final_multiplier: new_multiplier",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "DEF scales with HP loss percentage",
+      "Each 1% HP loss grants 0.40% DEF",
+      "Updates immediately on HP changes",
+      "Works with both healing and damage",
+      "Properly calculates percentage values",
+      "Correctly stacks with other DEF modifiers"
+    ],
+    "edge_case": [
+      "Unit at full HP",
+      "Unit at 1 HP",
+      "HP changes in rapid succession",
+      "Percentage rounding errors",
+      "Interaction with other HP-based effects",
+      "DEF modifiers from multiple sources"
+    ]
+  }
+} 

@@ -1,0 +1,8 @@
+{
+    "id": "just_keep_on_crying",
+    "name": "Just Keep on Crying!",
+    "path": "elation",
+    "description": "For every 1 Type of Aftertaste DMG the enemy received, increases the DMG taken by them by 8% until the end of their next action.",
+    "rarity": 2,
+    "category": "hinder"
+  }

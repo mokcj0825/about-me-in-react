@@ -1,0 +1,8 @@
+{
+    "id": "primordial_black_hole",
+    "name": "Primordial Black Hole",
+    "path": "destruction",
+    "description": "Characters gain a 5% ATK increase for each Destruction Blessing. This effect can stack up to a max of 6 time(s).",
+    "rarity": 1,
+    "category": "offense"
+  }

@@ -1,0 +1,195 @@
+{
+  "id": "the_hourglass_kindergarten",
+  "name": "The Hourglass Kindergarten",
+  "path": "elation",
+  "description": "For every 1 Type of Aftertaste DMG the enemy received, reduces their ATK by 4% until the end of their next action.",
+  "rarity": 2,
+  "category": "hinder",
+  "implementation": {
+    "data_structure": {
+      "stat_modifier": {
+        "id": "hourglass_kindergarten_debuff",
+        "type": "stat_modifier",
+        "stat": "ATK",
+        "value_per_stack": -4,
+        "modifier_type": "percentage",
+        "duration_type": "next_action",
+        "stack_type": "aftertaste_types",
+        "condition": "on_aftertaste_applied",
+        "apply_timing": "post_damage"
+      },
+      "event_type": [
+        "aftertaste_applied",
+        "aftertaste_types_changed",
+        "stat_modified",
+        "action_started",
+        "action_ended",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_stat_multiplier(unit: Unit, stat: string): number",
+            "has_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "AftertasteManager": {
+          "method": [
+            "get_aftertaste_types(unit: Unit): string[]",
+            "on_aftertaste_applied(callback: (data: { target: Unit, type: string }) => void): void",
+            "on_aftertaste_removed(callback: (data: { target: Unit, type: string }) => void): void"
+          ]
+        },
+        "ActionManager": {
+          "method": [
+            "on_action_start(callback: (data: { unit: Unit }) => void): void",
+            "on_action_end(callback: (data: { unit: Unit }) => void): void",
+            "is_action_in_progress(unit: Unit): boolean"
+          ]
+        },
+        "UnitManager": {
+          "method": [
+            "is_alive(unit: Unit): boolean",
+            "get_stat(unit: Unit, stat: string): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "aftertaste_applied",
+        "check": [
+          "Is target alive?",
+          "Is this a new aftertaste type?",
+          "Does target have the ATK debuff?"
+        ],
+        "action": [
+          "Get current aftertaste types",
+          "Calculate new ATK reduction",
+          "Apply or update ATK debuff",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "action_end",
+        "check": [
+          "Is unit alive?",
+          "Does unit have the ATK debuff?"
+        ],
+        "action": [
+          "Remove ATK debuff",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "aftertaste_handler": [
+        "function handle_aftertaste_applied({ target, type }: { target: Unit, type: string }) {",
+        "  if (!target.is_alive()) return;",
+        "  ",
+        "  const aftertaste_types = aftertaste_manager.get_aftertaste_types(target);",
+        "  const modifier_id = 'hourglass_kindergarten_debuff';",
+        "  const base_atk = unit_manager.get_stat(target, 'ATK');",
+        "  ",
+        "  const atk_reduction = aftertaste_types.length * -4;",
+        "  ",
+        "  if (stat_modifier_manager.has_modifier(target, modifier_id)) {",
+        "    stat_modifier_manager.remove_modifier(target, modifier_id);",
+        "  }",
+        "  ",
+        "  stat_modifier_manager.add_modifier(target, {",
+        "    id: modifier_id,",
+        "    type: 'stat_modifier',",
+        "    stat: 'ATK',",
+        "    value: atk_reduction,",
+        "    modifier_type: 'percentage',",
+        "    duration: 'next_action'",
+        "  });",
+        "  ",
+        "  const new_multiplier = stat_modifier_manager.get_stat_multiplier(target, 'ATK');",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: target,",
+        "    stat: 'ATK',",
+        "    modifier_id: modifier_id,",
+        "    base_value: base_atk,",
+        "    reduction_value: atk_reduction,",
+        "    final_multiplier: new_multiplier",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'the_hourglass_kindergarten',",
+        "    trigger: 'aftertaste_applied',",
+        "    source: target,",
+        "    detail: {",
+        "      aftertaste_types: aftertaste_types,",
+        "      type_count: aftertaste_types.length,",
+        "      reduction_per_type: -4,",
+        "      total_reduction: atk_reduction,",
+        "      base_atk: base_atk,",
+        "      final_multiplier: new_multiplier",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "action_end_handler": [
+        "function handle_action_end({ unit }: { unit: Unit }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const modifier_id = 'hourglass_kindergarten_debuff';",
+        "  if (!stat_modifier_manager.has_modifier(unit, modifier_id)) return;",
+        "  ",
+        "  const base_atk = unit_manager.get_stat(unit, 'ATK');",
+        "  const current_multiplier = stat_modifier_manager.get_stat_multiplier(unit, 'ATK');",
+        "  ",
+        "  stat_modifier_manager.remove_modifier(unit, modifier_id);",
+        "  ",
+        "  const new_multiplier = stat_modifier_manager.get_stat_multiplier(unit, 'ATK');",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: unit,",
+        "    stat: 'ATK',",
+        "    modifier_id: modifier_id,",
+        "    base_value: base_atk,",
+        "    previous_multiplier: current_multiplier,",
+        "    final_multiplier: new_multiplier,",
+        "    is_removal: true",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'the_hourglass_kindergarten',",
+        "    trigger: 'action_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      base_atk: base_atk,",
+        "      previous_multiplier: current_multiplier,",
+        "      final_multiplier: new_multiplier,",
+        "      debuff_removed: true",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "ATK reduction scales with number of Aftertaste types",
+      "Each type reduces ATK by exactly 4%",
+      "Debuff persists until target's next action",
+      "Debuff updates when new Aftertaste types are applied",
+      "Properly removes debuff after action completion"
+    ],
+    "edge_case": [
+      "Multiple Aftertaste types applied simultaneously",
+      "Aftertaste type removed before action",
+      "Action interrupted or cancelled",
+      "Unit dies with active debuff",
+      "New Aftertaste type during existing debuff",
+      "Multiple actions queued in succession"
+    ]
+  }
+} 

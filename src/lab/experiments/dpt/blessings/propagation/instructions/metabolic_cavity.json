@@ -1,0 +1,127 @@
+{
+  "id": "metabolic_cavity",
+  "name": "Metabolic Cavity",
+  "path": "propagation",
+  "description": "For each Spore that bursts, heals the character with the lowest HP by 10% of their Max HP.",
+  "rarity": 2,
+  "category": "recovery",
+  "implementation": {
+    "data_structure": {
+      "heal_effect": {
+        "id": "metabolic_cavity_heal",
+        "type": "heal_modifier",
+        "value": 10,
+        "value_type": "percentage",
+        "heal_type": "max_hp_based",
+        "condition": "spore_burst",
+        "target_type": "lowest_hp",
+        "trigger": "spore_burst"
+      },
+      "event_type": [
+        "spore_burst",
+        "heal_applied",
+        "target_selected",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "HealingManager": {
+          "method": [
+            "heal_unit(unit: Unit, amount: number, source: string): void",
+            "calculate_heal_amount(base_amount: number, target: Unit): number"
+          ]
+        },
+        "ResourceManager": {
+          "method": [
+            "get_current_hp(unit: Unit): number",
+            "get_max_hp(unit: Unit): number"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "get_all_allies(): Unit[]",
+            "get_lowest_hp_ally(): Unit"
+          ]
+        },
+        "SporeManager": {
+          "method": [
+            "on_spore_burst(callback: (data: { spore_id: string }) => void): void"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "spore_burst",
+        "check": [
+          "Are there any valid allies?",
+          "Is there an ally with less than max HP?"
+        ],
+        "action": [
+          "Get ally with lowest HP",
+          "Calculate 10% of target's Max HP",
+          "Apply healing",
+          "Emit heal_applied event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "spore_burst_handling": [
+        "function handle_spore_burst({ spore_id }: { spore_id: string }) {",
+        "  const lowest_hp_ally = team_manager.get_lowest_hp_ally();",
+        "  if (!lowest_hp_ally) return;",
+        "  ",
+        "  const max_hp = resource_manager.get_max_hp(lowest_hp_ally);",
+        "  const current_hp = resource_manager.get_current_hp(lowest_hp_ally);",
+        "  ",
+        "  if (current_hp >= max_hp) return;",
+        "  ",
+        "  const heal_amount = Math.floor(max_hp * 0.1);",
+        "  const actual_heal = healing_manager.calculate_heal_amount(heal_amount, lowest_hp_ally);",
+        "  ",
+        "  emit_event('target_selected', {",
+        "    target: lowest_hp_ally,",
+        "    source: 'metabolic_cavity',",
+        "    reason: 'lowest_hp'",
+        "  });",
+        "  ",
+        "  healing_manager.heal_unit(lowest_hp_ally, actual_heal, 'metabolic_cavity');",
+        "  ",
+        "  emit_event('heal_applied', {",
+        "    target: lowest_hp_ally,",
+        "    amount: actual_heal,",
+        "    source: 'metabolic_cavity',",
+        "    trigger: 'spore_burst'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'metabolic_cavity',",
+        "    trigger: 'spore_burst',",
+        "    target: lowest_hp_ally,",
+        "    detail: {",
+        "      spore_id: spore_id,",
+        "      heal_amount: actual_heal,",
+        "      max_hp_percentage: 10",
+        "      target_max_hp: max_hp",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Heals exactly 10% of target's Max HP per Spore burst",
+      "Always selects the ally with lowest HP percentage",
+      "Healing is applied immediately after Spore burst",
+      "Does not overheal beyond maximum HP"
+    ],
+    "edge_case": [
+      "Multiple Spores burst simultaneously",
+      "All allies at full HP when Spore bursts",
+      "Multiple allies tied for lowest HP",
+      "Target dies before healing applies",
+      "Healing modified by other effects"
+    ]
+  }
+} 

@@ -1,0 +1,8 @@
+{
+    "id": "the_painted_albatross",
+    "name": "The Painted Albatross",
+    "path": "elation",
+    "description": "For each enemy hit by a character's follow-up attack, the character deals Additional DMG equal to 24% of their ATK to all enemies hit.",
+    "rarity": 2,
+    "category": "offense"
+  }

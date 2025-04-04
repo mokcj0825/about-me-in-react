@@ -1,0 +1,8 @@
+{
+    "id": "slaughterhouse_no_4_rest_in_peace",
+    "name": "Slaughterhouse No. 4: Rest in Peace",
+    "path": "elation",
+    "description": "When characters launch follow-up attacks to an enemy, deals Aftertaste DMG equal to 80% of their ATK to the enemy being hit. If the enemy also has their Weakness Broken, then deals DMG for 1 extra time(s).",
+    "rarity": 3,
+    "category": "offense"
+  }

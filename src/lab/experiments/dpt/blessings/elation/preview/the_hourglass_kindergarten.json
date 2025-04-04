@@ -1,0 +1,8 @@
+{
+    "id": "the_hourglass_kindergarten",
+    "name": "The Hourglass Kindergarten",
+    "path": "elation",
+    "description": "For every 1 Type of Aftertaste DMG the enemy received, reduces their ATK by 4% until the end of their next action.",
+    "rarity": 2,
+    "category": "hinder"
+  }

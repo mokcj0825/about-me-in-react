@@ -1,0 +1,140 @@
+{
+  "id": "back_to_the_lighthouse",
+  "name": "Back to the Lighthouse",
+  "path": "elation",
+  "description": "When a character deals DMG to an enemy with a follow-up attack, increases their Energy Regeneration Rate by 24%.",
+  "rarity": 1,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "energy_regen_buff": {
+        "id": "lighthouse_energy_regen",
+        "type": "stat_modifier",
+        "stat": "energy_regen_rate",
+        "value": 24,
+        "modifier_type": "percentage",
+        "trigger": "follow_up_damage"
+      },
+      "event_type": [
+        "follow_up_attack",
+        "damage_dealt",
+        "stat_modified",
+        "buff_applied",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "has_modifier(unit: Unit, modifier_id: string): boolean"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "on_damage_dealt(callback: (data: { source: Unit, target: Unit, amount: number }) => void): void"
+          ]
+        },
+        "EnergyManager": {
+          "method": [
+            "get_energy_regen_rate(unit: Unit): number",
+            "modify_energy_regen(unit: Unit, modifier: StatModifier): void"
+          ]
+        },
+        "TeamManager": {
+          "method": [
+            "is_enemy(unit: Unit): boolean"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack",
+        "check": [
+          "Is unit alive?",
+          "Is target an enemy?",
+          "Does unit not already have the energy regen buff?"
+        ],
+        "action": [
+          "Wait for damage confirmation",
+          "Apply energy regen buff if damage was dealt",
+          "Emit buff_applied event",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_handler": [
+        "function handle_follow_up_attack({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive() || !team_manager.is_enemy(target)) return;",
+        "  ",
+        "  const current_attack_id = generate_unique_id();",
+        "  ",
+        "  combat_manager.on_damage_dealt(({ source, target: damaged_target, amount }) => {",
+        "    if (source !== unit || damaged_target !== target || amount <= 0) return;",
+        "    if (stat_modifier_manager.has_modifier(unit, 'lighthouse_energy_regen')) return;",
+        "    ",
+        "    stat_modifier_manager.add_modifier(unit, {",
+        "      id: 'lighthouse_energy_regen',",
+        "      type: 'stat_modifier',",
+        "      stat: 'energy_regen_rate',",
+        "      value: 24,",
+        "      modifier_type: 'percentage'",
+        "    });",
+        "    ",
+        "    energy_manager.modify_energy_regen(unit, {",
+        "      id: 'lighthouse_energy_regen',",
+        "      value: 24,",
+        "      modifier_type: 'percentage'",
+        "    });",
+        "    ",
+        "    emit_event('buff_applied', {",
+        "      unit: unit,",
+        "      buff_id: 'lighthouse_energy_regen',",
+        "      value: 24",
+        "    });",
+        "    ",
+        "    emit_event('stat_modified', {",
+        "      unit: unit,",
+        "      stat: 'energy_regen_rate',",
+        "      value: 24,",
+        "      modifier_type: 'percentage'",
+        "    });",
+        "    ",
+        "    emit_event('blessing_triggered', {",
+        "      blessing: 'back_to_the_lighthouse',",
+        "      trigger: 'follow_up_damage',",
+        "      source: unit,",
+        "      detail: {",
+        "        damage_dealt: amount,",
+        "        energy_regen_increase: 24,",
+        "        target_unit: target.id,",
+        "        base_regen_rate: energy_manager.get_energy_regen_rate(unit)",
+        "      }",
+        "    });",
+        "  }, { once: true, attack_id: current_attack_id });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Energy Regen Rate buff is applied after follow-up damage",
+      "Buff provides exactly 24% Energy Regen Rate increase",
+      "Buff is applied only when damage is dealt",
+      "Buff is applied only once per unit",
+      "Buff persists indefinitely"
+    ],
+    "edge_case": [
+      "Follow-up attack deals no damage",
+      "Multiple follow-up attacks in succession",
+      "Unit dies after dealing follow-up damage",
+      "Target dies before damage registration",
+      "Follow-up attack is dodged or blocked",
+      "Unit already has maximum Energy Regen Rate"
+    ]
+  }
+} 

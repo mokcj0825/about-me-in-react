@@ -1,0 +1,158 @@
+{
+  "id": "mostly_harmful",
+  "name": "Mostly Harmful",
+  "path": "elation",
+  "description": "Increases the Weakness Break efficiency of follow-up attacks by 35%.",
+  "rarity": 1,
+  "category": "boost",
+  "implementation": {
+    "data_structure": {
+      "weakness_break_modifier": {
+        "id": "mostly_harmful_break",
+        "type": "effect_modifier",
+        "effect": "weakness_break",
+        "value": 35,
+        "modifier_type": "percentage",
+        "condition": "follow_up_attack",
+        "apply_timing": "pre_break"
+      },
+      "event_type": [
+        "follow_up_attack_start",
+        "follow_up_attack_end",
+        "break_efficiency_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "WeaknessBreakManager": {
+          "method": [
+            "add_break_modifier(unit: Unit, modifier: EffectModifier): void",
+            "remove_break_modifier(unit: Unit, modifier_id: string): void",
+            "get_break_efficiency(unit: Unit): number"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_start(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "on_follow_up_attack_end(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean"
+          ]
+        },
+        "WeaknessManager": {
+          "method": [
+            "has_weakness(unit: Unit): boolean",
+            "get_weakness_types(unit: Unit): string[]"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_start",
+        "check": [
+          "Is unit alive?",
+          "Is this a follow-up attack?",
+          "Does target have weaknesses?"
+        ],
+        "action": [
+          "Apply break efficiency increase",
+          "Emit break_efficiency_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "follow_up_attack_end",
+        "check": [
+          "Was break efficiency modified?"
+        ],
+        "action": [
+          "Remove break efficiency increase",
+          "Emit break_efficiency_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_start_handler": [
+        "function handle_follow_up_attack_start({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive() || !weakness_manager.has_weakness(target)) return;",
+        "  ",
+        "  const base_efficiency = weakness_break_manager.get_break_efficiency(unit);",
+        "  ",
+        "  weakness_break_manager.add_break_modifier(unit, {",
+        "    id: 'mostly_harmful_break',",
+        "    type: 'effect_modifier',",
+        "    effect: 'weakness_break',",
+        "    value: 35,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  emit_event('break_efficiency_modified', {",
+        "    unit: unit,",
+        "    modifier_id: 'mostly_harmful_break',",
+        "    value: 35,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'mostly_harmful',",
+        "    trigger: 'follow_up_attack_start',",
+        "    source: unit,",
+        "    detail: {",
+        "      base_efficiency: base_efficiency,",
+        "      increase: 35,",
+        "      final_efficiency: weakness_break_manager.get_break_efficiency(unit),",
+        "      target_unit: target.id,",
+        "      target_weaknesses: weakness_manager.get_weakness_types(target)",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "follow_up_end_handler": [
+        "function handle_follow_up_attack_end({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!weakness_break_manager.has_break_modifier(unit, 'mostly_harmful_break')) return;",
+        "  ",
+        "  const final_efficiency = weakness_break_manager.get_break_efficiency(unit);",
+        "  ",
+        "  weakness_break_manager.remove_break_modifier(unit, 'mostly_harmful_break');",
+        "  ",
+        "  emit_event('break_efficiency_modified', {",
+        "    unit: unit,",
+        "    modifier_id: 'mostly_harmful_break',",
+        "    value: -35,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'mostly_harmful',",
+        "    trigger: 'follow_up_attack_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      removed_increase: 35,",
+        "      final_efficiency: weakness_break_manager.get_break_efficiency(unit),",
+        "      previous_efficiency: final_efficiency",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "Break efficiency is increased only during follow-up attacks",
+      "Increase is exactly 35%",
+      "Buff is applied before break calculations",
+      "Buff is removed after follow-up attack ends",
+      "Only applies when target has weaknesses"
+    ],
+    "edge_case": [
+      "Unit dies during follow-up attack",
+      "Follow-up attack is interrupted",
+      "Multiple follow-up attacks in succession",
+      "Target has no weaknesses",
+      "Other break efficiency modifiers are active",
+      "Target weakness changes during attack"
+    ]
+  }
+} 

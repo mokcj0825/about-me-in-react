@@ -1,0 +1,159 @@
+{
+  "id": "pale_fire",
+  "name": "Pale Fire",
+  "path": "elation",
+  "description": "Increases the CRIT Rate of follow-up attacks by 26%.",
+  "rarity": 1,
+  "category": "offense",
+  "implementation": {
+    "data_structure": {
+      "crit_rate_modifier": {
+        "id": "pale_fire_crit",
+        "type": "stat_modifier",
+        "stat": "crit_rate",
+        "value": 26,
+        "modifier_type": "percentage",
+        "condition": "follow_up_attack",
+        "apply_timing": "pre_attack"
+      },
+      "event_type": [
+        "follow_up_attack_start",
+        "follow_up_attack_end",
+        "stat_modified",
+        "blessing_triggered"
+      ],
+      "required_interface": {
+        "StatModifierManager": {
+          "method": [
+            "add_modifier(unit: Unit, modifier: StatModifier): void",
+            "remove_modifier(unit: Unit, modifier_id: string): void",
+            "get_stat_value(unit: Unit, stat: string): number"
+          ]
+        },
+        "CombatManager": {
+          "method": [
+            "on_follow_up_attack_start(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "on_follow_up_attack_end(callback: (data: { unit: Unit, target: Unit }) => void): void",
+            "is_follow_up_attack(attack_id: string): boolean"
+          ]
+        },
+        "CriticalManager": {
+          "method": [
+            "modify_crit_rate(unit: Unit, amount: number): void",
+            "get_base_crit_rate(unit: Unit): number"
+          ]
+        }
+      }
+    },
+    "event_flow": [
+      {
+        "trigger": "follow_up_attack_start",
+        "check": [
+          "Is unit alive?",
+          "Is this a follow-up attack?"
+        ],
+        "action": [
+          "Apply CRIT Rate increase",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      },
+      {
+        "trigger": "follow_up_attack_end",
+        "check": [
+          "Was CRIT Rate modified?"
+        ],
+        "action": [
+          "Remove CRIT Rate increase",
+          "Emit stat_modified event",
+          "Emit blessing_triggered event"
+        ]
+      }
+    ],
+    "pseudocode": {
+      "follow_up_start_handler": [
+        "function handle_follow_up_attack_start({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!unit.is_alive()) return;",
+        "  ",
+        "  const base_crit_rate = critical_manager.get_base_crit_rate(unit);",
+        "  ",
+        "  stat_modifier_manager.add_modifier(unit, {",
+        "    id: 'pale_fire_crit',",
+        "    type: 'stat_modifier',",
+        "    stat: 'crit_rate',",
+        "    value: 26,",
+        "    modifier_type: 'percentage'",
+        "  });",
+        "  ",
+        "  critical_manager.modify_crit_rate(unit, 26);",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: unit,",
+        "    stat: 'crit_rate',",
+        "    value: 26,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'pale_fire',",
+        "    trigger: 'follow_up_attack_start',",
+        "    source: unit,",
+        "    detail: {",
+        "      base_crit_rate: base_crit_rate,",
+        "      increase: 26,",
+        "      final_crit_rate: stat_modifier_manager.get_stat_value(unit, 'crit_rate')",
+        "      target_unit: target.id",
+        "    }",
+        "  });",
+        "}"
+      ],
+      "follow_up_end_handler": [
+        "function handle_follow_up_attack_end({ unit, target }: { unit: Unit, target: Unit }) {",
+        "  if (!stat_modifier_manager.has_modifier(unit, 'pale_fire_crit')) return;",
+        "  ",
+        "  const final_crit_rate = stat_modifier_manager.get_stat_value(unit, 'crit_rate');",
+        "  ",
+        "  stat_modifier_manager.remove_modifier(unit, 'pale_fire_crit');",
+        "  critical_manager.modify_crit_rate(unit, -26);",
+        "  ",
+        "  emit_event('stat_modified', {",
+        "    unit: unit,",
+        "    stat: 'crit_rate',",
+        "    value: -26,",
+        "    modifier_type: 'percentage',",
+        "    attack_type: 'follow_up'",
+        "  });",
+        "  ",
+        "  emit_event('blessing_triggered', {",
+        "    blessing: 'pale_fire',",
+        "    trigger: 'follow_up_attack_end',",
+        "    source: unit,",
+        "    detail: {",
+        "      removed_increase: 26,",
+        "      final_crit_rate: stat_modifier_manager.get_stat_value(unit, 'crit_rate')",
+        "      previous_crit_rate: final_crit_rate",
+        "    }",
+        "  });",
+        "}"
+      ]
+    }
+  },
+  "validation": {
+    "success_condition": [
+      "CRIT Rate is increased only during follow-up attacks",
+      "Increase is exactly 26%",
+      "Buff is applied before attack calculations",
+      "Buff is removed after follow-up attack ends",
+      "Multiple follow-up attacks each get the increase"
+    ],
+    "edge_case": [
+      "Unit dies during follow-up attack",
+      "Follow-up attack is interrupted",
+      "Multiple follow-up attacks in succession",
+      "Base CRIT Rate is already at maximum",
+      "Other CRIT Rate modifiers are active",
+      "Follow-up attack misses or is dodged"
+    ]
+  }
+} 
