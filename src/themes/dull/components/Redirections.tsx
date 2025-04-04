@@ -95,7 +95,7 @@ const DullRedirection: React.FC<Props> = ({ darkMode }) => {
             <h3 style={styles.linkText}>Contact</h3>
             <div style={styles.contactInfo}>
               <p style={styles.description}>
-                <a href="mailto:mmokcjmok@gmail.com" style={styles.contactLink}>
+                <a href="mailto:mokcjmok@gmail.com" style={styles.contactLink}>
                   Email: mokcjmok@gmail.com
                 </a>
               </p>
