@@ -322,6 +322,15 @@
           ]
         }
       ]
+    },
+    {
+      "version": "Core 0.2",
+      "date": "2025-04-09",
+      "entries": [
+        "1. Extract map dynamic loading",
+        "- Map Editor/Creator",
+        "- Map selection"
+      ]
     }
   ]
 }

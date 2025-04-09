@@ -1,0 +1,1 @@
+export type HighlightType = 'moveable' | 'zoc' | 'selection' | 'effect'

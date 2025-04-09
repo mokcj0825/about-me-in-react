@@ -9,6 +9,13 @@ import GameTheaterv1_3 from "./experiments/gamev1_3/GameTheaterv1_3";
 import GameTheaterv1_4 from "./experiments/gamev1_4/GameTheaterv1_4";
 import DptTheater from "./experiments/dpt/DptTheater";
 import EditorTheater from "./experiments/dptEditor/EditorTheater";
+import Core from "./gameCore/Core";
+import { useParams } from "react-router-dom";
+
+const CoreWrapper = () => {
+  const { stageId = "0001" } = useParams(); // Default to "0001" if no stageId provided
+  return <Core stageId={stageId} />;
+};
 
 const LabRoutes = () => {
   return (
@@ -22,6 +29,7 @@ const LabRoutes = () => {
       <Route path="/game-theater-v1_4" element={<GameTheaterv1_4 />} />
       <Route path="/dpt" element={<DptTheater />} />
       <Route path="/dpt-editor" element={<EditorTheater />} />
+      <Route path="/core/:stageId?" element={<CoreWrapper />} />
     </Routes>
   );
 };
