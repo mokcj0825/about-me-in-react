@@ -54,8 +54,15 @@
           "id": "gamedev-5",
           "name": "Game V1.4 - Implement weapon system",
           "description": "Add weapon mechanism.",
-          "status": "in-progress",
+          "status": "completed",
           "url": "/labs/game-theater-v1_4"
+        },
+        {
+          "id": "core-0.2",
+          "name": "Game Core",
+          "description": "Setup core mechanics",
+          "status": "in-progress",
+          "url": "/labs/core/0001"
         }
       ]
     },

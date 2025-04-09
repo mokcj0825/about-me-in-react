@@ -1,0 +1,1 @@
+export type TerrainType = 'plain' | 'mountain' | 'forest' | 'sea' | 'river' | 'cliff' | 'road' | 'wasteland' | 'ruins' | 'swamp';

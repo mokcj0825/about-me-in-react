@@ -1,0 +1,26 @@
+{
+    "width": 20,
+    "height": 20,
+    "terrain": [
+      ["mountain", "mountain", "mountain", "cliff", "cliff", "mountain", "plain", "plain", "plain", "plain", "plain", "forest", "forest", "forest", "sea", "sea", "sea", "sea", "sea", "sea"],
+      ["mountain", "cliff", "cliff", "cliff", "mountain", "mountain", "plain", "plain", "plain", "plain", "forest", "forest", "forest", "forest", "forest", "sea", "sea", "sea", "sea", "sea"],
+      ["mountain", "mountain", "mountain", "mountain", "plain", "plain", "plain", "plain", "forest", "forest", "forest", "forest", "forest", "forest", "plain", "plain", "sea", "sea", "sea", "sea"],
+      ["plain", "plain", "plain", "plain", "plain", "road", "road", "plain", "forest", "forest", "forest", "forest", "forest", "plain", "plain", "plain", "plain", "sea", "sea", "sea"],
+      ["plain", "plain", "road", "road", "road", "road", "plain", "plain", "plain", "forest", "forest", "forest", "plain", "plain", "plain", "plain", "plain", "plain", "sea", "sea"],
+      ["plain", "plain", "road", "plain", "plain", "road", "road", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "sea"],
+      ["swamp", "swamp", "road", "plain", "plain", "plain", "road", "road", "road", "road", "road", "road", "road", "road", "plain", "plain", "plain", "plain", "plain", "plain"],
+      ["swamp", "swamp", "swamp", "road", "road", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "road", "road", "plain", "plain", "plain", "plain", "plain"],
+      ["swamp", "swamp", "swamp", "swamp", "road", "plain", "plain", "plain", "river", "river", "river", "plain", "plain", "plain", "road", "plain", "plain", "wasteland", "wasteland", "wasteland"],
+      ["swamp", "swamp", "swamp", "swamp", "road", "plain", "river", "river", "river", "plain", "river", "river", "plain", "plain", "road", "plain", "wasteland", "wasteland", "wasteland", "wasteland"],
+      ["swamp", "swamp", "swamp", "plain", "road", "river", "river", "plain", "plain", "plain", "plain", "river", "river", "plain", "road", "wasteland", "wasteland", "wasteland", "wasteland", "wasteland"],
+      ["plain", "swamp", "plain", "plain", "road", "river", "plain", "plain", "ruins", "ruins", "plain", "plain", "river", "plain", "road", "wasteland", "wasteland", "ruins", "wasteland", "wasteland"],
+      ["plain", "plain", "plain", "plain", "road", "river", "plain", "ruins", "ruins", "ruins", "ruins", "plain", "river", "plain", "road", "wasteland", "ruins", "ruins", "ruins", "wasteland"],
+      ["plain", "plain", "road", "road", "road", "river", "plain", "ruins", "ruins", "ruins", "ruins", "plain", "river", "plain", "road", "wasteland", "ruins", "ruins", "ruins", "wasteland"],
+      ["plain", "plain", "road", "plain", "plain", "river", "plain", "plain", "ruins", "ruins", "plain", "plain", "river", "road", "road", "wasteland", "wasteland", "ruins", "wasteland", "wasteland"],
+      ["forest", "plain", "road", "plain", "river", "river", "plain", "plain", "plain", "plain", "plain", "river", "river", "road", "plain", "plain", "wasteland", "wasteland", "wasteland", "wasteland"],
+      ["forest", "forest", "road", "plain", "river", "plain", "plain", "plain", "plain", "plain", "river", "river", "plain", "road", "plain", "plain", "plain", "wasteland", "wasteland", "wasteland"],
+      ["forest", "forest", "forest", "plain", "river", "river", "river", "river", "river", "river", "river", "plain", "plain", "road", "plain", "plain", "plain", "plain", "wasteland", "wasteland"],
+      ["forest", "forest", "forest", "forest", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "road", "road", "plain", "plain", "plain", "plain", "plain", "wasteland"],
+      ["forest", "forest", "forest", "forest", "forest", "plain", "plain", "plain", "plain", "plain", "plain", "plain", "road", "plain", "plain", "plain", "plain", "plain", "plain", "plain"]
+    ]
+} 
