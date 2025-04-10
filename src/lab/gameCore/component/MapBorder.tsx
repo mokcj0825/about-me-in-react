@@ -5,12 +5,7 @@ interface MapBordersProps {
   onStopScroll: () => void;
 }
 
-export const MapBorders: React.FC<MapBordersProps> = ({ onScroll, onStopScroll }) => {
-  const borderStyle: React.CSSProperties = {
-    position: 'absolute',
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-    zIndex: 10,
-  };
+export const MapBorder: React.FC<MapBordersProps> = ({ onScroll, onStopScroll }) => {
 
   return (
     <>
@@ -68,4 +63,10 @@ export const MapBorders: React.FC<MapBordersProps> = ({ onScroll, onStopScroll }
       />
     </>
   );
-}; 
+};
+
+const borderStyle: React.CSSProperties = {
+  position: 'absolute',
+  backgroundColor: 'rgba(0, 0, 0, 0)',
+  zIndex: 10,
+};

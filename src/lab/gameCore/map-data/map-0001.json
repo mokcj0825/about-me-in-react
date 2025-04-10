@@ -17,5 +17,6 @@
       ["swamp", "swamp", "swamp", "plain", "river", "plain", "ruins", "plain", "plain", "river", "road", "plain", "wasteland", "wasteland", "wasteland"],
       ["swamp", "swamp", "plain", "plain", "river", "ruins", "ruins", "ruins", "plain", "river", "road", "wasteland", "wasteland", "wasteland", "wasteland"],
       ["swamp", "plain", "plain", "plain", "river", "plain", "ruins", "plain", "plain", "river", "wasteland", "wasteland", "wasteland", "wasteland", "wasteland"]
-    ]
+    ],
+    "background": "background-0001.jpg"
   }

@@ -42,7 +42,6 @@ export const Container: React.FC<Props> = ({
 			flexGrow: 0,
 			position: 'relative',
 			transition: 'background-color 0.2s ease',
-			...getBackgroundStyle(terrain),
 			outline: isSelected
 				? '2px solid yellow'
 				: isHovered
