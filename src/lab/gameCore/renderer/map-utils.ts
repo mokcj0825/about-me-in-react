@@ -46,13 +46,13 @@ export const calculateNewPosition = (
 	
 	switch (direction) {
 		case 'left':
-			newPos.x = Math.min(ScrollConfig.SCROLL_THRESHOLD, prev.x + ScrollConfig.SCROLL_SPEED);
+			newPos.x = Math.min(0, prev.x + ScrollConfig.SCROLL_SPEED);
 			break;
 		case 'right':
 			newPos.x = Math.max(-(mapDimension.x - viewportDimension.x), prev.x - ScrollConfig.SCROLL_SPEED);
 			break;
 		case 'up':
-			newPos.y = Math.min(ScrollConfig.SCROLL_THRESHOLD, prev.y + ScrollConfig.SCROLL_SPEED);
+			newPos.y = Math.min(0, prev.y + ScrollConfig.SCROLL_SPEED);
 			break;
 		case 'down':
 			newPos.y = Math.max(-(mapDimension.y - viewportDimension.y), prev.y - ScrollConfig.SCROLL_SPEED);

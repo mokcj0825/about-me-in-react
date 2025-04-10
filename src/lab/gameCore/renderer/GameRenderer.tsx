@@ -33,17 +33,7 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ stageId }) => {
 	return (
 		<div 
 			ref={gameRef}
-			style={{
-				width: '100%',
-				height: '100vh',
-				position: 'relative',
-				backgroundColor: '#FFE4C4',
-				userSelect: 'none',
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'center',
-				overflow: 'hidden'
-			}}
+			style={wrapperStyle}
 		>
 			<MapRenderer mapFile={stageData.map} />
 			{/* Future renderers will go here */}
@@ -53,3 +43,15 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ stageId }) => {
 		</div>
 	);
 };
+
+const wrapperStyle = {
+	width: '100%',
+	height: '100vh',
+	position: 'relative',
+	backgroundColor: '#FFE4C4',
+	userSelect: 'none',
+	display: 'flex',
+	alignItems: 'center',
+	justifyContent: 'center',
+	overflow: 'hidden'
+} as const;
