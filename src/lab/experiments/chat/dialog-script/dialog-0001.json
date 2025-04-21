@@ -1,0 +1,45 @@
+{
+    "events": [
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": null,
+        "position": "TOP",
+        "message": "This is a 3 testing message for top position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": null,
+        "position": "MIDDLE",
+        "message": "This is a 3 testing message for middle position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": null,
+        "position": "BOTTOM",
+        "message": "This is a 3 testing message for bottom position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": null,
+        "position": "TOP",
+        "message": "This is a 4 second testing message for top position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": null,
+        "position": "MIDDLE",
+        "message": "This is a 4 second testing message for middle position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": null,
+        "position": "BOTTOM",
+        "message": "This is a 4 second testing message for bottom position."
+      }
+    ],
+    "finishEvent": {
+      "nextScene": "CITY",
+      "nextScript": "0000",
+      "shouldClose": true
+    }
+  }
