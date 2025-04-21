@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { DialogExecutor } from './DialogExecutor';
 
 // Constants for configuration
 const CHAT_CONFIG = {
@@ -10,37 +10,6 @@ const CHAT_CONFIG = {
 		BASE_PATH: '/labs/chat/',
 	},
 } as const;
-
-// Styled components
-const ChatContainer = styled.div`
-	position: relative;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-`;
-
-const BackgroundLayer = styled.div<{ $isVisible: boolean }>`
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: rgba(0, 0, 0, 0.8);
-	opacity: ${props => props.$isVisible ? 1 : 0};
-	transition: opacity ${CHAT_CONFIG.TRANSITION_DURATION}ms ease-in-out;
-	z-index: 1;
-`;
-
-const ContentLayer = styled.div`
-	position: relative;
-	z-index: 2;
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-`;
 
 interface Props {
 	dialogScriptId: string;
@@ -73,30 +42,18 @@ export const ChatCore: React.FC<Props> = ({
 		};
 	}, [dialogScriptId]);
 	
-	useEffect(() => {
-		const initializeDialog = async () => {
-			try {
-				// The DialogScriptLoader component will handle setting up the script
-				setIsVisible(true);
-				
-				// Execute the example script
-				const response = await fetch('./dialog-script/example-script.json');
-				const scriptJson = await response.text();
-				
-			} catch (error) {
-				console.error('Failed to initialize dialog:', error);
-				onChatEnd?.();
-			}
-		};
-		
-		initializeDialog();
-	}, [currentScriptId, onChatEnd]);
+	const handleDialogEnd = () => {
+		onChatEnd?.();
+	};
 	
 	return (
-		<ChatContainer>
-			<BackgroundLayer $isVisible={isVisible} />
-			<ContentLayer>
-			</ContentLayer>
-		</ChatContainer>
+		<div style={{ width: '100%', height: '100%', position: 'relative' }}>
+			{isVisible && (
+				<DialogExecutor 
+					scriptId={currentScriptId} 
+					onDialogEnd={handleDialogEnd} 
+				/>
+			)}
+		</div>
 	);
 };
