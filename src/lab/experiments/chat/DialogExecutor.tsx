@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 
@@ -297,6 +297,24 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         return `${DIALOG_CONFIG.SPRITE_PATH}${unitRes.toLowerCase()}.png`;
     };
 
+    // Use useMemo to prevent unnecessary recalculation of event content
+    const eventContent = useMemo(() => {
+        if (!currentEvent) return null;
+        
+        switch (currentEvent.eventCommand) {
+            case 'SHOW_MESSAGE':
+                return (
+                    <VisualNovelTextBox className="ui-element">
+                        {currentEvent.unitRes && <NameBox>{currentEvent.unitRes}</NameBox>}
+                        <MessageText>{currentEvent.message}</MessageText>
+                        <ContinueIndicator />
+                    </VisualNovelTextBox>
+                );
+            default:
+                return null;
+        }
+    }, [currentEvent]);
+
     // Load the dialog script
     useEffect(() => {
         const loadScript = async () => {
@@ -419,14 +437,8 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                     </CharacterSprite>
                 )}
 
-                {/* Visual novel style text box */}
-                {currentEvent && (
-                    <VisualNovelTextBox className="ui-element">
-                        {currentEvent.unitRes && <NameBox>{currentEvent.unitRes}</NameBox>}
-                        <MessageText>{currentEvent.message}</MessageText>
-                        <ContinueIndicator />
-                    </VisualNovelTextBox>
-                )}
+                {/* Memoized event content */}
+                {eventContent}
 
                 {/* Control panel */}
                 <ControlPanel className="ui-element">
