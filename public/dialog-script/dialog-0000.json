@@ -2,8 +2,8 @@
     "events": [
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": null,
-        "position": "TOP",
+        "unitRes": "demochara-001",
+        "position": "LEFT",
         "message": "This is a testing message for top position."
       },
       {
@@ -14,14 +14,14 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": null,
-        "position": "BOTTOM",
+        "unitRes": "demochara-002",
+        "position": "RIGHT",
         "message": "This is a testing message for bottom position."
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": null,
-        "position": "TOP",
+        "unitRes": "demochara-001",
+        "position": "LEFT",
         "message": "This is a second testing message for top position."
       },
       {
@@ -32,8 +32,8 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": null,
-        "position": "BOTTOM",
+        "unitRes": "demochara-002",
+        "position": "RIGHT",
         "message": "This is a second testing message for bottom position."
       }
     ],

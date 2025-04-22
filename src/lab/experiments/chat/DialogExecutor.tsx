@@ -8,19 +8,20 @@ const DIALOG_CONFIG = {
     NAVIGATION: {
         BASE_PATH: '/labs/chat/',
     },
+    SPRITE_PATH: '/character-sprite/',
 } as const;
 
 // Types for the dialog system
-export enum MessagePosition {
-    TOP = 'TOP',
+export enum SpritePosition {
+    LEFT = 'LEFT',
     MIDDLE = 'MIDDLE',
-    BOTTOM = 'BOTTOM'
+    RIGHT = 'RIGHT'
 }
 
 export interface DialogEvent {
     eventCommand: string;
     unitRes: string | null;
-    position: MessagePosition;
+    position: SpritePosition;
     message: string;
 }
 
@@ -41,6 +42,7 @@ const DialogContainer = styled.div`
     width: 100%;
     height: 100%;
     overflow: hidden;
+    font-family: 'Crimson Text', serif;
 `;
 
 const BackgroundLayer = styled.div<{ $isVisible: boolean }>`
@@ -67,94 +69,209 @@ const ContentLayer = styled.div`
     cursor: pointer; /* Make the entire content layer clickable */
 `;
 
-const MessageContainer = styled.div<{ $position: MessagePosition }>`
-    max-width: 80%;
-    margin: 20px;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    color: white;
+// Character Sprite Container - positioned based on SpritePosition
+const CharacterSprite = styled.div<{ $position: SpritePosition; $active: boolean }>`
     position: absolute;
+    bottom: 240px; // Position above the text box
+    opacity: ${props => props.$active ? 1 : 0.7};
+    filter: ${props => props.$active ? 'none' : 'grayscale(30%) brightness(80%)'};
+    transform-origin: bottom center;
+    z-index: ${props => props.$active ? 5 : 3};
+    
     ${props => {
         switch (props.$position) {
-            case MessagePosition.TOP:
-                return 'top: 20%;';
-            case MessagePosition.MIDDLE:
-                return 'top: 50%; transform: translateY(-50%);';
-            case MessagePosition.BOTTOM:
-                return 'bottom: 20%;';
+            case SpritePosition.LEFT:
+                return 'left: 15%; transform: translateX(-50%);';
+            case SpritePosition.MIDDLE:
+                return 'left: 50%; transform: translateX(-50%);';
+            case SpritePosition.RIGHT:
+                return 'left: 85%; transform: translateX(-50%);';
             default:
-                return 'top: 50%; transform: translateY(-50%);';
+                return 'left: 50%; transform: translateX(-50%);';
         }
     }}
 `;
 
-// Menu bar at the bottom
-const MenuBar = styled.div`
-    position: absolute;
-    bottom: 10px;
-    left: 0;
-    right: 0;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    padding: 10px;
-    z-index: 10;
+const SpriteImage = styled.img`
+    max-height: 500px;
+    max-width: 300px;
+    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
 `;
 
-const MenuButton = styled.button`
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: background-color 0.3s ease;
-    
-    &:hover {
-        background-color: rgba(255, 255, 255, 0.3);
-    }
-    
-    &:focus {
-        outline: none;
-        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
-    }
-`;
-
-// Top-right menu icon
-const TopMenuBar = styled.div`
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 10;
-`;
-
-const MenuIcon = styled.div`
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.2);
+// Keep the placeholder for fallback
+const SpriteImagePlaceholder = styled.div`
+    width: 300px;
+    height: 400px;
+    background: linear-gradient(135deg, rgba(166, 124, 82, 0.5), rgba(166, 124, 82, 0.2));
+    border: 2px solid #a67c52;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
+    color: white;
+    font-size: 24px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+`;
+
+// Visual Novel style text box at the bottom
+const VisualNovelTextBox = styled.div`
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    min-height: 180px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid #a67c52;
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    z-index: 10;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+`;
+
+// Character name box
+const NameBox = styled.div`
+    position: absolute;
+    top: -22px;
+    left: 20px;
+    background: #a67c52;
+    padding: 5px 15px;
+    border-radius: 5px 5px 0 0;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.3);
+`;
+
+// Message text
+const MessageText = styled.div`
+    font-size: 20px;
+    line-height: 1.5;
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+`;
+
+// Continue indicator
+const ContinueIndicator = styled.div`
+    position: absolute;
+    bottom: 15px;
+    right: 20px;
+    width: 20px;
+    height: 20px;
+    border-right: 3px solid white;
+    border-bottom: 3px solid white;
+    transform: rotate(-45deg);
+    animation: pulse 1.5s infinite;
+
+    @keyframes pulse {
+        0% {
+            opacity: 0.5;
+        }
+        50% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0.5;
+        }
+    }
+`;
+
+// Control panel for menu buttons
+const ControlPanel = styled.div`
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 10;
+`;
+
+const ControlButton = styled.button`
+    background: #a67c52;
+    color: white;
+    border: 2px solid #8c5e2a;
+    border-radius: 5px;
+    width: 50px;
+    height: 50px;
     cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     
     &:hover {
-        background-color: rgba(255, 255, 255, 0.3);
+        background: #c89c72;
+        transform: translateY(-2px);
     }
     
-    &::before, &::after {
-        content: '';
-        position: absolute;
-        width: 20px;
-        height: 2px;
-        background-color: white;
+    &:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
     }
-    
-    &::before {
-        transform: rotate(90deg);
-    }
+`;
+
+const ButtonIcon = styled.div`
+    font-size: 20px;
+    margin-bottom: 3px;
+`;
+
+const ButtonLabel = styled.div`
+    font-size: 10px;
+    text-transform: uppercase;
+`;
+
+// Dialog history panel
+const HistoryPanel = styled.div<{ $visible: boolean }>`
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 70%;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #a67c52;
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    z-index: 20;
+    display: ${props => props.$visible ? 'block' : 'none'};
+    overflow-y: auto;
+`;
+
+const HistoryEntry = styled.div`
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #a67c52;
+`;
+
+const HistoryName = styled.div`
+    font-weight: bold;
+    color: #a67c52;
+    margin-bottom: 5px;
+`;
+
+const HistoryText = styled.div`
+    font-size: 16px;
+    line-height: 1.4;
+`;
+
+// Progress indicator
+const ProgressIndicator = styled.div`
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 14px;
+    color: #a67c52;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 5px 10px;
+    border-radius: 20px;
+    border: 1px solid #a67c52;
+    z-index: 10;
 `;
 
 interface Props {
@@ -168,7 +285,17 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const [currentEventIndex, setCurrentEventIndex] = useState(0);
     const [currentEvent, setCurrentEvent] = useState<DialogEvent | null>(null);
     const [showMenu, setShowMenu] = useState(false);
+    const [showHistory, setShowHistory] = useState(false);
+    const [history, setHistory] = useState<DialogEvent[]>([]);
     const navigate = useNavigate();
+
+    // Function to get sprite image path based on unitRes
+    const getSpriteImagePath = (unitRes: string | null): string | null => {
+        if (!unitRes) return null;
+        
+        // Use the unitRes as the filename with .png extension
+        return `${DIALOG_CONFIG.SPRITE_PATH}${unitRes.toLowerCase()}.png`;
+    };
 
     // Load the dialog script
     useEffect(() => {
@@ -182,6 +309,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                 // Set the first event
                 if (scriptData.events.length > 0) {
                     setCurrentEvent(scriptData.events[0]);
+                    setHistory([scriptData.events[0]]);
                 } else {
                     // If no events, handle finish event immediately
                     handleFinishEvent(scriptData.finishEvent);
@@ -205,7 +333,11 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         if (nextIndex < currentScript.events.length) {
             // Set the next event
             setCurrentEventIndex(nextIndex);
-            setCurrentEvent(currentScript.events[nextIndex]);
+            const nextEvent = currentScript.events[nextIndex];
+            setCurrentEvent(nextEvent);
+            
+            // Add to history
+            setHistory(prev => [...prev, nextEvent]);
         } else {
             // All events completed, handle finish event
             handleFinishEvent(currentScript.finishEvent);
@@ -214,19 +346,18 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
 
     // Handle click on the content layer
     const handleContentClick = (e: React.MouseEvent) => {
+        // If history is showing, close it instead of advancing
+        if (showHistory) {
+            setShowHistory(false);
+            return;
+        }
+        
         // Only advance if we're not clicking on UI elements (menu buttons or icons)
         if (e.target === e.currentTarget || 
             (e.currentTarget as Node).contains(e.target as Node) && 
             !(e.target as Element).closest('.ui-element')) {
             advanceToNextMessage();
         }
-    };
-
-    // Handle top menu icon click
-    const handleMenuIconClick = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent advancing dialog
-        setShowMenu(!showMenu);
-        console.log("Menu icon clicked");
     };
     
     // Handle button clicks
@@ -248,10 +379,10 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         // Add configuration functionality here
     };
     
-    const handleLogsClick = (e: React.MouseEvent) => {
+    const handleHistoryClick = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent advancing dialog
-        console.log("Logs clicked");
-        // Add logs functionality here
+        setShowHistory(!showHistory);
+        console.log("History clicked");
     };
 
     const handleFinishEvent = (finishEvent: FinishEvent) => {
@@ -275,48 +406,83 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         <DialogContainer>
             <BackgroundLayer $isVisible={isVisible} />
             <ContentLayer onClick={handleContentClick}>
-                {currentEvent && (
-                    <MessageContainer $position={currentEvent.position}>
-                        {currentEvent.unitRes && <strong>{currentEvent.unitRes}: </strong>}
-                        {currentEvent.message}
-                    </MessageContainer>
+                {/* Character sprite based on position */}
+                {currentEvent && currentEvent.unitRes && getSpriteImagePath(currentEvent.unitRes) && (
+                    <CharacterSprite 
+                        $position={currentEvent.position}
+                        $active={true}
+                    >
+                        <SpriteImage 
+                            src={getSpriteImagePath(currentEvent.unitRes) || ''} 
+                            alt={currentEvent.unitRes}
+                        />
+                    </CharacterSprite>
                 )}
 
-                {/* Menu bar with buttons */}
-                <MenuBar className="ui-element">
-                    <MenuButton 
+                {/* Visual novel style text box */}
+                {currentEvent && (
+                    <VisualNovelTextBox className="ui-element">
+                        {currentEvent.unitRes && <NameBox>{currentEvent.unitRes}</NameBox>}
+                        <MessageText>{currentEvent.message}</MessageText>
+                        <ContinueIndicator />
+                    </VisualNovelTextBox>
+                )}
+
+                {/* Control panel */}
+                <ControlPanel className="ui-element">
+                    <ControlButton 
                         className="ui-element"
                         onClick={handleSaveClick}
                     >
-                        Save
-                    </MenuButton>
-                    <MenuButton 
+                        <ButtonIcon>💾</ButtonIcon>
+                        <ButtonLabel>Save</ButtonLabel>
+                    </ControlButton>
+                    <ControlButton 
                         className="ui-element"
                         onClick={handleLoadClick}
                     >
-                        Load
-                    </MenuButton>
-                    <MenuButton 
+                        <ButtonIcon>📂</ButtonIcon>
+                        <ButtonLabel>Load</ButtonLabel>
+                    </ControlButton>
+                    <ControlButton 
                         className="ui-element"
                         onClick={handleConfigClick}
                     >
-                        Config
-                    </MenuButton>
-                    <MenuButton 
+                        <ButtonIcon>⚙️</ButtonIcon>
+                        <ButtonLabel>Config</ButtonLabel>
+                    </ControlButton>
+                    <ControlButton 
                         className="ui-element"
-                        onClick={handleLogsClick}
+                        onClick={handleHistoryClick}
                     >
-                        Logs
-                    </MenuButton>
-                </MenuBar>
+                        <ButtonIcon>📜</ButtonIcon>
+                        <ButtonLabel>Logs</ButtonLabel>
+                    </ControlButton>
+                </ControlPanel>
 
-                {/* Top menu icon */}
-                <TopMenuBar className="ui-element">
-                    <MenuIcon 
-                        onClick={handleMenuIconClick} 
-                        className="ui-element"
-                    />
-                </TopMenuBar>
+                {/* Progress indicator */}
+                {currentScript && (
+                    <ProgressIndicator className="ui-element">
+                        {currentEventIndex + 1} / {currentScript.events.length}
+                    </ProgressIndicator>
+                )}
+
+                {/* History panel */}
+                <HistoryPanel 
+                    $visible={showHistory} 
+                    className="ui-element"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <h2 style={{ color: '#a67c52', marginBottom: '20px', textAlign: 'center' }}>
+                        Message History
+                    </h2>
+                    {history.map((event, index) => (
+                        <HistoryEntry key={index}>
+                            {event.unitRes && <HistoryName>{event.unitRes}</HistoryName>}
+                            <HistoryText>{event.message}</HistoryText>
+                        </HistoryEntry>
+                    ))}
+                </HistoryPanel>
             </ContentLayer>
         </DialogContainer>
     );
