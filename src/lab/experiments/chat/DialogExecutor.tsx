@@ -64,6 +64,7 @@ const ContentLayer = styled.div`
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    cursor: pointer; /* Make the entire content layer clickable */
 `;
 
 const MessageContainer = styled.div<{ $position: MessagePosition }>`
@@ -74,7 +75,6 @@ const MessageContainer = styled.div<{ $position: MessagePosition }>`
     border-radius: 10px;
     color: white;
     position: absolute;
-    cursor: pointer;
     ${props => {
         switch (props.$position) {
             case MessagePosition.TOP:
@@ -89,6 +89,74 @@ const MessageContainer = styled.div<{ $position: MessagePosition }>`
     }}
 `;
 
+// Menu bar at the bottom
+const MenuBar = styled.div`
+    position: absolute;
+    bottom: 10px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px;
+    z-index: 10;
+`;
+
+const MenuButton = styled.button`
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s ease;
+    
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    &:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+    }
+`;
+
+// Top-right menu icon
+const TopMenuBar = styled.div`
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 10;
+`;
+
+const MenuIcon = styled.div`
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    
+    &:hover {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    &::before, &::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 2px;
+        background-color: white;
+    }
+    
+    &::before {
+        transform: rotate(90deg);
+    }
+`;
+
 interface Props {
     scriptId: string;
     onDialogEnd?: () => void;
@@ -99,6 +167,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const [currentScript, setCurrentScript] = useState<DialogScript | null>(null);
     const [currentEventIndex, setCurrentEventIndex] = useState(0);
     const [currentEvent, setCurrentEvent] = useState<DialogEvent | null>(null);
+    const [showMenu, setShowMenu] = useState(false);
     const navigate = useNavigate();
 
     // Load the dialog script
@@ -126,7 +195,8 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         loadScript();
     }, [scriptId, onDialogEnd]);
 
-    const handleMessageClick = () => {
+    // Handler for advancing to the next message
+    const advanceToNextMessage = () => {
         if (!currentScript) return;
         
         // Move to the next event
@@ -142,13 +212,55 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         }
     };
 
+    // Handle click on the content layer
+    const handleContentClick = (e: React.MouseEvent) => {
+        // Only advance if we're not clicking on UI elements (menu buttons or icons)
+        if (e.target === e.currentTarget || 
+            (e.currentTarget as Node).contains(e.target as Node) && 
+            !(e.target as Element).closest('.ui-element')) {
+            advanceToNextMessage();
+        }
+    };
+
+    // Handle top menu icon click
+    const handleMenuIconClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent advancing dialog
+        setShowMenu(!showMenu);
+        console.log("Menu icon clicked");
+    };
+    
+    // Handle button clicks
+    const handleSaveClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent advancing dialog
+        console.log("Save clicked");
+        // Add save functionality here
+    };
+    
+    const handleLoadClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent advancing dialog
+        console.log("Load clicked");
+        // Add load functionality here
+    };
+    
+    const handleConfigClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent advancing dialog
+        console.log("Config clicked");
+        // Add configuration functionality here
+    };
+    
+    const handleLogsClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent advancing dialog
+        console.log("Logs clicked");
+        // Add logs functionality here
+    };
+
     const handleFinishEvent = (finishEvent: FinishEvent) => {
         // Handle navigation based on finish event
         if (finishEvent.nextScene && finishEvent.nextScript) {
             switch (finishEvent.nextScene) {
                 case 'DIALOG':
                     // Navigate to the next scene/script
-                    (`${DIALOG_CONFIG.NAVIGATION.BASE_PATH}${finishEvent.nextScript}`);
+                    navigate(`${DIALOG_CONFIG.NAVIGATION.BASE_PATH}${finishEvent.nextScript}`);
                     break;
                 default:
                     break;
@@ -162,16 +274,49 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     return (
         <DialogContainer>
             <BackgroundLayer $isVisible={isVisible} />
-            <ContentLayer>
+            <ContentLayer onClick={handleContentClick}>
                 {currentEvent && (
-                    <MessageContainer 
-                        $position={currentEvent.position} 
-                        onClick={handleMessageClick}
-                    >
+                    <MessageContainer $position={currentEvent.position}>
                         {currentEvent.unitRes && <strong>{currentEvent.unitRes}: </strong>}
                         {currentEvent.message}
                     </MessageContainer>
                 )}
+
+                {/* Menu bar with buttons */}
+                <MenuBar className="ui-element">
+                    <MenuButton 
+                        className="ui-element"
+                        onClick={handleSaveClick}
+                    >
+                        Save
+                    </MenuButton>
+                    <MenuButton 
+                        className="ui-element"
+                        onClick={handleLoadClick}
+                    >
+                        Load
+                    </MenuButton>
+                    <MenuButton 
+                        className="ui-element"
+                        onClick={handleConfigClick}
+                    >
+                        Config
+                    </MenuButton>
+                    <MenuButton 
+                        className="ui-element"
+                        onClick={handleLogsClick}
+                    >
+                        Logs
+                    </MenuButton>
+                </MenuBar>
+
+                {/* Top menu icon */}
+                <TopMenuBar className="ui-element">
+                    <MenuIcon 
+                        onClick={handleMenuIconClick} 
+                        className="ui-element"
+                    />
+                </TopMenuBar>
             </ContentLayer>
         </DialogContainer>
     );
