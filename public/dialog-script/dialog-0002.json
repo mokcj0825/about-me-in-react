@@ -1,0 +1,22 @@
+{
+  "events": [
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "message": "This is the first message that will be shown.",
+      "unitRes": null
+    },
+    {
+      "eventCommand": "CLEAR_MESSAGE"
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "message": "This is the second message that will be shown after clearing.",
+      "unitRes": null
+    }
+  ],
+  "finishEvent": {
+    "nextScene": "DIALOG",
+    "nextScript": "0000",
+    "shouldClose": false
+  }
+} 

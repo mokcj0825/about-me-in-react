@@ -1,9 +1,13 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { EventCommand } from './EventCommand';
 import { isShowMessageEvent } from './execution/ShowMessage';
 import ShowMessage from './execution/ShowMessage';
+import { isClearMessageEvent } from './execution/ClearMessage';
+import ClearMessage from './execution/ClearMessage';
+import { isWaitEvent } from './execution/Wait';
+import Wait from './execution/Wait';
 import {DialogEvent} from "./utils/DialogEvent";
 
 // Constants for configuration
@@ -156,6 +160,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const [showHistory, setShowHistory] = useState(false);
     const [history, setHistory] = useState<DialogEvent[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [messageVisible, setMessageVisible] = useState(true); // Track if message should be visible
     const onDialogEndRef = useRef(onDialogEnd);
     const navigate = useNavigate();
     
@@ -164,6 +169,49 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         onDialogEndRef.current = onDialogEnd;
     }, [onDialogEnd]);
 
+    const handleFinishEvent = useCallback((finishEvent: FinishEvent) => {
+        // Handle navigation based on finish event
+        if (finishEvent.nextScene && finishEvent.nextScript) {
+            switch (finishEvent.nextScene) {
+                case 'DIALOG':
+                    // Navigate to the next scene/script
+                    navigate(`${DIALOG_CONFIG.NAVIGATION.BASE_PATH}${finishEvent.nextScript}`);
+                    break;
+                default:
+                    break;
+            }
+        } else {
+            // No next scene/script, end the dialog
+            onDialogEndRef.current?.();
+        }
+    }, [navigate]);
+
+    // Handler for advancing to the next message
+    const advanceToNextMessage = useCallback(() => {
+        if (!currentScript) return;
+        
+        // Move to the next event
+        const nextIndex = currentEventIndex + 1;
+        
+        if (nextIndex < currentScript.events.length) {
+            // Set the next event
+            setCurrentEventIndex(nextIndex);
+            const nextEvent = currentScript.events[nextIndex];
+            setCurrentEvent(nextEvent);
+            
+            // Update message visibility based on event type
+            if (isShowMessageEvent(nextEvent)) {
+                setMessageVisible(true);
+                setHistory(prev => [...prev, nextEvent]);
+            } else if (isClearMessageEvent(nextEvent)) {
+                setMessageVisible(false);
+            }
+        } else {
+            // All events completed, handle finish event
+            handleFinishEvent(currentScript.finishEvent);
+        }
+    }, [currentScript, currentEventIndex, handleFinishEvent]);
+
     // Handle command execution based on the current event
     const commandExecution = useMemo(() => {
         if (!currentEvent) return null;
@@ -171,11 +219,29 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         switch (currentEvent.eventCommand) {
             case EventCommand.SHOW_MESSAGE:
                 return <ShowMessage event={currentEvent} />;
-            // Add cases for other commands as needed
+            case EventCommand.CLEAR_MESSAGE:
+                return <ClearMessage event={currentEvent} onComplete={advanceToNextMessage} />;
+            case EventCommand.WAIT:
+                // For WAIT command, we need to check if there's a message to show
+                // Only show the last message if it hasn't been cleared
+                if (messageVisible && history.length > 0) {
+                    const lastMessageEvent = history[history.length - 1];
+                    if (isShowMessageEvent(lastMessageEvent)) {
+                        return (
+                            <>
+                                <ShowMessage event={lastMessageEvent} />
+                                <Wait event={currentEvent} onComplete={advanceToNextMessage} />
+                            </>
+                        );
+                    }
+                }
+                
+                // If no message should be visible, just wait
+                return <Wait event={currentEvent} onComplete={advanceToNextMessage} />;
             default:
                 return null;
         }
-    }, [currentEvent]);
+    }, [currentEvent, advanceToNextMessage, history, messageVisible]);
 
     // Load the dialog script
     useEffect(() => {
@@ -212,29 +278,6 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         
         loadScript();
     }, [scriptId]); // Remove onDialogEnd from dependencies
-
-    // Handler for advancing to the next message
-    const advanceToNextMessage = () => {
-        if (!currentScript) return;
-        
-        // Move to the next event
-        const nextIndex = currentEventIndex + 1;
-        
-        if (nextIndex < currentScript.events.length) {
-            // Set the next event
-            setCurrentEventIndex(nextIndex);
-            const nextEvent = currentScript.events[nextIndex];
-            setCurrentEvent(nextEvent);
-            
-            // Only add to history if it's a show message event
-            if (isShowMessageEvent(nextEvent)) {
-                setHistory(prev => [...prev, nextEvent]);
-            }
-        } else {
-            // All events completed, handle finish event
-            handleFinishEvent(currentScript.finishEvent);
-        }
-    };
 
     // Handle click on the content layer
     const handleContentClick = (e: React.MouseEvent) => {
@@ -275,23 +318,6 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         e.stopPropagation(); // Prevent advancing dialog
         setShowHistory(!showHistory);
         console.log("History clicked");
-    };
-
-    const handleFinishEvent = (finishEvent: FinishEvent) => {
-        // Handle navigation based on finish event
-        if (finishEvent.nextScene && finishEvent.nextScript) {
-            switch (finishEvent.nextScene) {
-                case 'DIALOG':
-                    // Navigate to the next scene/script
-                    navigate(`${DIALOG_CONFIG.NAVIGATION.BASE_PATH}${finishEvent.nextScript}`);
-                    break;
-                default:
-                    break;
-            }
-        } else {
-            // No next scene/script, end the dialog
-            onDialogEndRef.current?.();
-        }
     };
 
     return (

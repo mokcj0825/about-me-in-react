@@ -1,0 +1,35 @@
+{
+  "events": [
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "message": "This is the first message.",
+      "unitRes": null
+    },
+    {
+      "eventCommand": "CLEAR_MESSAGE"
+    },
+    {
+      "eventCommand": "WAIT",
+      "time": 2000
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "message": "This message appears after a 2-second wait.",
+      "unitRes": null
+    },
+    {
+      "eventCommand": "WAIT",
+      "time": 1000
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "message": "This message appears after a 1-second wait.",
+      "unitRes": null
+    }
+  ],
+  "finishEvent": {
+    "nextScene": "DIALOG",
+    "nextScript": "0000",
+    "shouldClose": false
+  }
+} 
