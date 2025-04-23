@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
-import { DialogEvent, SpritePosition } from './utils/DialogEvent';
+import { EventCommand } from './EventCommand';
+import { isShowMessageEvent } from './execution/ShowMessage';
 import ShowMessage from './execution/ShowMessage';
+import {DialogEvent} from "./utils/DialogEvent";
 
 // Constants for configuration
 const DIALOG_CONFIG = {
@@ -12,7 +14,6 @@ const DIALOG_CONFIG = {
     },
     SPRITE_PATH: '/character-sprite/',
 } as const;
-
 
 export interface FinishEvent {
     nextScene: string;
@@ -56,35 +57,6 @@ const ContentLayer = styled.div`
     align-items: center;
     justify-content: center;
     cursor: pointer; /* Make the entire content layer clickable */
-`;
-
-// Character Sprite Container - positioned based on SpritePosition
-const CharacterSprite = styled.div<{ $position: SpritePosition; $active: boolean }>`
-    position: absolute;
-    bottom: 240px; // Position above the text box
-    opacity: ${props => props.$active ? 1 : 0.7};
-    filter: ${props => props.$active ? 'none' : 'grayscale(30%) brightness(80%)'};
-    transform-origin: bottom center;
-    z-index: ${props => props.$active ? 5 : 3};
-    
-    ${props => {
-        switch (props.$position) {
-            case SpritePosition.LEFT:
-                return 'left: 15%; transform: translateX(-50%);';
-            case SpritePosition.MIDDLE:
-                return 'left: 50%; transform: translateX(-50%);';
-            case SpritePosition.RIGHT:
-                return 'left: 85%; transform: translateX(-50%);';
-            default:
-                return 'left: 50%; transform: translateX(-50%);';
-        }
-    }}
-`;
-
-const SpriteImage = styled.img`
-    max-height: 500px;
-    max-width: 300px;
-    filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
 `;
 
 // Control panel for menu buttons
@@ -170,21 +142,6 @@ const HistoryText = styled.div`
     line-height: 1.4;
 `;
 
-// Progress indicator
-const ProgressIndicator = styled.div`
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    font-size: 14px;
-    color: #a67c52;
-    background: rgba(0, 0, 0, 0.7);
-    padding: 5px 10px;
-    border-radius: 20px;
-    border: 1px solid #a67c52;
-    z-index: 10;
-`;
-
-
 interface Props {
     scriptId: string;
     onDialogEnd?: () => void;
@@ -198,24 +155,23 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const [showMenu, setShowMenu] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [history, setHistory] = useState<DialogEvent[]>([]);
-    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
-
-    // Function to get sprite image path based on unitRes
-    const getSpriteImagePath = (unitRes: string | null): string | null => {
-        if (!unitRes) return null;
-        
-        // Use the unitRes as the filename with .png extension
-        return `${DIALOG_CONFIG.SPRITE_PATH}${unitRes.toLowerCase()}.png`;
-    };
+    const onDialogEndRef = useRef(onDialogEnd);
+    const navigate = useNavigate();
+    
+    // Update ref when prop changes
+    useEffect(() => {
+        onDialogEndRef.current = onDialogEnd;
+    }, [onDialogEnd]);
 
     // Handle command execution based on the current event
     const commandExecution = useMemo(() => {
         if (!currentEvent) return null;
         
         switch (currentEvent.eventCommand) {
-            case 'SHOW_MESSAGE':
+            case EventCommand.SHOW_MESSAGE:
                 return <ShowMessage event={currentEvent} />;
+            // Add cases for other commands as needed
             default:
                 return null;
         }
@@ -224,7 +180,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     // Load the dialog script
     useEffect(() => {
         if (isLoading) return;
-        
+
         const loadScript = async () => {
             try {
                 setIsLoading(true);
@@ -235,22 +191,27 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                 
                 // Set the first event
                 if (scriptData.events.length > 0) {
-                    setCurrentEvent(scriptData.events[0]);
-                    setHistory([scriptData.events[0]]);
+                    const firstEvent = scriptData.events[0];
+                    setCurrentEvent(firstEvent);
+                    
+                    // Only add to history if it's a show message event
+                    if (isShowMessageEvent(firstEvent)) {
+                        setHistory([firstEvent]);
+                    }
                 } else {
                     // If no events, handle finish event immediately
                     handleFinishEvent(scriptData.finishEvent);
                 }
             } catch (error) {
                 console.error('Failed to load dialog script:', error);
-                onDialogEnd?.();
+                onDialogEndRef.current?.();
             } finally {
                 setIsLoading(false);
             }
         };
         
         loadScript();
-    }, [scriptId]);
+    }, [scriptId]); // Remove onDialogEnd from dependencies
 
     // Handler for advancing to the next message
     const advanceToNextMessage = () => {
@@ -265,8 +226,10 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
             const nextEvent = currentScript.events[nextIndex];
             setCurrentEvent(nextEvent);
             
-            // Add to history
-            setHistory(prev => [...prev, nextEvent]);
+            // Only add to history if it's a show message event
+            if (isShowMessageEvent(nextEvent)) {
+                setHistory(prev => [...prev, nextEvent]);
+            }
         } else {
             // All events completed, handle finish event
             handleFinishEvent(currentScript.finishEvent);
@@ -327,7 +290,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
             }
         } else {
             // No next scene/script, end the dialog
-            onDialogEnd?.();
+            onDialogEndRef.current?.();
         }
     };
 
@@ -335,19 +298,6 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         <DialogContainer>
             <BackgroundLayer $isVisible={isVisible} />
             <ContentLayer onClick={handleContentClick}>
-                {/* Character sprite based on position */}
-                {currentEvent && currentEvent.unitRes && getSpriteImagePath(currentEvent.unitRes) && (
-                    <CharacterSprite 
-                        $position={currentEvent.position}
-                        $active={true}
-                    >
-                        <SpriteImage 
-                            src={getSpriteImagePath(currentEvent.unitRes) || ''} 
-                            alt={currentEvent.unitRes}
-                        />
-                    </CharacterSprite>
-                )}
-
                 {/* Command execution based on event type */}
                 {commandExecution}
 
@@ -382,13 +332,6 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                         <ButtonLabel>Logs</ButtonLabel>
                     </ControlButton>
                 </ControlPanel>
-
-                {/* Progress indicator */}
-                {currentScript && (
-                    <ProgressIndicator className="ui-element">
-                        {currentEventIndex + 1} / {currentScript.events.length}
-                    </ProgressIndicator>
-                )}
 
                 {/* History panel */}
                 <HistoryPanel 
