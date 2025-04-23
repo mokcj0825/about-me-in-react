@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import { DialogEvent, SpritePosition } from './utils/DialogEvent';
+import ShowMessage from './execution/ShowMessage';
 
 // Constants for configuration
 const DIALOG_CONFIG = {
@@ -11,19 +13,6 @@ const DIALOG_CONFIG = {
     SPRITE_PATH: '/character-sprite/',
 } as const;
 
-// Types for the dialog system
-export enum SpritePosition {
-    LEFT = 'LEFT',
-    MIDDLE = 'MIDDLE',
-    RIGHT = 'RIGHT'
-}
-
-export interface DialogEvent {
-    eventCommand: string;
-    unitRes: string | null;
-    position: SpritePosition;
-    message: string;
-}
 
 export interface FinishEvent {
     nextScene: string;
@@ -96,85 +85,6 @@ const SpriteImage = styled.img`
     max-height: 500px;
     max-width: 300px;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
-`;
-
-// Keep the placeholder for fallback
-const SpriteImagePlaceholder = styled.div`
-    width: 300px;
-    height: 400px;
-    background: linear-gradient(135deg, rgba(166, 124, 82, 0.5), rgba(166, 124, 82, 0.2));
-    border: 2px solid #a67c52;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 24px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-`;
-
-// Visual Novel style text box at the bottom
-const VisualNovelTextBox = styled.div`
-    position: absolute;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    min-height: 180px;
-    background: rgba(0, 0, 0, 0.7);
-    border: 2px solid #a67c52;
-    border-radius: 10px;
-    padding: 20px;
-    color: white;
-    z-index: 10;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-`;
-
-// Character name box
-const NameBox = styled.div`
-    position: absolute;
-    top: -22px;
-    left: 20px;
-    background: #a67c52;
-    padding: 5px 15px;
-    border-radius: 5px 5px 0 0;
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.3);
-`;
-
-// Message text
-const MessageText = styled.div`
-    font-size: 20px;
-    line-height: 1.5;
-    letter-spacing: 0.5px;
-    margin-top: 5px;
-`;
-
-// Continue indicator
-const ContinueIndicator = styled.div`
-    position: absolute;
-    bottom: 15px;
-    right: 20px;
-    width: 20px;
-    height: 20px;
-    border-right: 3px solid white;
-    border-bottom: 3px solid white;
-    transform: rotate(-45deg);
-    animation: pulse 1.5s infinite;
-
-    @keyframes pulse {
-        0% {
-            opacity: 0.5;
-        }
-        50% {
-            opacity: 1;
-        }
-        100% {
-            opacity: 0.5;
-        }
-    }
 `;
 
 // Control panel for menu buttons
@@ -274,6 +184,7 @@ const ProgressIndicator = styled.div`
     z-index: 10;
 `;
 
+
 interface Props {
     scriptId: string;
     onDialogEnd?: () => void;
@@ -288,6 +199,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const [showHistory, setShowHistory] = useState(false);
     const [history, setHistory] = useState<DialogEvent[]>([]);
     const navigate = useNavigate();
+    const [isLoading, setIsLoading] = useState(false);
 
     // Function to get sprite image path based on unitRes
     const getSpriteImagePath = (unitRes: string | null): string | null => {
@@ -297,19 +209,13 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         return `${DIALOG_CONFIG.SPRITE_PATH}${unitRes.toLowerCase()}.png`;
     };
 
-    // Use useMemo to prevent unnecessary recalculation of event content
-    const eventContent = useMemo(() => {
+    // Handle command execution based on the current event
+    const commandExecution = useMemo(() => {
         if (!currentEvent) return null;
         
         switch (currentEvent.eventCommand) {
             case 'SHOW_MESSAGE':
-                return (
-                    <VisualNovelTextBox className="ui-element">
-                        {currentEvent.unitRes && <NameBox>{currentEvent.unitRes}</NameBox>}
-                        <MessageText>{currentEvent.message}</MessageText>
-                        <ContinueIndicator />
-                    </VisualNovelTextBox>
-                );
+                return <ShowMessage event={currentEvent} />;
             default:
                 return null;
         }
@@ -317,8 +223,11 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
 
     // Load the dialog script
     useEffect(() => {
+        if (isLoading) return;
+        
         const loadScript = async () => {
             try {
+                setIsLoading(true);
                 const response = await fetch(`/dialog-script/dialog-${scriptId}.json`);
                 const scriptData: DialogScript = await response.json();
                 setCurrentScript(scriptData);
@@ -335,11 +244,13 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
             } catch (error) {
                 console.error('Failed to load dialog script:', error);
                 onDialogEnd?.();
+            } finally {
+                setIsLoading(false);
             }
         };
         
         loadScript();
-    }, [scriptId, onDialogEnd]);
+    }, [scriptId]);
 
     // Handler for advancing to the next message
     const advanceToNextMessage = () => {
@@ -437,8 +348,8 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                     </CharacterSprite>
                 )}
 
-                {/* Memoized event content */}
-                {eventContent}
+                {/* Command execution based on event type */}
+                {commandExecution}
 
                 {/* Control panel */}
                 <ControlPanel className="ui-element">
