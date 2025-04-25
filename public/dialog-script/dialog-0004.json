@@ -18,7 +18,9 @@
             "value": "right"
           }
         ],
-        "storageKey": "pathChoice"
+        "valueType": "STRING",
+        "storageKey": "pathChoice",
+        "actionToStorage": "SET"
       },
       {
         "eventCommand": "SHOW_MESSAGE",
@@ -52,7 +54,9 @@
             "value": "call"
           }
         ],
-        "storageKey": "encounterChoice"
+        "valueType": "STRING",
+        "storageKey": "encounterChoice",
+        "actionToStorage": "SET"
       },
       {
         "eventCommand": "SHOW_MESSAGE",
@@ -68,7 +72,43 @@
         "eventCommand": "SHOW_MESSAGE",
         "unitRes": "Narrator",
         "position": "MIDDLE",
-        "message": "The story continues based on your choices. Your first choice was: {pathChoice} and your second choice was: {encounterChoice}"
+        "message": "You find a number on a wall. What do you think it represents?"
+      },
+      {
+        "eventCommand": "REQUEST_SELECTION",
+        "option": [
+          {
+            "label": "It's a code",
+            "value": "42"
+          },
+          {
+            "label": "It's a year",
+            "value": "2023"
+          },
+          {
+            "label": "It's a temperature",
+            "value": "98.6"
+          }
+        ],
+        "valueType": "NUMBER",
+        "storageKey": "wallNumber",
+        "actionToStorage": "SET"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "Narrator",
+        "position": "MIDDLE",
+        "message": "You've recorded the number."
+      },
+      {
+        "eventCommand": "WAIT",
+        "duration": 1000
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "Narrator",
+        "position": "MIDDLE",
+        "message": "The story continues based on your choices. Your first choice was: {pathChoice} and your second choice was: {encounterChoice}. The number on the wall was: {wallNumber}"
       },
       {
         "eventCommand": "WAIT",

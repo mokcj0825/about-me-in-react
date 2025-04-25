@@ -11,6 +11,8 @@ export interface RequestSelectionEvent {
     eventCommand: EventCommand.REQUEST_SELECTION;
     option: SelectionOption[];
     storageKey: string;
+    valueType?: 'STRING' | 'NUMBER' | 'BOOLEAN';
+    actionToStorage?: 'SET' | 'APPEND' | 'REMOVE';
 }
 
 export const isRequestSelectionEvent = (event: any): event is RequestSelectionEvent => {

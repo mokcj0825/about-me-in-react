@@ -218,8 +218,34 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const handleSelection = useCallback((value: string) => {
         setSelection(value);
         if (currentEvent && isRequestSelectionEvent(currentEvent)) {
-            // Store the selection
-            localStorage.setItem(currentEvent.storageKey, value);
+            // Determine the action to take based on actionToStorage
+            const action = currentEvent.actionToStorage || 'SET';
+            
+            // Process the value based on valueType
+            let processedValue = value;
+            if (currentEvent.valueType === 'NUMBER') {
+                processedValue = value.toString();
+            } else if (currentEvent.valueType === 'BOOLEAN') {
+                processedValue = value.toString();
+            }
+            
+            // Handle storage based on action
+            switch (action) {
+                case 'SET':
+                    localStorage.setItem(currentEvent.storageKey, processedValue);
+                    break;
+                case 'APPEND':
+                    const existingValue = localStorage.getItem(currentEvent.storageKey) || '';
+                    localStorage.setItem(currentEvent.storageKey, existingValue + ',' + processedValue);
+                    break;
+                case 'REMOVE':
+                    const currentValue = localStorage.getItem(currentEvent.storageKey) || '';
+                    const values = currentValue.split(',').filter(v => v !== processedValue);
+                    localStorage.setItem(currentEvent.storageKey, values.join(','));
+                    break;
+                default:
+                    localStorage.setItem(currentEvent.storageKey, processedValue);
+            }
             
             // Move to next event without clearing the message
             const nextIndex = currentEventIndex + 1;
