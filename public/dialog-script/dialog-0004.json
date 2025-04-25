@@ -1,0 +1,83 @@
+{
+    "events": [
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "Narrator",
+        "position": "MIDDLE",
+        "message": "You find yourself at a crossroads in a mysterious forest. The path ahead splits into two directions."
+      },
+      {
+        "eventCommand": "REQUEST_SELECTION",
+        "option": [
+          {
+            "label": "Take the left path",
+            "value": "left"
+          },
+          {
+            "label": "Take the right path",
+            "value": "right"
+          }
+        ],
+        "storageKey": "pathChoice"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "Narrator",
+        "position": "MIDDLE",
+        "message": "You've made your choice. Let's see what awaits..."
+      },
+      {
+        "eventCommand": "WAIT",
+        "duration": 1000
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "Narrator",
+        "position": "MIDDLE",
+        "message": "As you proceed, you encounter another decision point."
+      },
+      {
+        "eventCommand": "REQUEST_SELECTION",
+        "option": [
+          {
+            "label": "Approach the mysterious figure",
+            "value": "approach"
+          },
+          {
+            "label": "Hide behind a tree",
+            "value": "hide"
+          },
+          {
+            "label": "Call out to them",
+            "value": "call"
+          }
+        ],
+        "storageKey": "encounterChoice"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "Narrator",
+        "position": "MIDDLE",
+        "message": "Your choice will determine the outcome of this encounter..."
+      },
+      {
+        "eventCommand": "WAIT",
+        "duration": 1500
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "Narrator",
+        "position": "MIDDLE",
+        "message": "The story continues based on your choices. Your first choice was: {pathChoice} and your second choice was: {encounterChoice}"
+      },
+      {
+        "eventCommand": "WAIT",
+        "duration": 2000
+      }
+    ],
+    "finishEvent": {
+      "nextScene": "DIALOG",
+      "nextScript": "0005",
+      "shouldClose": false
+    }
+  }

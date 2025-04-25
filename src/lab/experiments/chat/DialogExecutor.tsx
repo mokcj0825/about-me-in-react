@@ -9,6 +9,7 @@ import ClearMessage from './execution/ClearMessage';
 import { isWaitEvent } from './execution/Wait';
 import Wait from './execution/Wait';
 import {DialogEvent} from "./utils/DialogEvent";
+import RequestSelection, { isRequestSelectionEvent, RequestSelectionEvent } from './execution/RequestSelection';
 
 // Constants for configuration
 const DIALOG_CONFIG = {
@@ -161,6 +162,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const [history, setHistory] = useState<DialogEvent[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [messageVisible, setMessageVisible] = useState(true); // Track if message should be visible
+    const [selection, setSelection] = useState<string | null>(null);
     const onDialogEndRef = useRef(onDialogEnd);
     const navigate = useNavigate();
     
@@ -212,6 +214,39 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         }
     }, [currentScript, currentEventIndex, handleFinishEvent]);
 
+    // Handle selection from RequestSelection component
+    const handleSelection = useCallback((value: string) => {
+        setSelection(value);
+        if (currentEvent && isRequestSelectionEvent(currentEvent)) {
+            // Store the selection
+            localStorage.setItem(currentEvent.storageKey, value);
+            
+            // Move to next event without clearing the message
+            const nextIndex = currentEventIndex + 1;
+            
+            if (nextIndex < (currentScript?.events.length || 0)) {
+                // Set the next event
+                setCurrentEventIndex(nextIndex);
+                const nextEvent = currentScript?.events[nextIndex];
+                setCurrentEvent(nextEvent || null);
+                
+                // Update message visibility based on event type
+                if (nextEvent && isShowMessageEvent(nextEvent)) {
+                    setMessageVisible(true);
+                    setHistory(prev => [...prev, nextEvent]);
+                } else if (nextEvent && isClearMessageEvent(nextEvent)) {
+                    setMessageVisible(false);
+                }
+                // For other event types, maintain current message visibility
+            } else {
+                // All events completed, handle finish event
+                if (currentScript) {
+                    handleFinishEvent(currentScript.finishEvent);
+                }
+            }
+        }
+    }, [currentEvent, currentEventIndex, currentScript, handleFinishEvent]);
+
     // Handle command execution based on the current event
     const commandExecution = useMemo(() => {
         if (!currentEvent) return null;
@@ -238,10 +273,33 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                 
                 // If no message should be visible, just wait
                 return <Wait event={currentEvent} onComplete={advanceToNextMessage} />;
+            case EventCommand.REQUEST_SELECTION:
+                // For REQUEST_SELECTION, we need to show the last message if it exists
+                if (messageVisible && history.length > 0) {
+                    const lastMessageEvent = history[history.length - 1];
+                    if (isShowMessageEvent(lastMessageEvent)) {
+                        return (
+                            <>
+                                <ShowMessage event={lastMessageEvent} />
+                                <RequestSelection
+                                    event={currentEvent as RequestSelectionEvent}
+                                    onSelect={handleSelection}
+                                />
+                            </>
+                        );
+                    }
+                }
+                // If no message to show, just show the selection
+                return (
+                    <RequestSelection
+                        event={currentEvent as RequestSelectionEvent}
+                        onSelect={handleSelection}
+                    />
+                );
             default:
                 return null;
         }
-    }, [currentEvent, advanceToNextMessage, history, messageVisible]);
+    }, [currentEvent, advanceToNextMessage, history, messageVisible, handleSelection]);
 
     // Load the dialog script
     useEffect(() => {
@@ -296,7 +354,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     };
     
     // Handle button clicks
-    const handleSaveClick = (e: React.MouseEvent) => {
+    const handleSaveClick = (e: React.MouseEvent) => { 
         e.stopPropagation(); // Prevent advancing dialog
         console.log("Save clicked");
         // Add save functionality here
@@ -375,6 +433,13 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                         </HistoryEntry>
                     ))}
                 </HistoryPanel>
+
+                {currentEvent && isRequestSelectionEvent(currentEvent) && (
+                    <RequestSelection
+                        event={currentEvent}
+                        onSelect={handleSelection}
+                    />
+                )}
             </ContentLayer>
         </DialogContainer>
     );
