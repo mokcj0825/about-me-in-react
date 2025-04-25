@@ -218,35 +218,6 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const handleSelection = useCallback((value: string) => {
         setSelection(value);
         if (currentEvent && isRequestSelectionEvent(currentEvent)) {
-            // Determine the action to take based on actionToStorage
-            const action = currentEvent.actionToStorage || 'SET';
-            
-            // Process the value based on valueType
-            let processedValue = value;
-            if (currentEvent.valueType === 'NUMBER') {
-                processedValue = value.toString();
-            } else if (currentEvent.valueType === 'BOOLEAN') {
-                processedValue = value.toString();
-            }
-            
-            // Handle storage based on action
-            switch (action) {
-                case 'SET':
-                    localStorage.setItem(currentEvent.storageKey, processedValue);
-                    break;
-                case 'APPEND':
-                    const existingValue = localStorage.getItem(currentEvent.storageKey) || '';
-                    localStorage.setItem(currentEvent.storageKey, existingValue + ',' + processedValue);
-                    break;
-                case 'REMOVE':
-                    const currentValue = localStorage.getItem(currentEvent.storageKey) || '';
-                    const values = currentValue.split(',').filter(v => v !== processedValue);
-                    localStorage.setItem(currentEvent.storageKey, values.join(','));
-                    break;
-                default:
-                    localStorage.setItem(currentEvent.storageKey, processedValue);
-            }
-            
             // Move to next event without clearing the message
             const nextIndex = currentEventIndex + 1;
             
@@ -277,46 +248,36 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const commandExecution = useMemo(() => {
         if (!currentEvent) return null;
         
+        // Helper function to render with retained message if needed
+        const renderWithRetainedMessage = (currentComponent: React.ReactNode) => {
+            // If message is visible and we have history, show the last message
+            if (messageVisible && history.length > 0) {
+                const lastMessageEvent = history[history.length - 1];
+                if (isShowMessageEvent(lastMessageEvent)) {
+                    return (
+                        <>
+                            <ShowMessage event={lastMessageEvent} />
+                            {currentComponent}
+                        </>
+                    );
+                }
+            }
+            return currentComponent;
+        };
+        
         switch (currentEvent.eventCommand) {
             case EventCommand.SHOW_MESSAGE:
                 return <ShowMessage event={currentEvent} />;
             case EventCommand.CLEAR_MESSAGE:
                 return <ClearMessage event={currentEvent} onComplete={advanceToNextMessage} />;
             case EventCommand.WAIT:
-                // For WAIT command, we need to check if there's a message to show
-                // Only show the last message if it hasn't been cleared
-                if (messageVisible && history.length > 0) {
-                    const lastMessageEvent = history[history.length - 1];
-                    if (isShowMessageEvent(lastMessageEvent)) {
-                        return (
-                            <>
-                                <ShowMessage event={lastMessageEvent} />
-                                <Wait event={currentEvent} onComplete={advanceToNextMessage} />
-                            </>
-                        );
-                    }
-                }
-                
-                // If no message should be visible, just wait
-                return <Wait event={currentEvent} onComplete={advanceToNextMessage} />;
+                // For WAIT command, retain the last message if it exists
+                return renderWithRetainedMessage(
+                    <Wait event={currentEvent} onComplete={advanceToNextMessage} />
+                );
             case EventCommand.REQUEST_SELECTION:
-                // For REQUEST_SELECTION, we need to show the last message if it exists
-                if (messageVisible && history.length > 0) {
-                    const lastMessageEvent = history[history.length - 1];
-                    if (isShowMessageEvent(lastMessageEvent)) {
-                        return (
-                            <>
-                                <ShowMessage event={lastMessageEvent} />
-                                <RequestSelection
-                                    event={currentEvent as RequestSelectionEvent}
-                                    onSelect={handleSelection}
-                                />
-                            </>
-                        );
-                    }
-                }
-                // If no message to show, just show the selection
-                return (
+                // For REQUEST_SELECTION, retain the last message if it exists
+                return renderWithRetainedMessage(
                     <RequestSelection
                         event={currentEvent as RequestSelectionEvent}
                         onSelect={handleSelection}

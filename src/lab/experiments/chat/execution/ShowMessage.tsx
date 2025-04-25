@@ -44,17 +44,6 @@ const ShowMessage: React.FC<ShowMessageProps> = ({ event }) => {
 		return `/character-sprite/${unitRes.toLowerCase()}.png`;
 	};
 
-	// Function to replace template variables in the message
-	const processMessage = (message: string): string => {
-		// Match patterns like {variableName}
-		return message.replace(/\{([^}]+)\}/g, (match, variableName) => {
-			// Get the value from localStorage
-			const value = localStorage.getItem(variableName);
-			// Return the value or the original placeholder if not found
-			return value || match;
-		});
-	};
-
 	return (
 		<>
 			{/* Character sprite based on position */}
@@ -72,12 +61,29 @@ const ShowMessage: React.FC<ShowMessageProps> = ({ event }) => {
 
 			<VisualNovelTextBox className="ui-element">
 				{unitRes && <NameBox>{unitRes}</NameBox>}
-				<MessageText>{processMessage(message)}</MessageText>
+				<MessageText>{MessageUtils.processMessage(message)}</MessageText>
 				<ContinueIndicator />
 			</VisualNovelTextBox>
 		</>
 	);
 };
+
+class MessageUtils {
+	/**
+	 * Process a message with template variables
+	 * @param message The message with template variables
+	 * @returns The processed message with variables replaced
+	 */
+	public static processMessage(message: string): string {
+		// Match patterns like {variableName}
+		return message.replace(/\{([^}]+)\}/g, (match, variableName) => {
+			// Get the value from localStorage
+			const value = localStorage.getItem(variableName);
+			// Return the value or the original placeholder if not found
+			return value || match;
+		});
+	}
+}
 
 // Styled components
 const CharacterSprite = styled.div<{ $position: SpritePosition; $active: boolean }>`

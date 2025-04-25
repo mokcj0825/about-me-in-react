@@ -29,13 +29,47 @@ const RequestSelection: React.FC<Props> = ({ event, onSelect }) => {
         return null;
     }
 
+    const handleSelection = (value: string) => {
+        // Process the value based on valueType
+        let processedValue = value;
+        if (event.valueType === 'NUMBER') {
+            processedValue = value.toString();
+        } else if (event.valueType === 'BOOLEAN') {
+            processedValue = value.toString();
+        }
+        
+        // Determine the action to take based on actionToStorage
+        const action = event.actionToStorage || 'SET';
+        
+        // Handle storage based on action
+        switch (action) {
+            case 'SET':
+                localStorage.setItem(event.storageKey, processedValue);
+                break;
+            case 'APPEND':
+                const existingValue = localStorage.getItem(event.storageKey) || '';
+                localStorage.setItem(event.storageKey, existingValue + ',' + processedValue);
+                break;
+            case 'REMOVE':
+                const currentValue = localStorage.getItem(event.storageKey) || '';
+                const values = currentValue.split(',').filter(v => v !== processedValue);
+                localStorage.setItem(event.storageKey, values.join(','));
+                break;
+            default:
+                localStorage.setItem(event.storageKey, processedValue);
+        }
+        
+        // Call the parent's onSelect callback
+        onSelect(value);
+    };
+
     return (
         <SelectionContainer>
             <OptionList>
                 {event.option.map((option, index) => (
                     <OptionButton
                         key={index}
-                        onClick={() => onSelect(option.value)}
+                        onClick={() => handleSelection(option.value)}
                     >
                         {option.label}
                     </OptionButton>
