@@ -85,7 +85,7 @@
           "id": "CHAT-01",
           "name": "Chat mimic",
           "description": "Simulate chat functionality",
-          "status": "in-progress",
+          "status": "completed",
           "url": "/labs/chat"
         }
       ]
