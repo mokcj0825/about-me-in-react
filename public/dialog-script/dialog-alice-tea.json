@@ -7,7 +7,7 @@
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "alice",
+      "characterName": "alice",
       "message": "Wonderful! I'll put the kettle on."
     },
     {
@@ -16,7 +16,7 @@
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "alice",
+      "characterName": "alice",
       "message": "Here's your tea. How do you like it?"
     },
     {

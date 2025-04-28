@@ -7,8 +7,7 @@ import { DialogEvent } from '../utils/DialogEvent';
 export interface ShowMessageEvent extends DialogEvent {
 	eventCommand: EventCommand.SHOW_MESSAGE;
 	message: string;
-	unitRes?: string;
-	position?: SpritePosition;
+	characterName?: string;
 }
 
 // Define SpritePosition enum here to avoid circular dependencies
@@ -34,7 +33,7 @@ const ShowMessage: React.FC<ShowMessageProps> = ({ event }) => {
 	}
 
 	// Now TypeScript knows these properties exist
-	const { unitRes, position = SpritePosition.MIDDLE, message } = event;
+	const { characterName = SpritePosition.MIDDLE, message } = event;
 
 	// Function to get sprite image path based on unitRes
 	const getSpriteImagePath = (unitRes: string | null): string | null => {
@@ -47,7 +46,7 @@ const ShowMessage: React.FC<ShowMessageProps> = ({ event }) => {
 	return (
 		<>
 			{/* Character sprite based on position */}
-			{unitRes && getSpriteImagePath(unitRes) && (
+			{/*unitRes && getSpriteImagePath(unitRes) && (
 				<CharacterSprite 
 					$position={position}
 					$active={true}
@@ -57,10 +56,10 @@ const ShowMessage: React.FC<ShowMessageProps> = ({ event }) => {
 						alt={unitRes}
 					/>
 				</CharacterSprite>
-			)}
+			)*/}
 
 			<VisualNovelTextBox className="ui-element">
-				{unitRes && <NameBox>{unitRes}</NameBox>}
+				{characterName && <NameBox>{characterName}</NameBox>}
 				<MessageText>{MessageUtils.processMessage(message)}</MessageText>
 				<ContinueIndicator />
 			</VisualNovelTextBox>
@@ -93,6 +92,7 @@ const CharacterSprite = styled.div<{ $position: SpritePosition; $active: boolean
 	filter: ${props => props.$active ? 'none' : 'grayscale(30%) brightness(80%)'};
 	transform-origin: bottom center;
 	z-index: ${props => props.$active ? 5 : 3};
+	/* Removed transition effects for immediate character changes */
 	
 	${props => {
 		switch (props.$position) {
@@ -112,6 +112,7 @@ const SpriteImage = styled.img`
 	max-height: 500px;
 	max-width: 300px;
 	filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+	/* No transitions for immediate image changes */
 `;
 
 const VisualNovelTextBox = styled.div`

@@ -1,21 +1,20 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import { EventCommand } from './EventCommand';
 import { isShowMessageEvent } from './execution/ShowMessage';
 import ShowMessage from './execution/ShowMessage';
 import { isClearMessageEvent } from './execution/ClearMessage';
 import ClearMessage from './execution/ClearMessage';
-import { isWaitEvent } from './execution/Wait';
 import Wait from './execution/Wait';
 import {DialogEvent} from "./utils/DialogEvent";
 import RequestSelection, { isRequestSelectionEvent, RequestSelectionEvent } from './execution/RequestSelection';
-import SetBackground, { isSetBackgroundEvent, SetBackgroundEvent } from './execution/SetBackground';
-import RemoveBackground, { isRemoveBackgroundEvent, RemoveBackgroundEvent } from './execution/RemoveBackground';
+import SetBackground, { SetBackgroundEvent } from './execution/SetBackground';
+import RemoveBackground, { RemoveBackgroundEvent } from './execution/RemoveBackground';
+import { renderWithRetainedMessage, isDuplicateEvent, processVariableSubstitution } from './executor-utils/DialogExecutorUtils';
+import { DialogContainer, BackgroundLayer, BackgroundImage, ContentLayer, ControlPanel, ControlButton, ButtonIcon, ButtonLabel, HistoryPanel, HistoryEntry, HistoryName, HistoryText } from './executor-utils/executor-styled-div';
 
 // Constants for configuration
 const DIALOG_CONFIG = {
-    TRANSITION_DURATION: 500,
     NAVIGATION: {
         BASE_PATH: '/labs/chat/',
     },
@@ -32,135 +31,6 @@ export interface DialogScript {
     events: DialogEvent[];
     finishEvent: FinishEvent;
 }
-
-// Styled components
-const DialogContainer = styled.div`
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    font-family: 'Crimson Text', serif;
-`;
-
-const BackgroundLayer = styled.div<{ $isVisible: boolean }>`
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    opacity: ${props => props.$isVisible ? 1 : 0};
-    transition: opacity ${DIALOG_CONFIG.TRANSITION_DURATION}ms ease-in-out;
-    z-index: 1;
-`;
-
-const BackgroundImage = styled.div`
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0;
-    z-index: 0;
-`;
-
-const ContentLayer = styled.div`
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer; /* Make the entire content layer clickable */
-`;
-
-// Control panel for menu buttons
-const ControlPanel = styled.div`
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    z-index: 10;
-`;
-
-const ControlButton = styled.button`
-    background: #a67c52;
-    color: white;
-    border: 2px solid #8c5e2a;
-    border-radius: 5px;
-    width: 50px;
-    height: 50px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    
-    &:hover {
-        background: #c89c72;
-        transform: translateY(-2px);
-    }
-    
-    &:active {
-        transform: translateY(1px);
-        box-shadow: 0 2px 3px rgba(0, 0, 0, 0.3);
-    }
-`;
-
-const ButtonIcon = styled.div`
-    font-size: 20px;
-    margin-bottom: 3px;
-`;
-
-const ButtonLabel = styled.div`
-    font-size: 10px;
-    text-transform: uppercase;
-`;
-
-// Dialog history panel
-const HistoryPanel = styled.div<{ $visible: boolean }>`
-    position: absolute;
-    top: 10%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80%;
-    height: 70%;
-    background: rgba(0, 0, 0, 0.9);
-    border: 2px solid #a67c52;
-    border-radius: 10px;
-    padding: 20px;
-    color: white;
-    z-index: 20;
-    display: ${props => props.$visible ? 'block' : 'none'};
-    overflow-y: auto;
-`;
-
-const HistoryEntry = styled.div`
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #a67c52;
-`;
-
-const HistoryName = styled.div`
-    font-weight: bold;
-    color: #a67c52;
-    margin-bottom: 5px;
-`;
-
-const HistoryText = styled.div`
-    font-size: 16px;
-    line-height: 1.4;
-`;
 
 interface Props {
     scriptId: string;
@@ -190,20 +60,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         // Handle navigation based on finish event
         if (finishEvent.nextScene && finishEvent.nextScript) {
             // Process variable substitution in nextScript
-            let nextScript = finishEvent.nextScript;
-            
-            // Check if nextScript contains variables in the format {variableName}
-            const variableRegex = /\{([^}]+)\}/g;
-            const matches = nextScript.match(variableRegex);
-            
-            if (matches) {
-                // Replace each variable with its value from localStorage
-                matches.forEach(match => {
-                    const variableName = match.replace(/[{}]/g, '');
-                    const variableValue = localStorage.getItem(variableName) || '';
-                    nextScript = nextScript.replace(match, variableValue);
-                });
-            }
+            let nextScript = processVariableSubstitution(finishEvent.nextScript);
             
             switch (finishEvent.nextScene) {
                 case 'DIALOG':
@@ -239,13 +96,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                 // Check if this event is already in the history to prevent duplicates
                 setHistory(prev => {
                     // Check if the event is already in the history
-                    const isDuplicate = prev.some(event => 
-                        event === nextEvent || 
-                        (isShowMessageEvent(event) && 
-                         isShowMessageEvent(nextEvent) && 
-                         event.message === nextEvent.message && 
-                         event.unitRes === nextEvent.unitRes)
-                    );
+                    const isDuplicate = isDuplicateEvent(nextEvent, prev);
                     
                     // Only add to history if it's not a duplicate
                     return isDuplicate ? prev : [...prev, nextEvent];
@@ -293,23 +144,6 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const commandExecution = useMemo(() => {
         if (!currentEvent) return null;
         
-        // Helper function to render with retained message if needed
-        const renderWithRetainedMessage = (currentComponent: React.ReactNode) => {
-            // If message is visible and we have history, show the last message
-            if (messageVisible && history.length > 0) {
-                const lastMessageEvent = history[history.length - 1];
-                if (isShowMessageEvent(lastMessageEvent)) {
-                    return (
-                        <>
-                            <ShowMessage event={lastMessageEvent} />
-                            {currentComponent}
-                        </>
-                    );
-                }
-            }
-            return currentComponent;
-        };
-        
         switch (currentEvent.eventCommand) {
             case EventCommand.SHOW_MESSAGE:
                 return <ShowMessage event={currentEvent} />;
@@ -318,7 +152,8 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
             case EventCommand.WAIT:
                 // For WAIT command, retain the last message if it exists
                 return renderWithRetainedMessage(
-                    <Wait event={currentEvent} onComplete={advanceToNextMessage} />
+                    <Wait event={currentEvent} onComplete={advanceToNextMessage} />,
+                    messageVisible
                 );
             case EventCommand.REQUEST_SELECTION:
                 // For REQUEST_SELECTION, retain the last message if it exists
@@ -326,7 +161,8 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                     <RequestSelection
                         event={currentEvent as RequestSelectionEvent}
                         onSelect={handleSelection}
-                    />
+                    />,
+                    messageVisible
                 );
             case EventCommand.SET_BACKGROUND:
                 return <SetBackground event={currentEvent as SetBackgroundEvent} onComplete={advanceToNextMessage} />;
@@ -335,7 +171,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
             default:
                 return null;
         }
-    }, [currentEvent, advanceToNextMessage, history, messageVisible, handleSelection]);
+    }, [currentEvent, advanceToNextMessage, handleSelection, messageVisible]);
 
     // Load the dialog script
     useEffect(() => {
@@ -398,19 +234,16 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const handleSaveClick = (e: React.MouseEvent) => { 
         e.stopPropagation(); // Prevent advancing dialog
         console.log("Save clicked");
-        // Add save functionality here
     };
     
     const handleLoadClick = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent advancing dialog
         console.log("Load clicked");
-        // Add load functionality here
     };
     
     const handleConfigClick = (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent advancing dialog
         console.log("Config clicked");
-        // Add configuration functionality here
     };
     
     const handleHistoryClick = (e: React.MouseEvent) => {
@@ -427,7 +260,6 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                 {/* Command execution based on event type */}
                 {commandExecution}
 
-                {/* Control panel */}
                 <ControlPanel className="ui-element">
                     <ControlButton 
                         className="ui-element"
@@ -459,7 +291,6 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                     </ControlButton>
                 </ControlPanel>
 
-                {/* History panel */}
                 <HistoryPanel 
                     $visible={showHistory} 
                     className="ui-element"

@@ -2,15 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DialogExecutor } from './DialogExecutor';
 
-// Constants for configuration
-const CHAT_CONFIG = {
-	DIALOG_END_DELAY: 1000,
-	TRANSITION_DURATION: 500,
-	NAVIGATION: {
-		BASE_PATH: '/labs/chat/',
-	},
-} as const;
-
 interface Props {
 	dialogScriptId: string;
 	onChatEnd?: () => void;
@@ -22,7 +13,6 @@ export const ChatCore: React.FC<Props> = ({
 }) => {
 	const [isVisible, setIsVisible] = useState(false);
 	const [currentScriptId, setCurrentScriptId] = useState(dialogScriptId);
-	const navigate = useNavigate();
 	
 	// Update currentScriptId when dialogScriptId prop changes
 	useEffect(() => {

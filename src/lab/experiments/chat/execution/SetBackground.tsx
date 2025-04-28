@@ -33,30 +33,13 @@ const SetBackground: React.FC<Props> = ({ event, onComplete }) => {
             // Construct the full path using the base path
             const fullImagePath = `${BACKGROUND_CONFIG.BASE_PATH}${event.imagePath}`;
             
-            // Check if transitionDuration is 0 or undefined
-            if (event.transitionDuration === 0 || event.transitionDuration === undefined) {
-                // Apply immediately without transition
-                backgroundElement.style.transition = 'none';
-                backgroundElement.style.backgroundImage = `url(${fullImagePath})`;
-                backgroundElement.style.opacity = '1';
-                
-                // Call onComplete immediately
-                onComplete();
-            } else {
-                // Apply with transition
-                backgroundElement.style.transition = `opacity ${event.transitionDuration}ms ease-in-out`;
-                backgroundElement.style.backgroundImage = `url(${fullImagePath})`;
-                backgroundElement.style.opacity = '1';
-                
-                // Call onComplete after the transition
-                const timer = setTimeout(() => {
-                    onComplete();
-                }, event.transitionDuration);
-                
-                return () => {
-                    clearTimeout(timer);
-                };
-            }
+            // Always apply immediately without transition
+            backgroundElement.style.transition = 'none';
+            backgroundElement.style.backgroundImage = `url(${fullImagePath})`;
+            backgroundElement.style.opacity = '1';
+            
+            // Call onComplete immediately
+            onComplete();
         } else {
             // If no background element found, call onComplete immediately
             onComplete();

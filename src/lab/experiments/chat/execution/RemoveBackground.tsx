@@ -24,30 +24,13 @@ const RemoveBackground: React.FC<Props> = ({ event, onComplete }) => {
         // Remove the background image
         const backgroundElement = document.getElementById('dialog-background');
         if (backgroundElement) {
-            // Check if transitionDuration is 0 or undefined
-            if (event.transitionDuration === 0 || event.transitionDuration === undefined) {
-                // Remove immediately without transition
-                backgroundElement.style.transition = 'none';
-                backgroundElement.style.opacity = '0';
-                backgroundElement.style.backgroundImage = 'none';
-                
-                // Call onComplete immediately
-                onComplete();
-            } else {
-                // Remove with transition
-                backgroundElement.style.transition = `opacity ${event.transitionDuration}ms ease-in-out`;
-                backgroundElement.style.opacity = '0';
-                
-                // After the transition, remove the background image
-                const timer = setTimeout(() => {
-                    backgroundElement.style.backgroundImage = 'none';
-                    onComplete();
-                }, event.transitionDuration);
-                
-                return () => {
-                    clearTimeout(timer);
-                };
-            }
+            // Always remove immediately without transition
+            backgroundElement.style.transition = 'none';
+            backgroundElement.style.opacity = '0';
+            backgroundElement.style.backgroundImage = 'none';
+            
+            // Call onComplete immediately
+            onComplete();
         } else {
             // If no background element found, call onComplete immediately
             onComplete();

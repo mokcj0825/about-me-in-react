@@ -3,7 +3,7 @@
     {
       "eventCommand": "SHOW_MESSAGE",
       "message": "This is the first message that will be shown.",
-      "unitRes": null
+      "characterName": null
     },
     {
       "eventCommand": "CLEAR_MESSAGE"
@@ -11,7 +11,7 @@
     {
       "eventCommand": "SHOW_MESSAGE",
       "message": "This is the second message that will be shown after clearing.",
-      "unitRes": null
+      "characterName": null
     }
   ],
   "finishEvent": {

@@ -6,38 +6,32 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "demochara-001",
-        "position": "LEFT",
+        "characterName": "demochara-001",
         "message": "This is a testing message for top position."
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": null,
-        "position": "MIDDLE",
+        "characterName": null,
         "message": "This is a testing message for middle position."
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "demochara-002",
-        "position": "RIGHT",
+        "characterName": "demochara-002",
         "message": "This is a testing message for bottom position."
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "demochara-001",
-        "position": "LEFT",
+        "characterName": "demochara-001",
         "message": "This is a second testing message for top position."
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": null,
-        "position": "MIDDLE",
+        "characterName": null,
         "message": "This is a second testing message for middle position."
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "demochara-002",
-        "position": "RIGHT",
+        "characterName": "demochara-002",
         "message": "This is a second testing message for bottom position."
       }
     ],

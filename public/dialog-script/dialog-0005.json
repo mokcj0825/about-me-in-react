@@ -2,7 +2,7 @@
   "events": [
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "narrator",
+      "characterName": "narrator",
       "message": "Today who do you want to visit?"
     },
     {
