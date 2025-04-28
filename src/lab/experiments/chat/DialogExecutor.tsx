@@ -174,10 +174,26 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const handleFinishEvent = useCallback((finishEvent: FinishEvent) => {
         // Handle navigation based on finish event
         if (finishEvent.nextScene && finishEvent.nextScript) {
+            // Process variable substitution in nextScript
+            let nextScript = finishEvent.nextScript;
+            
+            // Check if nextScript contains variables in the format {variableName}
+            const variableRegex = /\{([^}]+)\}/g;
+            const matches = nextScript.match(variableRegex);
+            
+            if (matches) {
+                // Replace each variable with its value from localStorage
+                matches.forEach(match => {
+                    const variableName = match.replace(/[{}]/g, '');
+                    const variableValue = localStorage.getItem(variableName) || '';
+                    nextScript = nextScript.replace(match, variableValue);
+                });
+            }
+            
             switch (finishEvent.nextScene) {
                 case 'DIALOG':
                     // Navigate to the next scene/script
-                    navigate(`${DIALOG_CONFIG.NAVIGATION.BASE_PATH}${finishEvent.nextScript}`);
+                    navigate(`${DIALOG_CONFIG.NAVIGATION.BASE_PATH}${nextScript}`);
                     break;
                 default:
                     break;

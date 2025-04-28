@@ -1,0 +1,23 @@
+{
+  "events": [
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "alice",
+      "message": "Oh, that's a shame. Maybe next time then."
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "alice",
+      "message": "Goodbye! Come visit again soon!"
+    },
+    {
+      "eventCommand": "WAIT",
+      "duration": 2000
+    }
+  ],
+  "finishEvent": {
+    "nextScene": "DIALOG",
+    "nextScript": "dialog-0000",
+    "shouldClose": false
+  }
+} 
