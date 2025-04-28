@@ -1,6 +1,11 @@
 {
   "events": [
     {
+      "eventCommand": "SET_BACKGROUND",
+      "imagePath": "background-forest.png",
+      "transitionDuration": 0
+    },
+    {
       "eventCommand": "SHOW_MESSAGE",
       "unitRes": "lucy",
       "message": "Oh, it's you! I wasn't expecting visitors today."

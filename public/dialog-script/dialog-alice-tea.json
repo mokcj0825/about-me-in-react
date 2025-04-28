@@ -1,6 +1,11 @@
 {
   "events": [
     {
+      "eventCommand": "SET_BACKGROUND",
+      "imagePath": "background-cafe.png",
+      "transitionDuration": 0
+    },
+    {
       "eventCommand": "SHOW_MESSAGE",
       "unitRes": "alice",
       "message": "Wonderful! I'll put the kettle on."

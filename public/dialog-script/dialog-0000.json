@@ -1,6 +1,10 @@
 {
     "events": [
       {
+        "eventCommand": "SET_BACKGROUND",
+        "imagePath": "background-cafe.png"
+      },
+      {
         "eventCommand": "SHOW_MESSAGE",
         "unitRes": "demochara-001",
         "position": "LEFT",

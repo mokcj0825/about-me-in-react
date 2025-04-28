@@ -10,6 +10,8 @@ import { isWaitEvent } from './execution/Wait';
 import Wait from './execution/Wait';
 import {DialogEvent} from "./utils/DialogEvent";
 import RequestSelection, { isRequestSelectionEvent, RequestSelectionEvent } from './execution/RequestSelection';
+import SetBackground, { isSetBackgroundEvent, SetBackgroundEvent } from './execution/SetBackground';
+import RemoveBackground, { isRemoveBackgroundEvent, RemoveBackgroundEvent } from './execution/RemoveBackground';
 
 // Constants for configuration
 const DIALOG_CONFIG = {
@@ -46,10 +48,23 @@ const BackgroundLayer = styled.div<{ $isVisible: boolean }>`
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: transparent;
     opacity: ${props => props.$isVisible ? 1 : 0};
     transition: opacity ${DIALOG_CONFIG.TRANSITION_DURATION}ms ease-in-out;
     z-index: 1;
+`;
+
+const BackgroundImage = styled.div`
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    z-index: 0;
 `;
 
 const ContentLayer = styled.div`
@@ -220,7 +235,21 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
             // Update message visibility based on event type
             if (isShowMessageEvent(nextEvent)) {
                 setMessageVisible(true);
-                setHistory(prev => [...prev, nextEvent]);
+                
+                // Check if this event is already in the history to prevent duplicates
+                setHistory(prev => {
+                    // Check if the event is already in the history
+                    const isDuplicate = prev.some(event => 
+                        event === nextEvent || 
+                        (isShowMessageEvent(event) && 
+                         isShowMessageEvent(nextEvent) && 
+                         event.message === nextEvent.message && 
+                         event.unitRes === nextEvent.unitRes)
+                    );
+                    
+                    // Only add to history if it's not a duplicate
+                    return isDuplicate ? prev : [...prev, nextEvent];
+                });
             } else if (isClearMessageEvent(nextEvent)) {
                 setMessageVisible(false);
             }
@@ -299,6 +328,10 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                         onSelect={handleSelection}
                     />
                 );
+            case EventCommand.SET_BACKGROUND:
+                return <SetBackground event={currentEvent as SetBackgroundEvent} onComplete={advanceToNextMessage} />;
+            case EventCommand.REMOVE_BACKGROUND:
+                return <RemoveBackground event={currentEvent as RemoveBackgroundEvent} onComplete={advanceToNextMessage} />;
             default:
                 return null;
         }
@@ -348,6 +381,11 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
             return;
         }
         
+        // Don't advance if the current event is a RequestSelection event
+        if (currentEvent && isRequestSelectionEvent(currentEvent)) {
+            return;
+        }
+        
         // Only advance if we're not clicking on UI elements (menu buttons or icons)
         if (e.target === e.currentTarget || 
             (e.currentTarget as Node).contains(e.target as Node) && 
@@ -384,6 +422,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     return (
         <DialogContainer>
             <BackgroundLayer $isVisible={isVisible} />
+            <BackgroundImage id="dialog-background" />
             <ContentLayer onClick={handleContentClick}>
                 {/* Command execution based on event type */}
                 {commandExecution}
