@@ -1,0 +1,42 @@
+{
+  "events": [
+    {
+      "eventCommand": "SET_BACKGROUND",
+      "imagePath": "background-forest.png",
+      "transitionDuration": 0
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "lucy",
+      "message": "Oh, it's you! I wasn't expecting visitors today."
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "lucy",
+      "message": "Would you like to help me with my garden?"
+    },
+    {
+      "eventCommand": "REQUEST_SELECTION",
+      "option": [
+        {
+          "label": "Yes, I'd love to",
+          "value": "yes",
+          "nextScriptId": "lucy-garden"
+        },
+        {
+          "label": "No, I'm just passing by",
+          "value": "no",
+          "nextScriptId": "lucy-goodbye"
+        }
+      ],
+      "valueType": "STRING",
+      "storageKey": "gardenChoice",
+      "actionToStorage": "SET"
+    }
+  ],
+  "finishEvent": {
+    "nextScene": "DIALOG",
+    "nextScript": "0000",
+    "shouldClose": false
+  }
+} 

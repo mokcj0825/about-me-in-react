@@ -73,8 +73,20 @@
           "id": "DPT-1",
           "name": "Design pattern setup",
           "description": "Design pattern",
-          "status": "in-progress",
+          "status": "completed",
           "url": "/labs/dpt"
+        }
+      ]
+    },
+    {
+      "title": "Dialog Test",
+      "experiments": [
+        {
+          "id": "CHAT-01",
+          "name": "Chat mimic",
+          "description": "Simulate chat functionality",
+          "status": "completed",
+          "url": "/labs/chat"
         }
       ]
     }

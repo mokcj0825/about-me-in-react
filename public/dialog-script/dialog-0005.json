@@ -1,0 +1,37 @@
+{
+  "events": [
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "narrator",
+      "message": "Today who do you want to visit?"
+    },
+    {
+      "eventCommand": "REQUEST_SELECTION",
+      "option": [
+        {
+          "label": "Alice",
+          "value": "alice",
+          "nextScriptId": "alice"
+        },
+        {
+          "label": "Lucy",
+          "value": "lucy",
+          "nextScriptId": "lucy"
+        },
+        {
+          "label": "Jane",
+          "value": "jane",
+          "nextScriptId": "jane"
+        }
+      ],
+      "valueType": "STRING",
+      "storageKey": "redirection",
+      "actionToStorage": "SET"
+    }
+  ],
+  "finishEvent": {
+    "nextScene": "DIALOG",
+    "nextScript": "{redirection}",
+    "shouldClose": false
+  }
+} 

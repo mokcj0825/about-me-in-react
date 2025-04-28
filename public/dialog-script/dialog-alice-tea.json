@@ -1,0 +1,46 @@
+{
+  "events": [
+    {
+      "eventCommand": "SET_BACKGROUND",
+      "imagePath": "background-cafe.png",
+      "transitionDuration": 0
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "alice",
+      "message": "Wonderful! I'll put the kettle on."
+    },
+    {
+      "eventCommand": "WAIT",
+      "duration": 2000
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "alice",
+      "message": "Here's your tea. How do you like it?"
+    },
+    {
+      "eventCommand": "REQUEST_SELECTION",
+      "option": [
+        {
+          "label": "It's delicious",
+          "value": "delicious",
+          "nextScriptId": "alice-tea-delicious"
+        },
+        {
+          "label": "It's a bit too hot",
+          "value": "hot",
+          "nextScriptId": "alice-tea-hot"
+        }
+      ],
+      "valueType": "STRING",
+      "storageKey": "teaFeedback",
+      "actionToStorage": "SET"
+    }
+  ],
+  "finishEvent": {
+    "nextScene": "DIALOG",
+    "nextScript": "0000",
+    "shouldClose": false
+  }
+} 

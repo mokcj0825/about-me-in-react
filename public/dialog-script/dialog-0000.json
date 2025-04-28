@@ -1,0 +1,49 @@
+{
+    "events": [
+      {
+        "eventCommand": "SET_BACKGROUND",
+        "imagePath": "background-cafe.png"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "demochara-001",
+        "position": "LEFT",
+        "message": "This is a testing message for top position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": null,
+        "position": "MIDDLE",
+        "message": "This is a testing message for middle position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "demochara-002",
+        "position": "RIGHT",
+        "message": "This is a testing message for bottom position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "demochara-001",
+        "position": "LEFT",
+        "message": "This is a second testing message for top position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": null,
+        "position": "MIDDLE",
+        "message": "This is a second testing message for middle position."
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "unitRes": "demochara-002",
+        "position": "RIGHT",
+        "message": "This is a second testing message for bottom position."
+      }
+    ],
+    "finishEvent": {
+      "nextScene": "DIALOG",
+      "nextScript": "0001",
+      "shouldClose": true
+    }
+  }

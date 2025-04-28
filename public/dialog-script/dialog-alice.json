@@ -1,0 +1,37 @@
+{
+  "events": [
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "alice",
+      "message": "Hello there! I'm so glad you came to visit me today."
+    },
+    {
+      "eventCommand": "SHOW_MESSAGE",
+      "unitRes": "alice",
+      "message": "Would you like to stay for tea?"
+    },
+    {
+      "eventCommand": "REQUEST_SELECTION",
+      "option": [
+        {
+          "label": "Yes, please",
+          "value": "alice-tea",
+          "nextScriptId": "alice-tea"
+        },
+        {
+          "label": "No, thank you",
+          "value": "alice-goodbye",
+          "nextScriptId": "alice-goodbye"
+        }
+      ],
+      "valueType": "STRING",
+      "storageKey": "teaChoice",
+      "actionToStorage": "SET"
+    }
+  ],
+  "finishEvent": {
+    "nextScene": "DIALOG",
+    "nextScript": "{teaChoice}",
+    "shouldClose": false
+  }
+} 
