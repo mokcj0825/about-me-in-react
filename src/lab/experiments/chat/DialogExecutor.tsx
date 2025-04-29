@@ -1,24 +1,26 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { EventCommand } from './EventCommand';
+import { EventCommand, CharacterPosition, ShowCharacterEvent, HideCharacterEvent } from './EventCommand';
 import { isShowMessageEvent } from './execution/ShowMessage';
 import ShowMessage from './execution/ShowMessage';
 import { isClearMessageEvent } from './execution/ClearMessage';
 import ClearMessage from './execution/ClearMessage';
 import Wait from './execution/Wait';
-import {DialogEvent} from "./utils/DialogEvent";
+import { DialogEvent } from "./utils/DialogEvent";
 import RequestSelection, { isRequestSelectionEvent, RequestSelectionEvent } from './execution/RequestSelection';
-import SetBackground, { SetBackgroundEvent } from './execution/SetBackground';
-import RemoveBackground, { RemoveBackgroundEvent } from './execution/RemoveBackground';
 import { renderWithRetainedMessage, isDuplicateEvent, processVariableSubstitution } from './executor-utils/DialogExecutorUtils';
-import { DialogContainer, BackgroundLayer, BackgroundImage, ContentLayer, ControlPanel, ControlButton, ButtonIcon, ButtonLabel, HistoryPanel, HistoryEntry, HistoryName, HistoryText } from './executor-utils/executor-styled-div';
+import { DialogContainer } from './executor-utils/executor-styled-div';
+import { backgroundService } from './services/BackgroundService';
+import { characterService } from './services/CharacterService';
+
+// We're only importing UILayer now, as the other layers are managed by ChatCore
+import UILayer from './layers/UILayer';
 
 // Constants for configuration
 const DIALOG_CONFIG = {
     NAVIGATION: {
         BASE_PATH: '/labs/chat/',
     },
-    SPRITE_PATH: '/character-sprite/',
 } as const;
 
 export interface FinishEvent {
@@ -144,19 +146,19 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
     const commandExecution = useMemo(() => {
         if (!currentEvent) return null;
         
+        console.log("Current event command:", currentEvent.eventCommand);
+        
         switch (currentEvent.eventCommand) {
             case EventCommand.SHOW_MESSAGE:
                 return <ShowMessage event={currentEvent} />;
             case EventCommand.CLEAR_MESSAGE:
                 return <ClearMessage event={currentEvent} onComplete={advanceToNextMessage} />;
             case EventCommand.WAIT:
-                // For WAIT command, retain the last message if it exists
                 return renderWithRetainedMessage(
                     <Wait event={currentEvent} onComplete={advanceToNextMessage} />,
                     messageVisible
                 );
             case EventCommand.REQUEST_SELECTION:
-                // For REQUEST_SELECTION, retain the last message if it exists
                 return renderWithRetainedMessage(
                     <RequestSelection
                         event={currentEvent as RequestSelectionEvent}
@@ -165,10 +167,38 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                     messageVisible
                 );
             case EventCommand.SET_BACKGROUND:
-                return <SetBackground event={currentEvent as SetBackgroundEvent} onComplete={advanceToNextMessage} />;
+                console.log("SET_BACKGROUND command received:", currentEvent);
+                // Set the background using the service
+                if (currentEvent.imagePath) {
+                    backgroundService.setBackground(currentEvent.imagePath);
+                }
+                advanceToNextMessage();
+                return null;
             case EventCommand.REMOVE_BACKGROUND:
-                return <RemoveBackground event={currentEvent as RemoveBackgroundEvent} onComplete={advanceToNextMessage} />;
+                console.log("REMOVE_BACKGROUND command received");
+                backgroundService.setBackground(null);
+                advanceToNextMessage();
+                return null;
+            case EventCommand.SHOW_CHARACTER:
+                console.log("SHOW_CHARACTER command received:", currentEvent);
+                // Set the character using the service
+                if ((currentEvent as ShowCharacterEvent).position && (currentEvent as ShowCharacterEvent).spriteUrl) {
+                    characterService.showCharacter(
+                        (currentEvent as ShowCharacterEvent).position,
+                        (currentEvent as ShowCharacterEvent).spriteUrl
+                    );
+                }
+                advanceToNextMessage();
+                return null;
+            case EventCommand.HIDE_CHARACTER:
+                console.log("HIDE_CHARACTER command received:", currentEvent);
+                if ((currentEvent as HideCharacterEvent).position) {
+                    characterService.hideCharacter((currentEvent as HideCharacterEvent).position);
+                }
+                advanceToNextMessage();
+                return null;
             default:
+                console.log("Unknown command:", currentEvent.eventCommand);
                 return null;
         }
     }, [currentEvent, advanceToNextMessage, handleSelection, messageVisible]);
@@ -180,7 +210,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
         const loadScript = async () => {
             try {
                 setIsLoading(true);
-                const response = await fetch(`/dialog-script/dialog-${scriptId}.json`);
+                const response = await fetch(`/dialog-script/${scriptId}.json`);
                 const scriptData: DialogScript = await response.json();
                 setCurrentScript(scriptData);
                 setIsVisible(true);
@@ -254,66 +284,19 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
 
     return (
         <DialogContainer>
-            <BackgroundLayer $isVisible={isVisible} />
-            <BackgroundImage id="dialog-background" />
-            <ContentLayer onClick={handleContentClick}>
-                {/* Command execution based on event type */}
-                {commandExecution}
-
-                <ControlPanel className="ui-element">
-                    <ControlButton 
-                        className="ui-element"
-                        onClick={handleSaveClick}
-                    >
-                        <ButtonIcon>💾</ButtonIcon>
-                        <ButtonLabel>Save</ButtonLabel>
-                    </ControlButton>
-                    <ControlButton 
-                        className="ui-element"
-                        onClick={handleLoadClick}
-                    >
-                        <ButtonIcon>📂</ButtonIcon>
-                        <ButtonLabel>Load</ButtonLabel>
-                    </ControlButton>
-                    <ControlButton 
-                        className="ui-element"
-                        onClick={handleConfigClick}
-                    >
-                        <ButtonIcon>⚙️</ButtonIcon>
-                        <ButtonLabel>Config</ButtonLabel>
-                    </ControlButton>
-                    <ControlButton 
-                        className="ui-element"
-                        onClick={handleHistoryClick}
-                    >
-                        <ButtonIcon>📜</ButtonIcon>
-                        <ButtonLabel>Logs</ButtonLabel>
-                    </ControlButton>
-                </ControlPanel>
-
-                <HistoryPanel 
-                    $visible={showHistory} 
-                    className="ui-element"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <h2 style={{ color: '#a67c52', marginBottom: '20px', textAlign: 'center' }}>
-                        Message History
-                    </h2>
-                    {history.map((event, index) => (
-                        <HistoryEntry key={index}>
-                            {event.unitRes && <HistoryName>{event.unitRes}</HistoryName>}
-                            <HistoryText>{event.message}</HistoryText>
-                        </HistoryEntry>
-                    ))}
-                </HistoryPanel>
-
-                {currentEvent && isRequestSelectionEvent(currentEvent) && (
-                    <RequestSelection
-                        event={currentEvent}
-                        onSelect={handleSelection}
-                    />
-                )}
-            </ContentLayer>
+            {/* UI Layer - handles all UI elements */}
+            <UILayer
+                currentEvent={currentEvent}
+                messageHistory={history}
+                showHistory={showHistory}
+                handleContentClick={handleContentClick}
+                handleSaveClick={handleSaveClick}
+                handleLoadClick={handleLoadClick}
+                handleConfigClick={handleConfigClick}
+                handleHistoryClick={handleHistoryClick}
+                handleSelection={handleSelection}
+                commandExecution={commandExecution}
+            />
         </DialogContainer>
     );
 }; 

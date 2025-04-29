@@ -29,7 +29,7 @@
   ],
   "finishEvent": {
     "nextScene": "DIALOG",
-    "nextScript": "0000",
+    "nextScript": "dialog-0000",
     "shouldClose": false
   }
 } 

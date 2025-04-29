@@ -110,7 +110,7 @@
     ],
     "finishEvent": {
       "nextScene": "DIALOG",
-      "nextScript": "0005",
+      "nextScript": "dialog-0005",
       "shouldClose": false
     }
   }

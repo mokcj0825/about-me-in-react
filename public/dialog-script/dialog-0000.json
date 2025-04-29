@@ -15,6 +15,10 @@
         "message": "This is a testing message for middle position."
       },
       {
+        "eventCommand": "SET_BACKGROUND",
+        "imagePath": "background-forest.png"
+      },
+      {
         "eventCommand": "SHOW_MESSAGE",
         "characterName": "demochara-002",
         "message": "This is a testing message for bottom position."
@@ -37,7 +41,6 @@
     ],
     "finishEvent": {
       "nextScene": "DIALOG",
-      "nextScript": "0001",
-      "shouldClose": true
+      "nextScript": "dialog-0001"
     }
   }

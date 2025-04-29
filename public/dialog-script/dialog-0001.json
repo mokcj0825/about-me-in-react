@@ -1,11 +1,6 @@
 {
     "events": [
       {
-        "eventCommand": "SET_BACKGROUND",
-        "imagePath": "background-cafe.png",
-        "transitionDuration": 0
-      },
-      {
         "eventCommand": "SHOW_MESSAGE",
         "characterName": null,
         "message": "This is a 3 testing message for top position."
