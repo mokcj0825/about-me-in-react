@@ -15,12 +15,13 @@ import {
 	resolveNextScriptId 
 } from './executor-utils/DialogExecutorUtils';
 
-// Constants
+// System constants
 const EMPTY_HANDLER = () => {};
 const NAVIGATION_CONFIG = {
 	BASE_PATH: '/labs/chat/'
 };
 
+// Types for script navigation and control
 interface FinishEvent {
 	nextScene?: string;
 	nextScript?: string;
@@ -34,15 +35,8 @@ interface Props {
 }
 
 /**
- * ChatCore component
- * 
- * Main entry point for the chat/dialogue system
- * Manages three separate layers:
- * - BackgroundLayer: Displays background images
- * - CharacterLayer: Displays character sprites
- * - UILayer: Displays UI elements and dialogs
- * 
- * Uses ScriptExecutor to process scripts and update layers through state changes
+ * Main dialog system component that orchestrates character display, background,
+ * and UI components. Processes dialog scripts and manages state transitions.
  */
 export const ChatCore: React.FC<Props> = ({
 	dialogScriptId,
@@ -60,15 +54,15 @@ export const ChatCore: React.FC<Props> = ({
 	const [messageVisible, setMessageVisible] = useState(true);
 	const [previousMessageComponent, setPreviousMessageComponent] = useState<React.ReactNode | null>(null);
 	
-	// Update currentScriptId when dialogScriptId prop changes or finishEvent loads new script
+	/**
+	 * Initializes or resets dialog state when script ID changes
+	 * Effect: Clears message state and resets visibility with slight delay
+	 */
 	useEffect(() => {
 		console.log(`ChatCore: Script ID set to ${currentScriptId}`);
-		
-		// Clear message state when script ID changes
 		setCurrentMessage(null);
 		setIsVisible(false);
 		
-		// Initialize new dialog after a short delay to ensure clean state
 		const timer = setTimeout(() => {
 			setIsVisible(true);
 		}, 100);
@@ -78,12 +72,14 @@ export const ChatCore: React.FC<Props> = ({
 		};
 	}, [currentScriptId]);
 	
-	// Handle URL changes from within the component
+	/**
+	 * Handles URL-based navigation between dialog scripts
+	 * Effect: Updates current script ID when URL path changes
+	 */
 	useEffect(() => {
 		const path = location.pathname;
 		console.log(`ChatCore: Location changed to ${path}`);
 		
-		// Extract script ID from path
 		if (path.startsWith(NAVIGATION_CONFIG.BASE_PATH)) {
 			const newScriptId = path.substring(NAVIGATION_CONFIG.BASE_PATH.length);
 			if (newScriptId && newScriptId !== currentScriptId) {
@@ -93,85 +89,86 @@ export const ChatCore: React.FC<Props> = ({
 		}
 	}, [location, currentScriptId]);
 	
-	// Handle background changes from ScriptExecutor
+	/**
+	 * Handler for background image changes from ScriptExecutor
+	 * Input: Image path string or null to clear background
+	 * Effect: Updates background state
+	 */
 	const handleBackgroundChange = useCallback((imagePath: string | null) => {
 		console.log('ChatCore: Received background change:', imagePath);
 		setBackground(imagePath);
 	}, []);
 	
-	// Handle message changes from ScriptExecutor
+	/**
+	 * Processes message events from ScriptExecutor
+	 * Input: DialogEvent or null to clear message
+	 * Effect: Updates message state, visibility, and message history
+	 */
 	const handleMessageChange = useCallback((message: DialogEvent | null) => {
 		console.log('ChatCore: Received message change:', message);
 		
-		// Save current message component before updating
 		if (currentMessage && isShowMessageEvent(currentMessage)) {
 			setPreviousMessageComponent(
 				<ShowMessage event={currentMessage} />
 			);
 		}
 		
-		// Update message visibility based on event type
 		if (message) {
 			if (isShowMessageEvent(message)) {
 				setMessageVisible(true);
 			} else if (isClearMessageEvent(message)) {
 				setMessageVisible(false);
 			}
-			// For other event types, maintain current visibility
 		} else {
-			// null message indicates a CLEAR_MESSAGE
 			setMessageVisible(false);
 		}
 		
 		setCurrentMessage(message);
 		
-		// Add message to history if it's a new message (not null)
 		if (message) {
 			setMessageHistory(prev => [...prev, message]);
 		}
 	}, [currentMessage]);
 	
-	// Get the advance function from ScriptExecutor
+	/**
+	 * Receives advance function from ScriptExecutor
+	 * Input: Function to advance script to next event
+	 * Effect: Updates advanceScript state
+	 */
 	const handleAdvanceReady = useCallback((advanceFunction: () => void) => {
 		setAdvanceScript(() => advanceFunction);
 	}, []);
 	
-	// Handle script completion
+	/**
+	 * Handles script completion - manages transitions between scripts
+	 * Input: FinishEvent object containing navigation data
+	 * Effect: Navigates to next script or ends dialog
+	 */
 	const handleScriptComplete = useCallback((finishEvent: FinishEvent) => {
 		console.log('ChatCore: Script completed with finish event:', finishEvent);
 		
-		// If finishEvent is empty or not defined, just do nothing
 		if (!finishEvent || Object.keys(finishEvent).length === 0) {
 			console.log('ChatCore: Empty finishEvent, doing nothing');
 			return;
 		}
 		
-		// Handle shouldClose flag if present
 		if (finishEvent.shouldClose) {
-			// Close the dialog/chat
 			console.log('ChatCore: Closing chat');
 			onChatEnd?.();
 			return;
 		}
 		
-		// Handle navigation if nextScene and nextScript are provided
 		if (finishEvent.nextScene && finishEvent.nextScript) {
 			try {
-				// Get the storageKey from the nextScript if it contains a variable reference
 				const storageKey = finishEvent.nextScript.match(/\{([^}]+)\}/)?.[1];
-				
-				// Try to resolve the nextScriptId based on the storageKey or directly
 				let nextScript: string | null = null;
 				
 				if (storageKey) {
-					// If the nextScript is a variable reference, use resolveNextScriptId
 					nextScript = resolveNextScriptId(storageKey, finishEvent.nextScript);
 				} else {
-					// Otherwise, just use the nextScript directly
 					nextScript = finishEvent.nextScript;
 				}
 				
-				// Verify we have a valid script ID after resolution
 				if (!nextScript || nextScript.includes('{')) {
 					console.error(`ChatCore: Invalid script ID after resolution: "${nextScript}"`);
 					return;
@@ -179,11 +176,9 @@ export const ChatCore: React.FC<Props> = ({
 				
 				switch (finishEvent.nextScene) {
 					case 'DIALOG':
-						// Load the next script directly
 						console.log(`ChatCore: Loading next script: ${nextScript}`);
 						navigate(`${NAVIGATION_CONFIG.BASE_PATH}${nextScript}`);
 						break;
-						
 					default:
 						console.log(`ChatCore: Unknown next scene: ${finishEvent.nextScene}`);
 						break;
@@ -192,27 +187,27 @@ export const ChatCore: React.FC<Props> = ({
 				console.error('ChatCore: Error during script transition:', error);
 			}
 		} else if (onChatEnd) {
-			// If there's no next script but we have an onChatEnd handler, call it
 			console.log('ChatCore: No next scene/script defined, calling onChatEnd');
 			onChatEnd();
 		}
 	}, [onChatEnd, navigate]);
 	
-	// Handle click on content to advance dialog
+	/**
+	 * Handles screen clicks to advance dialog
+	 * Input: Mouse event
+	 * Effect: Advances script or closes history view
+	 */
 	const handleContentClick = useCallback((e: React.MouseEvent) => {
-		// If history is showing, close it instead of advancing
 		if (showHistory) {
 			setShowHistory(false);
 			return;
 		}
 		
-		// Don't advance if we have a selection event
 		if (currentMessage && isRequestSelectionEvent(currentMessage)) {
 			console.log('ChatCore: Selection event active, ignoring content click');
 			return;
 		}
 		
-		// Only advance if we're not clicking on UI elements
 		if (e.target === e.currentTarget || 
 			(e.currentTarget as Node).contains(e.target as Node) && 
 			!(e.target as Element).closest('.ui-element')) {
@@ -221,28 +216,37 @@ export const ChatCore: React.FC<Props> = ({
 		}
 	}, [showHistory, advanceScript, currentMessage]);
 	
-	// Handle button clicks
+	/**
+	 * Toggles history panel visibility
+	 * Input: Mouse event
+	 * Effect: Updates showHistory state
+	 */
 	const handleHistoryClick = useCallback((e: React.MouseEvent) => {
-		e.stopPropagation(); // Prevent advancing dialog
+		e.stopPropagation();
 		setShowHistory(!showHistory);
 	}, [showHistory]);
 	
-	// Handle selection from RequestSelection component
+	/**
+	 * Processes selection events from choice dialogs
+	 * Input: Selected value string
+	 * Effect: Advances script if current event is a selection event
+	 */
 	const handleSelection = useCallback((value: string) => {
 		console.log('ChatCore: Selection made:', value);
 		
-		// If the current event is a selection event, advance the script
 		if (currentMessage && isRequestSelectionEvent(currentMessage)) {
 			console.log('ChatCore: Advancing after selection');
 			advanceScript?.();
 		}
 	}, [currentMessage, advanceScript]);
 	
-	// Create appropriate component for the current message
+	/**
+	 * Renders appropriate component based on current message type
+	 * Returns: React component for current message event
+	 */
 	const messageComponent = useMemo(() => {
 		if (!currentMessage) return null;
 		
-		// Create component based on event type
 		switch (currentMessage.eventCommand) {
 			case EventCommand.SHOW_MESSAGE:
 				return <ShowMessage event={currentMessage} />;
@@ -262,19 +266,15 @@ export const ChatCore: React.FC<Props> = ({
 		}
 	}, [currentMessage, handleSelection, messageVisible, previousMessageComponent]);
 	
+	// Log message updates for debugging
 	useEffect(() => {
 		console.log('ChatCore: Current message updated:', currentMessage?.message);
 	}, [currentMessage]);
 	
 	return (
 		<div style={{ width: '100%', height: '100%', position: 'relative' }}>
-			{/* Background Layer - state managed by ChatCore */}
 			<BackgroundLayer backgroundImage={background} />
-			
-			{/* Character Layer - will receive state from ChatCore later */}
 			<CharacterLayer />
-			
-			{/* UI Layer - receives message state from ChatCore */}
 			<UILayer 
 				currentEvent={currentMessage}
 				messageHistory={messageHistory}
@@ -288,7 +288,6 @@ export const ChatCore: React.FC<Props> = ({
 				commandExecution={messageComponent}
 			/>
 			
-			{/* Script Executor - processes scripts and emits events */}
 			{isVisible && (
 				<ScriptExecutor 
 					scriptId={currentScriptId}

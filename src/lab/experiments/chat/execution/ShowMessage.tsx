@@ -3,21 +3,24 @@ import styled from 'styled-components';
 import { EventCommand } from '../EventCommand';
 import { DialogEvent } from '../utils/DialogEvent';
 
-// Specific interface for SHOW_MESSAGE events
+/**
+ * Types and interfaces for message display
+ */
 export interface ShowMessageEvent extends DialogEvent {
 	eventCommand: EventCommand.SHOW_MESSAGE;
 	message: string;
 	characterName?: string;
 }
 
-// Define SpritePosition enum here to avoid circular dependencies
 export enum SpritePosition {
 	LEFT = 'LEFT',
 	MIDDLE = 'MIDDLE',
 	RIGHT = 'RIGHT'
 }
 
-// Type guard to check if an event is a show message event
+/**
+ * Type guard to check if an event is a show message event
+ */
 export const isShowMessageEvent = (event: DialogEvent): event is ShowMessageEvent => {
 	return event.eventCommand === EventCommand.SHOW_MESSAGE && 'message' in event;
 };
@@ -26,18 +29,19 @@ interface ShowMessageProps {
 	event: DialogEvent;
 }
 
+/**
+ * ShowMessage component - Renders a visual novel style message box
+ */
 const ShowMessage: React.FC<ShowMessageProps> = ({ event }) => {
-	// Use type guard to ensure this is a show message event
 	if (!isShowMessageEvent(event)) {
 		return null;
 	}
 
-	// Now TypeScript knows these properties exist
 	const { characterName = SpritePosition.MIDDLE, message } = event;
 
 	return (
 		<>
-			<VisualNovelTextBox className="ui-element">
+			<VisualNovelTextBox>
 				{characterName && <NameBox>{characterName}</NameBox>}
 				<MessageText>{MessageUtils.processMessage(message)}</MessageText>
 				<ContinueIndicator />
@@ -46,23 +50,21 @@ const ShowMessage: React.FC<ShowMessageProps> = ({ event }) => {
 	);
 };
 
+/**
+ * Utility class for message text processing
+ */
 class MessageUtils {
-	/**
-	 * Process a message with template variables
-	 * @param message The message with template variables
-	 * @returns The processed message with variables replaced
-	 */
 	public static processMessage(message: string): string {
-		// Match patterns like {variableName}
 		return message.replace(/\{([^}]+)\}/g, (match, variableName) => {
-			// Get the value from localStorage
 			const value = localStorage.getItem(variableName);
-			// Return the value or the original placeholder if not found
 			return value || match;
 		});
 	}
 }
 
+/**
+ * Styled components for the visual novel dialog interface
+ */
 const VisualNovelTextBox = styled.div`
 	position: absolute;
 	bottom: 30px;

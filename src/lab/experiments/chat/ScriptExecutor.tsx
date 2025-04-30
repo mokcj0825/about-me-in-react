@@ -1,9 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { EventCommand, CharacterPosition } from './EventCommand';
+import { EventCommand } from './EventCommand';
 import { DialogEvent } from './utils/DialogEvent';
 import { characterService } from './services/CharacterService';
+import { getCharacterSprite, CharacterPosition } from './execution/ShowCharacter';
 
-// Define types for script structure
+/**
+ * Types for script structure and execution
+ */
 interface FinishEvent {
     nextScene?: string;
     nextScript?: string;
@@ -25,11 +28,11 @@ interface Props {
 }
 
 /**
- * ScriptExecutor
+ * ScriptExecutor component
  * 
- * Responsible for loading and executing script commands.
- * Currently focused on processing background-related events and messages.
- * Emits events back to ChatCore.
+ * Loads and executes dialog scripts, processing events sequentially.
+ * Emits appropriate events to parent components for UI updates.
+ * Handles navigation between scripts through finish events.
  */
 export const ScriptExecutor: React.FC<Props> = ({ 
     scriptId,
@@ -44,7 +47,9 @@ export const ScriptExecutor: React.FC<Props> = ({
     const [isLoading, setIsLoading] = useState(false);
     const [scriptLoaded, setScriptLoaded] = useState(false);
 
-    // Log when currentEvent changes
+    /**
+     * Process current event when it changes
+     */
     useEffect(() => {
         console.log('ScriptExecutor: Current event updated:', 
             currentEvent ? `${currentEvent.eventCommand} - ${JSON.stringify(currentEvent)}` : 'null');
@@ -54,7 +59,10 @@ export const ScriptExecutor: React.FC<Props> = ({
         }
     }, [currentEvent]);
 
-    // Load the script data - only once per scriptId
+    /**
+     * Load script data from JSON file
+     * Effect: Fetches script and initializes with first event
+     */
     useEffect(() => {
         if (scriptLoaded || isLoading) return;
 
@@ -72,7 +80,6 @@ export const ScriptExecutor: React.FC<Props> = ({
                 const scriptData: Script = await response.json();
                 console.log('ScriptExecutor: Script loaded:', scriptData);
                 
-                // Ensure finishEvent exists, even if empty
                 if (!scriptData.finishEvent) {
                     scriptData.finishEvent = {};
                 }
@@ -80,12 +87,10 @@ export const ScriptExecutor: React.FC<Props> = ({
                 setScript(scriptData);
                 setScriptLoaded(true);
                 
-                // Initialize with first event
                 if (scriptData.events.length > 0) {
                     console.log('ScriptExecutor: Setting first event:', scriptData.events[0]);
                     setCurrentEvent(scriptData.events[0]);
                 } else {
-                    // If no events, handle finish event immediately
                     handleScriptComplete(scriptData.finishEvent);
                 }
                 
@@ -99,7 +104,9 @@ export const ScriptExecutor: React.FC<Props> = ({
         loadScript();
     }, [scriptId, scriptLoaded]);
 
-    // Reset state when scriptId changes
+    /**
+     * Reset state when script ID changes
+     */
     useEffect(() => {
         setScriptLoaded(false);
         setCurrentEventIndex(0);
@@ -107,7 +114,10 @@ export const ScriptExecutor: React.FC<Props> = ({
         setScript(null);
     }, [scriptId]);
 
-    // Process the current event
+    /**
+     * Process the current event based on its type
+     * Effect: Emits appropriate callbacks and may advance to next event
+     */
     const processEvent = useCallback(() => {
         if (!currentEvent || !script) {
             console.log('ScriptExecutor: No current event or script to process');
@@ -116,46 +126,30 @@ export const ScriptExecutor: React.FC<Props> = ({
 
         console.log(`ScriptExecutor: Processing event: ${currentEvent.eventCommand}`, currentEvent);
         
-        // Process events and emit to parent
         switch (currentEvent.eventCommand) {
             case EventCommand.SET_BACKGROUND:
                 if ('imagePath' in currentEvent && currentEvent.imagePath) {
                     console.log('ScriptExecutor: Emitting background change:', currentEvent.imagePath);
                     onBackgroundChange?.(currentEvent.imagePath);
                 }
-                // Auto-advance
                 advanceToNextEvent();
                 break;
                 
             case EventCommand.REMOVE_BACKGROUND:
                 console.log('ScriptExecutor: Emitting background removal');
                 onBackgroundChange?.(null);
-                // Auto-advance
                 advanceToNextEvent();
                 break;
 
             case EventCommand.SHOW_CHARACTER:
-                if ('position' in currentEvent) {
-                    const { position } = currentEvent;
-                    let sprite = '';
-                    
-                    // Handle both spriteUrl and res properties
-                    if ('spriteUrl' in currentEvent && currentEvent.spriteUrl) {
-                        sprite = currentEvent.spriteUrl;
-                    } else if ('res' in currentEvent && currentEvent.res) {
-                        sprite = currentEvent.res;
-                    } else {
-                        console.log('ScriptExecutor: Invalid SHOW_CHARACTER event - missing sprite information:', currentEvent);
-                        advanceToNextEvent();
-                        return;
-                    }
-                    
-                    console.log(`ScriptExecutor: Showing character at ${position} with sprite ${sprite}`);
-                    characterService.showCharacter(position as CharacterPosition, sprite);
+                const characterInfo = getCharacterSprite(currentEvent);
+                
+                if (characterInfo) {
+                    console.log(`ScriptExecutor: Showing character at ${characterInfo.position} with sprite ${characterInfo.sprite}`);
+                    characterService.showCharacter(characterInfo.position, characterInfo.sprite);
                 } else {
-                    console.log('ScriptExecutor: Invalid SHOW_CHARACTER event - missing position:', currentEvent);
+                    console.log('ScriptExecutor: Invalid SHOW_CHARACTER event - missing position or sprite info:', currentEvent);
                 }
-                // Auto-advance
                 advanceToNextEvent();
                 break;
                 
@@ -167,34 +161,28 @@ export const ScriptExecutor: React.FC<Props> = ({
                 } else {
                     console.log('ScriptExecutor: Invalid HIDE_CHARACTER event:', currentEvent);
                 }
-                // Auto-advance
                 advanceToNextEvent();
                 break;
 
             case EventCommand.SHOW_MESSAGE:
                 console.log('ScriptExecutor: Emitting message event:', currentEvent);
                 onMessageChange?.(currentEvent);
-                // Don't auto-advance - wait for user click
-                return;
+                return; // Wait for user click
                 
             case EventCommand.CLEAR_MESSAGE:
                 console.log('ScriptExecutor: Emitting clear message');
                 onMessageChange?.(null);
-                // Auto-advance
                 advanceToNextEvent();
                 break;
                 
             case EventCommand.REQUEST_SELECTION:
                 console.log('ScriptExecutor: Processing selection request:', currentEvent);
-                // Emit the selection event to the parent component
                 onMessageChange?.(currentEvent);
-                // Don't auto-advance - wait for user selection
-                return;
+                return; // Wait for user selection
                 
             case EventCommand.WAIT:
                 console.log('ScriptExecutor: Processing wait event:', currentEvent);
                 if ('time' in currentEvent && typeof currentEvent.time === 'number') {
-                    // Wait for the specified time, then advance
                     setTimeout(() => {
                         console.log(`ScriptExecutor: Wait of ${currentEvent.time}ms completed`);
                         advanceToNextEvent();
@@ -212,16 +200,20 @@ export const ScriptExecutor: React.FC<Props> = ({
         }
     }, [currentEvent, script, onBackgroundChange, onMessageChange]);
 
-    // Handle script completion
+    /**
+     * Notifies parent component when script is complete
+     * Input: FinishEvent object with navigation details
+     * Effect: Triggers callback to parent
+     */
     const handleScriptComplete = useCallback((finishEvent: FinishEvent) => {
         console.log('ScriptExecutor: Script completed with finish event:', finishEvent);
-        
-        // Always notify parent about script completion, even if finishEvent is empty
-        // This allows the parent to decide what to do based on the content of finishEvent
         onScriptComplete?.(finishEvent);
     }, [onScriptComplete]);
 
-    // Function to advance to next event
+    /**
+     * Advances to the next event in the script
+     * Effect: Updates current event or completes script
+     */
     const advanceToNextEvent = useCallback(() => {
         if (!script || currentEventIndex === undefined) return;
         
@@ -233,12 +225,14 @@ export const ScriptExecutor: React.FC<Props> = ({
             setCurrentEvent(script.events[nextIndex]);
         } else {
             console.log('ScriptExecutor: No more events, handling finish event');
-            // Script completed, handle finish event
             handleScriptComplete(script.finishEvent);
         }
     }, [currentEventIndex, script, handleScriptComplete]);
 
-    // Handle manual advancement for message events
+    /**
+     * Handles manual advancement from user interaction
+     * Effect: Advances eligible events (messages, selections)
+     */
     const advanceScript = useCallback(() => {
         if (!script || !currentEvent) {
             console.log('ScriptExecutor: Cannot advance, no script or current event');
@@ -248,20 +242,20 @@ export const ScriptExecutor: React.FC<Props> = ({
         console.log('ScriptExecutor: Manual advance triggered for:', 
             currentEvent.eventCommand);
 
-        // Allow advancing for message and selection events
         switch (currentEvent.eventCommand) {
             case EventCommand.SHOW_MESSAGE:
             case EventCommand.REQUEST_SELECTION:
                 advanceToNextEvent();
+                break;
             default:
                 console.log('ScriptExecutor: Not an advanceable event, ignoring advance');
                 break;
         }
-        
-
     }, [currentEvent, advanceToNextEvent]);
 
-    // Provide the advance function to parent component
+    /**
+     * Provides the advance function to parent component
+     */
     useEffect(() => {
         if (onAdvanceReady) {
             console.log('ScriptExecutor: Providing advance function to parent');
@@ -269,6 +263,5 @@ export const ScriptExecutor: React.FC<Props> = ({
         }
     }, [advanceScript, onAdvanceReady]);
 
-    // Component doesn't render anything visible
-    return null;
+    return null; // Component doesn't render anything visible
 }; 

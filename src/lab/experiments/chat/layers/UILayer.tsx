@@ -55,10 +55,8 @@ const UILayer: React.FC<UILayerProps> = ({
   
   return (
     <ContentLayer onClick={handleContentClick}>
-      {/* Dialog content and commands */}
       {commandExecution}
 
-      {/* Control buttons */}
       <ControlPanel className="ui-element">
         <ControlButton 
           className="ui-element"
@@ -107,7 +105,6 @@ const UILayer: React.FC<UILayerProps> = ({
         ))}
       </HistoryPanel>
 
-      {/* Selection options if needed */}
       {currentEvent && isRequestSelectionEvent(currentEvent) && (
         <RequestSelection
           event={currentEvent as RequestSelectionEvent}
@@ -118,5 +115,4 @@ const UILayer: React.FC<UILayerProps> = ({
   );
 };
 
-// Use memo to prevent unnecessary re-renders
 export default memo(UILayer); 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, memo } from 'react';
 import styled from 'styled-components';
-import { CharacterPosition } from '../EventCommand';
+import { CharacterPosition } from '../execution/ShowCharacter';
 import { characterService } from '../services/CharacterService';
 
 // Constants for configuration

@@ -9,20 +9,5 @@ export enum EventCommand {
 	HIDE_CHARACTER = 'HIDE_CHARACTER'
 }
 
-export enum CharacterPosition {
-	LEFT = 'LEFT',
-	MIDDLE = 'MIDDLE',
-	RIGHT = 'RIGHT'
-}
 
-export interface ShowCharacterEvent {
-	eventCommand: EventCommand.SHOW_CHARACTER;
-	position: CharacterPosition;
-	spriteUrl?: string;
-	res?: string;
-}
 
-export interface HideCharacterEvent {
-	eventCommand: EventCommand.HIDE_CHARACTER;
-	position: CharacterPosition;
-}

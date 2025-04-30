@@ -1,4 +1,4 @@
-import { CharacterPosition } from '../EventCommand';
+import { CharacterPosition } from "../execution/ShowCharacter";
 
 // Simple event emitter for character changes
 type CharacterChangeListener = (characters: Record<CharacterPosition, string | null>) => void;
