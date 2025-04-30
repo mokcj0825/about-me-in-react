@@ -1,51 +1,5 @@
 import { styled } from "styled-components";
 
-const DEFAULT_TRANSITION_DURATION = 300;
-
-export const DialogContainer = styled.div`
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    font-family: 'Crimson Text', serif;
-`;
-
-export const BackgroundLayer = styled.div<{ $isVisible: boolean }>`
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    opacity: ${props => props.$isVisible ? 1 : 0};
-    z-index: 1;
-`;
-
-export const BackgroundImage = styled.div`
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0;
-    z-index: 0;
-`;
-
-export const ContentLayer = styled.div`
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer; /* Make the entire content layer clickable */
-`;
-
 // Control panel for menu buttons
 export const ControlPanel = styled.div`
     position: absolute;

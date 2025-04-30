@@ -6,13 +6,12 @@ import CharacterLayer from './layers/CharacterLayer';
 import UILayer from './layers/UILayer';
 import { DialogEvent } from './utils/DialogEvent';
 import ShowMessage, { isShowMessageEvent } from './execution/ShowMessage';
-import ClearMessage, { isClearMessageEvent } from './execution/ClearMessage';
+import { isClearMessageEvent } from './execution/ClearMessage';
 import { EventCommand } from './EventCommand';
 import { isRequestSelectionEvent } from './execution/RequestSelection';
 import RequestSelection, { RequestSelectionEvent } from './execution/RequestSelection';
 import { 
-	renderWithRetainedMessage, 
-	processVariableSubstitution, 
+	renderWithRetainedMessage,
 	resolveNextScriptId 
 } from './executor-utils/DialogExecutorUtils';
 

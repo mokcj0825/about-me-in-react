@@ -209,14 +209,18 @@ export const ScriptExecutor: React.FC<Props> = ({
         
         console.log('ScriptExecutor: Manual advance triggered for:', 
             currentEvent.eventCommand);
-        
+
         // Allow advancing for message and selection events
-        if (currentEvent.eventCommand === EventCommand.SHOW_MESSAGE || 
-            currentEvent.eventCommand === EventCommand.REQUEST_SELECTION) {
-            advanceToNextEvent();
-        } else {
-            console.log('ScriptExecutor: Not an advanceable event, ignoring advance');
+        switch (currentEvent.eventCommand) {
+            case EventCommand.SHOW_MESSAGE:
+            case EventCommand.REQUEST_SELECTION:
+                advanceToNextEvent();
+            default:
+                console.log('ScriptExecutor: Not an advanceable event, ignoring advance');
+                break;
         }
+        
+
     }, [currentEvent, advanceToNextEvent]);
 
     // Provide the advance function to parent component
