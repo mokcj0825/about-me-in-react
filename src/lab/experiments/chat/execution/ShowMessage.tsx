@@ -35,29 +35,8 @@ const ShowMessage: React.FC<ShowMessageProps> = ({ event }) => {
 	// Now TypeScript knows these properties exist
 	const { characterName = SpritePosition.MIDDLE, message } = event;
 
-	// Function to get sprite image path based on unitRes
-	const getSpriteImagePath = (unitRes: string | null): string | null => {
-		if (!unitRes) return null;
-		
-		// Use the unitRes as the filename with .png extension
-		return `/character-sprite/${unitRes.toLowerCase()}.png`;
-	};
-
 	return (
 		<>
-			{/* Character sprite based on position */}
-			{/*unitRes && getSpriteImagePath(unitRes) && (
-				<CharacterSprite 
-					$position={position}
-					$active={true}
-				>
-					<SpriteImage 
-						src={getSpriteImagePath(unitRes) || ''} 
-						alt={unitRes}
-					/>
-				</CharacterSprite>
-			)*/}
-
 			<VisualNovelTextBox className="ui-element">
 				{characterName && <NameBox>{characterName}</NameBox>}
 				<MessageText>{MessageUtils.processMessage(message)}</MessageText>
@@ -83,37 +62,6 @@ class MessageUtils {
 		});
 	}
 }
-
-// Styled components
-const CharacterSprite = styled.div<{ $position: SpritePosition; $active: boolean }>`
-	position: absolute;
-	bottom: 240px; // Position above the text box
-	opacity: ${props => props.$active ? 1 : 0.7};
-	filter: ${props => props.$active ? 'none' : 'grayscale(30%) brightness(80%)'};
-	transform-origin: bottom center;
-	z-index: ${props => props.$active ? 5 : 3};
-	/* Removed transition effects for immediate character changes */
-	
-	${props => {
-		switch (props.$position) {
-			case SpritePosition.LEFT:
-				return 'left: 15%; transform: translateX(-50%);';
-			case SpritePosition.MIDDLE:
-				return 'left: 50%; transform: translateX(-50%);';
-			case SpritePosition.RIGHT:
-				return 'left: 85%; transform: translateX(-50%);';
-			default:
-				return 'left: 50%; transform: translateX(-50%);';
-		}
-	}}
-`;
-
-const SpriteImage = styled.img`
-	max-height: 500px;
-	max-width: 300px;
-	filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
-	/* No transitions for immediate image changes */
-`;
 
 const VisualNovelTextBox = styled.div`
 	position: absolute;
