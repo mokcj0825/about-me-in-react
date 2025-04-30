@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { EventCommand } from './EventCommand';
+import { EventCommand, CharacterPosition } from './EventCommand';
 import { DialogEvent } from './utils/DialogEvent';
+import { characterService } from './services/CharacterService';
 
 // Define types for script structure
 interface FinishEvent {
@@ -129,6 +130,43 @@ export const ScriptExecutor: React.FC<Props> = ({
             case EventCommand.REMOVE_BACKGROUND:
                 console.log('ScriptExecutor: Emitting background removal');
                 onBackgroundChange?.(null);
+                // Auto-advance
+                advanceToNextEvent();
+                break;
+
+            case EventCommand.SHOW_CHARACTER:
+                if ('position' in currentEvent) {
+                    const { position } = currentEvent;
+                    let sprite = '';
+                    
+                    // Handle both spriteUrl and res properties
+                    if ('spriteUrl' in currentEvent && currentEvent.spriteUrl) {
+                        sprite = currentEvent.spriteUrl;
+                    } else if ('res' in currentEvent && currentEvent.res) {
+                        sprite = currentEvent.res;
+                    } else {
+                        console.log('ScriptExecutor: Invalid SHOW_CHARACTER event - missing sprite information:', currentEvent);
+                        advanceToNextEvent();
+                        return;
+                    }
+                    
+                    console.log(`ScriptExecutor: Showing character at ${position} with sprite ${sprite}`);
+                    characterService.showCharacter(position as CharacterPosition, sprite);
+                } else {
+                    console.log('ScriptExecutor: Invalid SHOW_CHARACTER event - missing position:', currentEvent);
+                }
+                // Auto-advance
+                advanceToNextEvent();
+                break;
+                
+            case EventCommand.HIDE_CHARACTER:
+                if ('position' in currentEvent) {
+                    const { position } = currentEvent;
+                    console.log(`ScriptExecutor: Hiding character at ${position}`);
+                    characterService.hideCharacter(position as CharacterPosition);
+                } else {
+                    console.log('ScriptExecutor: Invalid HIDE_CHARACTER event:', currentEvent);
+                }
                 // Auto-advance
                 advanceToNextEvent();
                 break;

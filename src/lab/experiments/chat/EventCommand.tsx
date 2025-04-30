@@ -18,7 +18,8 @@ export enum CharacterPosition {
 export interface ShowCharacterEvent {
 	eventCommand: EventCommand.SHOW_CHARACTER;
 	position: CharacterPosition;
-	spriteUrl: string;
+	spriteUrl?: string;
+	res?: string;
 }
 
 export interface HideCharacterEvent {

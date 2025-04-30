@@ -36,21 +36,23 @@ const CharacterSprite = styled.div<{ position: CharacterPosition }>`
   transform: ${props => {
     switch (props.position) {
       case CharacterPosition.LEFT:
-        return 'translateX(-50%)';
+        return 'translateX(-20%)';
       case CharacterPosition.MIDDLE:
         return 'translateX(-50%)';
       case CharacterPosition.RIGHT:
-        return 'translateX(-50%)';
+        return 'translateX(-80%)';
       default:
         return 'translateX(-50%)';
     }
   }};
-  height: 90%;
+  height: 80%;
   transition: opacity 0.3s ease;
 `;
 
 const CharacterImage = styled.img`
   height: 100%;
+  max-height: 500px;
+  max-width: 300px;
   object-fit: contain;
 `;
 
@@ -97,7 +99,7 @@ const CharacterLayer: React.FC<CharacterLayerProps> = () => {
             position={position as CharacterPosition}
           >
             <CharacterImage 
-              src={`${SPRITE_CONFIG.PATH}${spriteUrl}`} 
+              src={`${SPRITE_CONFIG.PATH}${spriteUrl}.png`} 
               alt={`Character at ${position}`}
             />
           </CharacterSprite>
