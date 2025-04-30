@@ -2,8 +2,7 @@
     "events": [
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "Narrator",
-        "position": "MIDDLE",
+        "characterName": "Narrator",
         "message": "You find yourself at a crossroads in a mysterious forest. The path ahead splits into two directions."
       },
       {
@@ -24,8 +23,7 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "Narrator",
-        "position": "MIDDLE",
+        "characterName": "Narrator",
         "message": "You've made your choice. Let's see what awaits..."
       },
       {
@@ -34,8 +32,7 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "Narrator",
-        "position": "MIDDLE",
+        "characterName": "Narrator",
         "message": "As you proceed, you encounter another decision point."
       },
       {
@@ -60,8 +57,7 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "Narrator",
-        "position": "MIDDLE",
+        "characterName": "Narrator",
         "message": "Your choice will determine the outcome of this encounter..."
       },
       {
@@ -70,8 +66,7 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "Narrator",
-        "position": "MIDDLE",
+        "characterName": "Narrator",
         "message": "You find a number on a wall. What do you think it represents?"
       },
       {
@@ -96,8 +91,7 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "Narrator",
-        "position": "MIDDLE",
+        "characterName": "Narrator",
         "message": "You've recorded the number."
       },
       {
@@ -106,8 +100,7 @@
       },
       {
         "eventCommand": "SHOW_MESSAGE",
-        "unitRes": "Narrator",
-        "position": "MIDDLE",
+        "characterName": "Narrator",
         "message": "The story continues based on your choices. Your first choice was: {pathChoice} and your second choice was: {encounterChoice}. The number on the wall was: {wallNumber}"
       },
       {
@@ -117,7 +110,7 @@
     ],
     "finishEvent": {
       "nextScene": "DIALOG",
-      "nextScript": "0005",
+      "nextScript": "dialog-0005",
       "shouldClose": false
     }
   }

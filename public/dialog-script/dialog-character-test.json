@@ -1,0 +1,75 @@
+{
+    "events": [
+      {
+        "eventCommand": "SET_BACKGROUND",
+        "imagePath": "background-cafe.png"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "characterName": "narrator",
+        "message": "Let's demonstrate character sprites in different positions."
+      },
+      {
+        "eventCommand": "SHOW_CHARACTER",
+        "position": "LEFT",
+        "res": "demochara-001"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "characterName": "Character 1",
+        "message": "I'm on the left side of the screen!"
+      },
+      {
+        "eventCommand": "SHOW_CHARACTER",
+        "position": "RIGHT",
+        "res": "demochara-002"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "characterName": "Character 2",
+        "message": "And I'm on the right side!"
+      },
+      {
+        "eventCommand": "SHOW_CHARACTER",
+        "position": "MIDDLE",
+        "res": "narrator"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "characterName": "Narrator",
+        "message": "I'm in the middle between both of you!"
+      },
+      {
+        "eventCommand": "HIDE_CHARACTER",
+        "position": "LEFT"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "characterName": "narrator",
+        "message": "Character 1 has left the scene."
+      },
+      {
+        "eventCommand": "HIDE_CHARACTER",
+        "position": "RIGHT"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "characterName": "narrator",
+        "message": "Character 2 has also left the scene."
+      },
+      {
+        "eventCommand": "HIDE_CHARACTER",
+        "position": "MIDDLE"
+      },
+      {
+        "eventCommand": "SHOW_MESSAGE",
+        "characterName": "narrator",
+        "message": "All characters have now left the scene."
+      }
+    ],
+    "finishEvent": {
+      "nextScene": "DIALOG",
+      "nextScript": "dialog-0000",
+      "shouldClose": false
+    }
+  }

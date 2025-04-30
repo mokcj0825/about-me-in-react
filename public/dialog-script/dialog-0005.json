@@ -2,7 +2,7 @@
   "events": [
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "narrator",
+      "characterName": "narrator",
       "message": "Today who do you want to visit?"
     },
     {
@@ -10,18 +10,18 @@
       "option": [
         {
           "label": "Alice",
-          "value": "alice",
-          "nextScriptId": "alice"
+          "value": "dialog-alice",
+          "nextScriptId": "dialog-alice"
         },
         {
           "label": "Lucy",
-          "value": "lucy",
-          "nextScriptId": "lucy"
+          "value": "dialog-lucy",
+          "nextScriptId": "dialog-lucy"
         },
         {
           "label": "Jane",
-          "value": "jane",
-          "nextScriptId": "jane"
+          "value": "dialog-jane",
+          "nextScriptId": "dialog-jane"
         }
       ],
       "valueType": "STRING",

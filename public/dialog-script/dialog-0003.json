@@ -3,7 +3,7 @@
     {
       "eventCommand": "SHOW_MESSAGE",
       "message": "This is the first message.",
-      "unitRes": null
+      "characterName": null
     },
     {
       "eventCommand": "CLEAR_MESSAGE"
@@ -15,7 +15,7 @@
     {
       "eventCommand": "SHOW_MESSAGE",
       "message": "This message appears after a 2-second wait.",
-      "unitRes": null
+      "characterName": null
     },
     {
       "eventCommand": "WAIT",
@@ -24,12 +24,12 @@
     {
       "eventCommand": "SHOW_MESSAGE",
       "message": "This message appears after a 1-second wait.",
-      "unitRes": null
+      "characterName": null
     }
   ],
   "finishEvent": {
     "nextScene": "DIALOG",
-    "nextScript": "0000",
+    "nextScript": "dialog-0000",
     "shouldClose": false
   }
 } 

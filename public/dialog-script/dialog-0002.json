@@ -3,7 +3,7 @@
     {
       "eventCommand": "SHOW_MESSAGE",
       "message": "This is the first message that will be shown.",
-      "unitRes": null
+      "characterName": null
     },
     {
       "eventCommand": "CLEAR_MESSAGE"
@@ -11,12 +11,12 @@
     {
       "eventCommand": "SHOW_MESSAGE",
       "message": "This is the second message that will be shown after clearing.",
-      "unitRes": null
+      "characterName": null
     }
   ],
   "finishEvent": {
     "nextScene": "DIALOG",
-    "nextScript": "0000",
+    "nextScript": "dialog-0000",
     "shouldClose": false
   }
 } 

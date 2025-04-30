@@ -7,12 +7,12 @@
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "lucy",
+      "characterName": "lucy",
       "message": "Oh, it's you! I wasn't expecting visitors today."
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "lucy",
+      "characterName": "lucy",
       "message": "Would you like to help me with my garden?"
     },
     {

@@ -5,6 +5,7 @@ import { EventCommand } from '../EventCommand';
 interface SelectionOption {
     label: string;
     value: string;
+    nextScriptId?: string;
 }
 
 export interface RequestSelectionEvent {
@@ -13,6 +14,8 @@ export interface RequestSelectionEvent {
     storageKey: string;
     valueType?: 'STRING' | 'NUMBER' | 'BOOLEAN';
     actionToStorage?: 'SET' | 'APPEND' | 'REMOVE';
+    message?: string;
+    characterName?: string;
 }
 
 export const isRequestSelectionEvent = (event: any): event is RequestSelectionEvent => {
@@ -29,7 +32,10 @@ const RequestSelection: React.FC<Props> = ({ event, onSelect }) => {
         return null;
     }
 
-    const handleSelection = (value: string) => {
+    const handleSelection = (option: SelectionOption) => {
+        const { value } = option;
+        console.log('RequestSelection: Selection made:', option);
+        
         // Process the value based on valueType
         let processedValue = value;
         if (event.valueType === 'NUMBER') {
@@ -45,18 +51,29 @@ const RequestSelection: React.FC<Props> = ({ event, onSelect }) => {
         switch (action) {
             case 'SET':
                 localStorage.setItem(event.storageKey, processedValue);
+                console.log(`RequestSelection: Stored "${processedValue}" in localStorage key "${event.storageKey}"`);
                 break;
             case 'APPEND':
                 const existingValue = localStorage.getItem(event.storageKey) || '';
                 localStorage.setItem(event.storageKey, existingValue + ',' + processedValue);
+                console.log(`RequestSelection: Appended "${processedValue}" to localStorage key "${event.storageKey}"`);
                 break;
             case 'REMOVE':
                 const currentValue = localStorage.getItem(event.storageKey) || '';
                 const values = currentValue.split(',').filter(v => v !== processedValue);
                 localStorage.setItem(event.storageKey, values.join(','));
+                console.log(`RequestSelection: Removed "${processedValue}" from localStorage key "${event.storageKey}"`);
                 break;
             default:
                 localStorage.setItem(event.storageKey, processedValue);
+                console.log(`RequestSelection: Default action - stored "${processedValue}" in localStorage key "${event.storageKey}"`);
+        }
+        
+        // If there's a nextScriptId in the option, store it in a temporary storage location
+        // This can be used for direct script navigation if needed
+        if (option.nextScriptId) {
+            localStorage.setItem(`${event.storageKey}_nextScriptId`, option.nextScriptId);
+            console.log(`RequestSelection: Stored nextScriptId "${option.nextScriptId}" in localStorage`);
         }
         
         // Call the parent's onSelect callback
@@ -69,7 +86,7 @@ const RequestSelection: React.FC<Props> = ({ event, onSelect }) => {
                 {event.option.map((option, index) => (
                     <OptionButton
                         key={index}
-                        onClick={() => handleSelection(option.value)}
+                        onClick={() => handleSelection(option)}
                     >
                         {option.label}
                     </OptionButton>

@@ -7,7 +7,7 @@
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "alice",
+      "characterName": "alice",
       "message": "Wonderful! I'll put the kettle on."
     },
     {
@@ -16,7 +16,7 @@
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "alice",
+      "characterName": "alice",
       "message": "Here's your tea. How do you like it?"
     },
     {
@@ -24,13 +24,11 @@
       "option": [
         {
           "label": "It's delicious",
-          "value": "delicious",
-          "nextScriptId": "alice-tea-delicious"
+          "value": "delicious"
         },
         {
           "label": "It's a bit too hot",
-          "value": "hot",
-          "nextScriptId": "alice-tea-hot"
+          "value": "hot"
         }
       ],
       "valueType": "STRING",

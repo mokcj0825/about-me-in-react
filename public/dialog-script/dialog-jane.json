@@ -2,12 +2,12 @@
   "events": [
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "jane",
+      "characterName": "jane",
       "message": "Hey! What a surprise to see you here!"
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "jane",
+      "characterName": "jane",
       "message": "I'm working on a new painting. Want to see it?"
     },
     {

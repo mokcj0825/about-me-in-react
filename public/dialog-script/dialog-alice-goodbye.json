@@ -2,12 +2,12 @@
   "events": [
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "alice",
+      "characterName": "alice",
       "message": "Oh, that's a shame. Maybe next time then."
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "alice",
+      "characterName": "alice",
       "message": "Goodbye! Come visit again soon!"
     },
     {

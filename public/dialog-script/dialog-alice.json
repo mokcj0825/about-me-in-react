@@ -2,12 +2,12 @@
   "events": [
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "alice",
+      "characterName": "alice",
       "message": "Hello there! I'm so glad you came to visit me today."
     },
     {
       "eventCommand": "SHOW_MESSAGE",
-      "unitRes": "alice",
+      "characterName": "alice",
       "message": "Would you like to stay for tea?"
     },
     {
@@ -15,13 +15,13 @@
       "option": [
         {
           "label": "Yes, please",
-          "value": "alice-tea",
-          "nextScriptId": "alice-tea"
+          "value": "dialog-alice-tea",
+          "nextScriptId": "dialog-alice-tea"
         },
         {
           "label": "No, thank you",
-          "value": "alice-goodbye",
-          "nextScriptId": "alice-goodbye"
+          "value": "dialog-alice-goodbye",
+          "nextScriptId": "dialog-alice-goodbye"
         }
       ],
       "valueType": "STRING",
