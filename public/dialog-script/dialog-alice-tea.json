@@ -24,13 +24,11 @@
       "option": [
         {
           "label": "It's delicious",
-          "value": "delicious",
-          "nextScriptId": "alice-tea-delicious"
+          "value": "delicious"
         },
         {
           "label": "It's a bit too hot",
-          "value": "hot",
-          "nextScriptId": "alice-tea-hot"
+          "value": "hot"
         }
       ],
       "valueType": "STRING",

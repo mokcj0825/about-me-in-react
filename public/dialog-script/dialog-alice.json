@@ -15,13 +15,13 @@
       "option": [
         {
           "label": "Yes, please",
-          "value": "alice-tea",
-          "nextScriptId": "alice-tea"
+          "value": "dialog-alice-tea",
+          "nextScriptId": "dialog-alice-tea"
         },
         {
           "label": "No, thank you",
-          "value": "alice-goodbye",
-          "nextScriptId": "alice-goodbye"
+          "value": "dialog-alice-goodbye",
+          "nextScriptId": "dialog-alice-goodbye"
         }
       ],
       "valueType": "STRING",

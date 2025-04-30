@@ -34,6 +34,23 @@ export const isRequestSelectionEvent = (event: any): boolean => {
 };
 
 /**
+ * Checks if an event is a duplicate in the history array
+ */
+export const isDuplicateEvent = (event: DialogEvent, history: DialogEvent[]): boolean => {
+  // Only check the most recent events for performance
+  const recentHistory = history.slice(-5);
+  
+  // Check for duplicate based on message content and character name
+  return recentHistory.some(historyEvent => 
+    historyEvent.eventCommand === event.eventCommand && 
+    'message' in historyEvent && 'message' in event && 
+    historyEvent.message === event.message &&
+    ('characterName' in historyEvent ? historyEvent.characterName : '') === 
+    ('characterName' in event ? event.characterName : '')
+  );
+};
+
+/**
  * Utility to render a component with retained message
  * Used for REQUEST_SELECTION to keep previous message visible
  */

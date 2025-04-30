@@ -2,7 +2,7 @@
     "events": [
       {
         "eventCommand": "SET_BACKGROUND",
-        "imagePath": "background-cafe.png"
+        "imagePath": "background-office.png"
       },
       {
         "eventCommand": "SHOW_MESSAGE",

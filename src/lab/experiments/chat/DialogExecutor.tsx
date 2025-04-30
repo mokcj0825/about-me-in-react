@@ -155,16 +155,18 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                 return <ClearMessage event={currentEvent} onComplete={advanceToNextMessage} />;
             case EventCommand.WAIT:
                 return renderWithRetainedMessage(
-                    <Wait event={currentEvent} onComplete={advanceToNextMessage} />,
-                    messageVisible
+                    messageVisible,
+                    null, // No previous message component to retain
+                    <Wait event={currentEvent} onComplete={advanceToNextMessage} />
                 );
             case EventCommand.REQUEST_SELECTION:
                 return renderWithRetainedMessage(
+                    messageVisible,
+                    history.length > 0 ? <ShowMessage event={history[history.length - 1]} /> : null,
                     <RequestSelection
                         event={currentEvent as RequestSelectionEvent}
                         onSelect={handleSelection}
-                    />,
-                    messageVisible
+                    />
                 );
             case EventCommand.SET_BACKGROUND:
                 console.log("SET_BACKGROUND command received:", currentEvent);
@@ -201,7 +203,7 @@ export const DialogExecutor: React.FC<Props> = ({ scriptId, onDialogEnd }) => {
                 console.log("Unknown command:", currentEvent.eventCommand);
                 return null;
         }
-    }, [currentEvent, advanceToNextMessage, handleSelection, messageVisible]);
+    }, [currentEvent, advanceToNextMessage, handleSelection, messageVisible, history]);
 
     // Load the dialog script
     useEffect(() => {
