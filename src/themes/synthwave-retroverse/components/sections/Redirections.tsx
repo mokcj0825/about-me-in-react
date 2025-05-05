@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { SYNTHWAVE_RETROVERSE_FONTS } from '../../fonts';
 import { SectionProps, StyledSectionProps, getSectionColors } from './SectionProps';
@@ -262,6 +262,21 @@ const Redirections: React.FC<SectionProps> = ({ darkMode }) => {
           }}
         >
           Labs
+        </RedirectButton>
+        <RedirectButton 
+          darkMode={darkMode}
+          isHovered={hoveredButton === 'core'}
+          onClick={() => window.location.href = 'https://cj-react-core.web.app/'}
+          onMouseEnter={() => {
+            setHoveredButton('core');
+            setDisplayText('Here is my core');
+          }}
+          onMouseLeave={() => {
+            setHoveredButton(null);
+            setDisplayText('Other places');
+          }}
+        >
+          Core
         </RedirectButton>
       </ButtonsContainer>
     </Container>
