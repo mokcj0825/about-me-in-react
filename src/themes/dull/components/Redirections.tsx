@@ -46,6 +46,22 @@ const DullRedirection: React.FC<Props> = ({ darkMode }) => {
           boxShadow: `0 4px 8px ${darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'}`,
         }
       },
+      linkCardDummy: {
+        background: currentTheme.background,
+        borderRadius: '8px',
+        padding: '20px',
+        transition: 'all 0.2s ease',
+        display: 'flex',
+        flexDirection: 'column' as const,
+        justifyContent: 'center',
+        alignItems: 'center',
+        textAlign: 'center' as const,
+        gap: '10px',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: `0 4px 8px ${darkMode ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'}`,
+        }
+      },
       linkText: {
         fontSize: '24px',
         color: currentTheme.text,
@@ -77,19 +93,30 @@ const DullRedirection: React.FC<Props> = ({ darkMode }) => {
       <section style={styles.container}>
         <h2 style={styles.title}>Anything else?</h2>
         <div style={styles.linksGrid}>
-          <div 
+          <div
             style={styles.linkCard}
             onClick={() => window.location.href = '/stash'}
           >
             <h3 style={styles.linkText}>Stash</h3>
             <p style={styles.description}>You can take a look on what I did.</p>
           </div>
-          <div 
+          <div
             style={styles.linkCard}
             onClick={() => window.location.href = '/labs'}
           >
             <h3 style={styles.linkText}>Labs</h3>
             <p style={styles.description}>You can take a look on what I test.</p>
+          </div>
+          <div
+            style={styles.linkCard}
+            onClick={() => window.location.href = 'https://cj-react-core.web.app/'}
+          >
+            <h3 style={styles.linkText}>Core</h3>
+            <p style={styles.description}>Core here.</p>
+          </div>
+          <div
+            style={styles.linkCardDummy}
+          >
           </div>
           <div style={styles.linkCard}>
             <h3 style={styles.linkText}>Contact</h3>
@@ -100,12 +127,14 @@ const DullRedirection: React.FC<Props> = ({ darkMode }) => {
                 </a>
               </p>
               <p style={styles.description}>
-                <a href="https://github.com/mokcj0825" target="_blank" rel="noopener noreferrer" style={styles.contactLink}>
+                <a href="https://github.com/mokcj0825" target="_blank" rel="noopener noreferrer"
+                   style={styles.contactLink}>
                   Github: github/mokcj0825
                 </a>
               </p>
               <p style={styles.description}>
-                <a href="https://www.linkedin.com/in/cj-mok-52907642/" target="_blank" rel="noopener noreferrer" style={styles.contactLink}>
+                <a href="https://www.linkedin.com/in/cj-mok-52907642/" target="_blank" rel="noopener noreferrer"
+                   style={styles.contactLink}>
                   LinkedIn: linkedin/cj-mok-52907642
                 </a>
               </p>

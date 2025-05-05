@@ -232,6 +232,30 @@ const HydroRedirections: React.FC<Props> = ({darkMode}: Props) => {
               Labs
             </div>
           </ButtonFrame>
+
+          <ButtonFrame darkMode={darkMode} rotate={true}>
+            <div 
+              style={{
+                cursor: 'pointer',
+                width: '25vw',
+                height: '25vh',
+                color: darkMode ? '#fff' : '#000',
+                transition: 'all 0.2s ease',
+                fontSize: '3rem',
+                fontWeight: '500',
+                position: 'relative',
+                zIndex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onClick={() => window.location.href = 'https://cj-react-core.web.app/'}
+              onMouseEnter={() => setDisplayText('Here is my core')}
+              onMouseLeave={() => setDisplayText('Other places')}
+            >
+              Core
+            </div>
+          </ButtonFrame>
         </div>
       </div>
     </div>
