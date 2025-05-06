@@ -1,0 +1,46 @@
+{
+  "id": "fall-of-lighthouse",
+  "name": "灯塔陨落",
+  "description": "",
+  "bonuses": {
+    "twoPiece": "我没想",
+    "fourPiece": "我没打算想。"
+  },
+  "pieces": [
+    {
+      "id": "fall-of-lighthouse-flower",
+      "name": "当铺堆积的勋章",
+      "type": "flower",
+      "rarity": 5,
+      "lore": "原本颁发给受伤士兵的勋章，如今却如废品般堆在当铺里。"
+    },
+    {
+      "id": "fall-of-lighthouse-feather",
+      "name": "街边可疑的针筒",
+      "type": "feather",
+      "rarity": 5,
+      "lore": "街上随处可见的针筒，里面还有不明药剂的残留。"
+    },
+    {
+      "id": "fall-of-lighthouse-sands",
+      "name": "华贵精致的手表",
+      "type": "sands",
+      "rarity": 5,
+      "lore": "做工精致的手表，只有盒子里的标签可以证明其真伪。"
+    },
+    {
+      "id": "fall-of-lighthouse-cup",
+      "name": "议会厅的釉色瓷器",
+      "type": "cup",
+      "rarity": 5,
+      "lore": "数百年前从敌国掠夺的稀世珍品，宣告当年征服陈腐帝国的历史。"
+    },
+    {
+      "id": "fall-of-lighthouse-circlet",
+      "name": "天选者的金冠",
+      "type": "circlet",
+      "rarity": 5,
+      "lore": "大难不死的天选者，佩戴着三权集于一身的金冠。"
+    }
+  ]
+} 

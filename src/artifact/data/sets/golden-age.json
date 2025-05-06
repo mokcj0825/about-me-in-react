@@ -1,0 +1,46 @@
+{
+  "id": "golden-age",
+  "name": "黄金时代",
+  "description": "",
+  "bonuses": {
+    "twoPiece": "我没想",
+    "fourPiece": "我没打算想。"
+  },
+  "pieces": [
+    {
+      "id": "golden-age-flower",
+      "name": "工会柜台的装饰玫瑰",
+      "type": "flower",
+      "rarity": 5,
+      "lore": "摆放在柜台上的玫瑰，象征着工人不是孤军奋战。"
+    },
+    {
+      "id": "golden-age-feather",
+      "name": "觅食乌鸦的羽毛",
+      "type": "feather",
+      "rarity": 5,
+      "lore": "在黄金时代下的滋润下，乌鸦也变得温顺起来。"
+    },
+    {
+      "id": "golden-age-sands",
+      "name": "车间工人的怀表",
+      "type": "sands",
+      "rarity": 5,
+      "lore": "非常可靠的怀表，提醒着工人什么时候该休息陪伴家人。"
+    },
+    {
+      "id": "golden-age-cup",
+      "name": "生日派对的纸杯",
+      "type": "cup",
+      "rarity": 5,
+      "lore": "在节俭变得毫无意义的黄金时代，一次性的纸杯基本无处不在。"
+    },
+    {
+      "id": "golden-age-circlet",
+      "name": "工厂的防护眼罩",
+      "type": "circlet",
+      "rarity": 5,
+      "lore": "质量上乘的防护眼罩，能够非常有效地保障工人们的眼睛。"
+    }
+  ]
+} 
