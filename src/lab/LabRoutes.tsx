@@ -12,6 +12,7 @@ import EditorTheater from "./experiments/dptEditor/EditorTheater";
 import Core from "./gameCore/Core";
 import { useParams } from "react-router-dom";
 import {ChatCore} from "./experiments/chat/ChatCore";
+import StringTest from "./strings/StringTest";
 
 // Constants for configuration
 const DEFAULT_ROUTE_CONFIG = {
@@ -43,6 +44,7 @@ const LabRoutes = () => {
       <Route path="/dpt-editor" element={<EditorTheater />} />
       <Route path="/core/:stageId?" element={<CoreWrapper />} />
       <Route path="/chat/:dialogScriptId?" element={<ChatRedirector />} />
+      <Route path="/strings" element={<StringTest />} />
     </Routes>
   );
 };

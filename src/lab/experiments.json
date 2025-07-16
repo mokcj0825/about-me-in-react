@@ -89,6 +89,18 @@
           "url": "/labs/chat"
         }
       ]
+    },
+    {
+      "title": "Strings",
+      "experiments": [
+        {
+          "id": "STRINGS-01",
+          "name": "String test 01",
+          "description": "Asssist 5 strings and 6 strings",
+          "status": "in-progress",
+          "url": "/labs/strings"
+        }
+      ]
     }
   ]
 } 
