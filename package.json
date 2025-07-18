@@ -30,7 +30,7 @@
     "sass": "^1.83.4",
     "styled-components": "^6.1.17",
     "three": "^0.172.0",
-    "react-draggable-frame": "1.0.6"
+    "react-draggable-frame": "1.0.7"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",
