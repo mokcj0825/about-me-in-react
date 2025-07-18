@@ -1,17 +1,17 @@
-import {DraggableFrame} from "react-draggable-frame";
+import {Draggable, DraggableFrame} from "react-draggable-frame";
 
 const NpmLab = () => {
   return (
       <div>
-          <DraggableFrame id={"0001"} anchored={true} >
+          <Draggable id={"0001"} anchored={true} >
               <div onClick={() => {
                   alert('Clicked');
               }}>Hello</div>
-          </DraggableFrame>
+          </Draggable>
 
-          <DraggableFrame id={"0002"} anchored={true} >
+          <Draggable id={"0002"} anchored={true} >
               <div>Hello 2</div>
-          </DraggableFrame>
+          </Draggable>
       </div>
   )
 }
