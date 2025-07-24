@@ -4,6 +4,119 @@ import './StringTest.css';
 const STANDARD_TUNING = ['E', 'A', 'D', 'G', 'B', 'E'];
 const MAX_FRET = 19;
 
+// Key signatures from all flats to all sharps
+const KEY_SIGNATURES = [
+  { key: 'Cb', signature: 'C♭', flats: 7, sharps: 0, display: 'C♭ (7 flats)' },
+  { key: 'Gb', signature: 'G♭', flats: 6, sharps: 0, display: 'G♭ (6 flats)' },
+  { key: 'Db', signature: 'D♭', flats: 5, sharps: 0, display: 'D♭ (5 flats)' },
+  { key: 'Ab', signature: 'A♭', flats: 4, sharps: 0, display: 'A♭ (4 flats)' },
+  { key: 'Eb', signature: 'E♭', flats: 3, sharps: 0, display: 'E♭ (3 flats)' },
+  { key: 'Bb', signature: 'B♭', flats: 2, sharps: 0, display: 'B♭ (2 flats)' },
+  { key: 'F', signature: 'F', flats: 1, sharps: 0, display: 'F (1 flat)' },
+  { key: 'C', signature: 'C', flats: 0, sharps: 0, display: 'C (no sharps/flats)' },
+  { key: 'G', signature: 'G', flats: 0, sharps: 1, display: 'G (1 sharp)' },
+  { key: 'D', signature: 'D', flats: 0, sharps: 2, display: 'D (2 sharps)' },
+  { key: 'A', signature: 'A', flats: 0, sharps: 3, display: 'A (3 sharps)' },
+  { key: 'E', signature: 'E', flats: 0, sharps: 4, display: 'E (4 sharps)' },
+  { key: 'B', signature: 'B', flats: 0, sharps: 5, display: 'B (5 sharps)' },
+  { key: 'F#', signature: 'F♯', flats: 0, sharps: 6, display: 'F♯ (6 sharps)' },
+  { key: 'C#', signature: 'C♯', flats: 0, sharps: 7, display: 'C♯ (7 sharps)' }
+];
+
+// Type for key signature accidentals
+type Accidental = {
+  note: string;
+  type: 'flat' | 'sharp';
+  position: number;
+};
+
+// Key signature accidentals and their positions
+const KEY_SIGNATURE_ACCIDENTALS: Record<string, Accidental[]> = {
+  // Flat keys (order: B♭, E♭, A♭, D♭, G♭, C♭, F♭)
+  'F': [{ note: 'B', type: 'flat', position: 3 }], // B♭ on B4 line
+  'Bb': [
+    { note: 'B', type: 'flat', position: 3 }, // B♭ on B4 line
+    { note: 'E', type: 'flat', position: 4 }  // E♭ on E4 line
+  ],
+  'Eb': [
+    { note: 'B', type: 'flat', position: 3 }, // B♭ on B4 line
+    { note: 'E', type: 'flat', position: 4 }, // E♭ on E4 line
+    { note: 'A', type: 'flat', position: 2.5 } // A♭ on A4 space
+  ],
+  'Ab': [
+    { note: 'B', type: 'flat', position: 3 }, // B♭ on B4 line
+    { note: 'E', type: 'flat', position: 4 }, // E♭ on E4 line
+    { note: 'A', type: 'flat', position: 2.5 }, // A♭ on A4 space
+    { note: 'D', type: 'flat', position: 1 } // D♭ on D5 line
+  ],
+  'Db': [
+    { note: 'B', type: 'flat', position: 3 }, // B♭ on B4 line
+    { note: 'E', type: 'flat', position: 4 }, // E♭ on E4 line
+    { note: 'A', type: 'flat', position: 2.5 }, // A♭ on A4 space
+    { note: 'D', type: 'flat', position: 1 }, // D♭ on D5 line
+    { note: 'G', type: 'flat', position: 3.5 } // G♭ on G4 space
+  ],
+  'Gb': [
+    { note: 'B', type: 'flat', position: 3 }, // B♭ on B4 line
+    { note: 'E', type: 'flat', position: 4 }, // E♭ on E4 line
+    { note: 'A', type: 'flat', position: 2.5 }, // A♭ on A4 space
+    { note: 'D', type: 'flat', position: 1 }, // D♭ on D5 line
+    { note: 'G', type: 'flat', position: 3.5 }, // G♭ on G4 space
+    { note: 'C', type: 'flat', position: 1.5 } // C♭ on C5 space
+  ],
+  'Cb': [
+    { note: 'B', type: 'flat', position: 3 }, // B♭ on B4 line
+    { note: 'E', type: 'flat', position: 4 }, // E♭ on E4 line
+    { note: 'A', type: 'flat', position: 2.5 }, // A♭ on A4 space
+    { note: 'D', type: 'flat', position: 1 }, // D♭ on D5 line
+    { note: 'G', type: 'flat', position: 3.5 }, // G♭ on G4 space
+    { note: 'C', type: 'flat', position: 1.5 }, // C♭ on C5 space
+    { note: 'F', type: 'flat', position: 0 } // F♭ on F5 line
+  ],
+  
+  // Sharp keys (order: F♯, C♯, G♯, D♯, A♯, E♯, B♯)
+  'G': [{ note: 'F', type: 'sharp', position: 0 }], // F♯ on F5 line
+  'D': [
+    { note: 'F', type: 'sharp', position: 0 }, // F♯ on F5 line
+    { note: 'C', type: 'sharp', position: 1.5 } // C♯ on C5 space
+  ],
+  'A': [
+    { note: 'F', type: 'sharp', position: 0 }, // F♯ on F5 line
+    { note: 'C', type: 'sharp', position: 1.5 }, // C♯ on C5 space
+    { note: 'G', type: 'sharp', position: -0.5 } // G♯ on G4 line (58px)
+  ],
+  'E': [
+    { note: 'F', type: 'sharp', position: 0 }, // F♯ on F5 line
+    { note: 'C', type: 'sharp', position: 1.5 }, // C♯ on C5 space
+    { note: 'G', type: 'sharp', position: -0.5 }, // G♯ on G4 line (58px)
+    { note: 'D', type: 'sharp', position: 1 } // D♯ on D5 line
+  ],
+  'B': [
+    { note: 'F', type: 'sharp', position: 0 }, // F♯ on F5 line
+    { note: 'C', type: 'sharp', position: 1.5 }, // C♯ on C5 space
+    { note: 'G', type: 'sharp', position: -0.5 }, // G♯ on G4 line (58px)
+    { note: 'D', type: 'sharp', position: 1 }, // D♯ on D5 line
+    { note: 'A', type: 'sharp', position: 2.5 } // A♯ on A4 space
+  ],
+  'F#': [
+    { note: 'F', type: 'sharp', position: 0 }, // F♯ on F5 line
+    { note: 'C', type: 'sharp', position: 1.5 }, // C♯ on C5 space
+    { note: 'G', type: 'sharp', position: -0.5 }, // G♯ on G4 line (58px)
+    { note: 'D', type: 'sharp', position: 1 }, // D♯ on D5 line
+    { note: 'A', type: 'sharp', position: 2.5 }, // A♯ on A4 space
+    { note: 'E', type: 'sharp', position: 0.4 } // E♯ on E4 line (76px) - one octave higher
+  ],
+  'C#': [
+    { note: 'F', type: 'sharp', position: 0 }, // F♯ on F5 line
+    { note: 'C', type: 'sharp', position: 1.5 }, // C♯ on C5 space
+    { note: 'G', type: 'sharp', position: -0.5 }, // G♯ on G4 line (58px)
+    { note: 'D', type: 'sharp', position: 1 }, // D♯ on D5 line
+    { note: 'A', type: 'sharp', position: 2.5 }, // A♯ on A4 space
+    { note: 'E', type: 'sharp', position: 0.4 }, // E♯ on E4 line (76px) - one octave higher
+    { note: 'B', type: 'sharp', position: 1.9 } // B♯ on B4 line (106px) - middle line
+  ]
+};
+
 // Staff line positions and their corresponding notes (from top to bottom)
 const STAFF_POSITIONS = [
   { position: 0, note: 'F5' },   // Top line
@@ -53,6 +166,9 @@ const StringTest: React.FC = () => {
   
   // State for highlighted note
   const [highlightedNote, setHighlightedNote] = useState<string | null>(null);
+  
+  // State for selected key signature
+  const [selectedKeySignature, setSelectedKeySignature] = useState<string>('C');
 
   // Convert note to fret positions
   const getFretPositions = useCallback((note: string): { string: number; fret: number }[] => {
@@ -144,12 +260,56 @@ const StringTest: React.FC = () => {
     <div className="string-test-container">
       <h2>Guitar Tab Converter</h2>
       
+      {/* Key Signature Selection */}
+      <div className="key-signature-section">
+        <h3>Key Signature</h3>
+        <select 
+          value={selectedKeySignature}
+          onChange={(e) => setSelectedKeySignature(e.target.value)}
+          className="key-signature-dropdown"
+        >
+          {KEY_SIGNATURES.map((keySig) => (
+            <option key={keySig.key} value={keySig.key}>
+              {keySig.display}
+            </option>
+          ))}
+        </select>
+        <div className="key-signature-info">
+          Selected: {KEY_SIGNATURES.find(k => k.key === selectedKeySignature)?.display}
+        </div>
+      </div>
+      
       <div className="main-layout">
         {/* Left Side: Musical Staff Notation */}
         <div className="notation-section">
           <h3>Musical Staff</h3>
           <div className="staff-container">
             <div className="staff">
+              {/* Key Signature Accidentals */}
+              {KEY_SIGNATURE_ACCIDENTALS[selectedKeySignature]?.map((accidental, index) => {
+                // Calculate the correct top position based on the accidental's position
+                const topPosition = accidental.position * 20 + 68;
+                
+                return (
+                  <div
+                    key={`key-sig-${index}`}
+                    className={`key-signature-accidental ${accidental.type}`}
+                    style={{
+                      position: 'absolute',
+                      left: `${20 + (index * 15)}px`,
+                      top: `${topPosition}px`,
+                      fontSize: '25px',
+                      fontWeight: 'bold',
+                      color: accidental.type === 'flat' ? '#007bff' : '#dc3545',
+                      zIndex: 3
+                    }}
+                    title={`${accidental.note}${accidental.type === 'flat' ? '♭' : '♯'}`}
+                  >
+                    {accidental.type === 'flat' ? '♭' : '♯'}
+                  </div>
+                );
+              })}
+              
               {/* Main staff lines and spaces - hoverable */}
               {STAFF_POSITIONS.map((pos, index) => {
                 const isLine = Number.isInteger(pos.position);
