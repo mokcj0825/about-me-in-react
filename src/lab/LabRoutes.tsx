@@ -14,6 +14,7 @@ import { useParams } from "react-router-dom";
 import {ChatCore} from "./experiments/chat/ChatCore";
 import StringTest from "./strings/StringTest";
 import NpmLab from "./experiments/npmTest/NpmLab";
+import Race from "./race/Race";
 
 // Constants for configuration
 const DEFAULT_ROUTE_CONFIG = {
@@ -46,7 +47,8 @@ const LabRoutes = () => {
       <Route path="/core/:stageId?" element={<CoreWrapper />} />
       <Route path="/chat/:dialogScriptId?" element={<ChatRedirector />} />
       <Route path="/strings" element={<StringTest />} />
-        <Route path="/npmLab" element={<NpmLab />} />
+      <Route path="/npmLab" element={<NpmLab />} />
+      <Route path="/race" element={<Race />} />
     </Routes>
   );
 };
