@@ -58,6 +58,13 @@
           "url": "/labs/game-theater-v1_4"
         },
         {
+          "id": "gamedev-6",
+          "name": "Auto-Runner Race Game",
+          "description": "A 2D auto-runner game with boost mechanics, double jump system, and obstacle auto-climbing. Features include 2-second boost with 4-second cooldown, jump attempts that recover on landing, and automatic obstacle climbing.",
+          "status": "completed",
+          "url": "/labs/race"
+        },
+        {
           "id": "core-0.2",
           "name": "Game Core",
           "description": "Setup core mechanics",
