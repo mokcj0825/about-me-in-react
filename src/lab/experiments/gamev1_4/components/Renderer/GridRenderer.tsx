@@ -1,5 +1,5 @@
 import React from 'react';
-import { HexCoordinate } from '../../types/HexCoordinate';
+import { HexCoordinate } from '../../../game-versioning/types/HexCoordinate';
 import { UnitData } from '../../types/UnitData';
 import { TerrainType } from '../../movement/types';
 import { HexCell } from '../HexaGrids/HexCell';

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { HexCoordinate, createHexCoordinate } from "./types/HexCoordinate";
+import { createHexCoordinate } from "./types/HexCoordinate";
 import { UnitData, initialUnits } from "./types/UnitData";
 import { HexCell } from "./components/HexaGrids/HexCell";
 import { MovementCalculator } from "./movement/MovementCalculator";
@@ -13,7 +13,9 @@ import { UnitSelectionModal } from './components/DisplayPanel/UnitSelectionModal
 import { hasCharacteristic } from "./types/Characteristics";
 import { TerrainDetailDisplay } from './components/DisplayPanel/TerrainDetailDisplay';
 import { UIModalState } from './types/UIState';
-import { ControlHints } from './components/DisplayPanel/ControlHints';
+import { ControlHints } from "./components/DisplayPanel/ControlHints";
+import { HexCoordinate } from "../game-versioning/types/HexCoordinate";
+import { GRID } from "../game-versioning/components/HexCell";
 
 /**
  * Props for the GameRenderer component
@@ -25,15 +27,6 @@ interface GameRendererProps {
   width: number;
   height: number;
 }
-
-/**
- * Grid layout constants
- * @constant GRID
- */
-const GRID = {
-  WIDTH: 100,        // Width of each hex cell
-  ROW_OFFSET: 50     // Horizontal offset for odd rows
-};
 
 /**
  * Main game board renderer component

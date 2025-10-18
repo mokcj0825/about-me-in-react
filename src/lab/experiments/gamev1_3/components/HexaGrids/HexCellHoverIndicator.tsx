@@ -31,25 +31,26 @@ interface Props {
  * />
  * ```
  */
-export const HexCellHoverIndicator: React.FC<Props> = ({ 
-  isHovered, 
+export const HexCellHoverIndicator: React.FC<Props> = ({
+  isHovered,
   isSelected,
-  style 
+  style,
 }) => {
   return (
     <div
       style={{
-        position: 'absolute',
-        top: 0,
+        backgroundColor: isHovered ? "rgba(0, 0, 0, 0.5)" : "transparent",
+        clipPath:
+          "polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)",
+        height: "100%",
         left: 0,
-        width: '100%',
-        height: '100%',
-        clipPath: 'polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)',
-        backgroundColor: isHovered ? 'rgba(0, 0, 0, 0.5)' : 'transparent',
-        outline: isSelected ? '2px solid yellow' : 'none',
-        transition: 'all 0.2s ease',
-        pointerEvents: 'none',
-        ...style
+        outline: isSelected ? "2px solid yellow" : "none",
+        pointerEvents: "none",
+        position: "absolute",
+        top: 0,
+        transition: "all 0.2s ease",
+        width: "100%",
+        ...style,
       }}
     />
   );

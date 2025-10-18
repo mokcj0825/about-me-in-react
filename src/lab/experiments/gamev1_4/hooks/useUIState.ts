@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { UIModalState } from '../types/UIState';
 import { TerrainType } from '../movement/types';
-import { HexCoordinate } from '../types/HexCoordinate';
+import { HexCoordinate } from '../../game-versioning/types/HexCoordinate';
 
 interface UseUIStateProps {
   onModalClose?: () => void;

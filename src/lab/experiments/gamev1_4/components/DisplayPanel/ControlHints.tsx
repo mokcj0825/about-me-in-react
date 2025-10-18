@@ -1,6 +1,6 @@
 import React from 'react';
 import {Z_INDEX} from "../../constants/zIndex";
-import { HexCoordinate } from '../../types/HexCoordinate';
+import { HexCoordinate } from '../../../game-versioning/types/HexCoordinate';
 
 interface Props {
   hoveredCoord: HexCoordinate | null;

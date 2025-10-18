@@ -1,7 +1,7 @@
-import { HexCoordinate } from "../../types/HexCoordinate";
 import { UnitData } from "../../types/UnitData";
 import { MovementRule } from "../types";
 import { isHostileUnit } from "../../utils/FactionUtils";
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 
 export class GroundMovement implements MovementRule {
     canMoveThrough(

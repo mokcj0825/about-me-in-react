@@ -1,4 +1,4 @@
-import { HexCoordinate, getNeighbors } from "../types/HexCoordinate";
+import { getNeighbors } from "../types/HexCoordinate";
 import { UnitData, MovementType } from "../types/UnitData";
 import { MovementRule } from "./types";
 import { ZoneOfControl } from "../zoc/types";
@@ -7,6 +7,7 @@ import { buffRegistry } from '../buffs/registry/BuffRegistry';
 import {AirMovement} from "./rules/AirMovement";
 import {GroundMovement} from "./rules/GroundMovement";
 import {StandardZOC} from "../zoc/rules/StandardZOC";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 
 /**
  * Defines movement costs for different terrain types and movement types
@@ -85,8 +86,8 @@ export class MovementCalculator {
         // Helper function to check if units can stack
         const canUnitsStack = (existingUnits: UnitData[], movingUnit: UnitData): boolean => {
             return existingUnits.length === 0 || existingUnits.every(u => 
-                // Same faction and different movement type can stack
-                u.faction === movingUnit.faction && u.movementType !== movingUnit.movementType
+                // Same fraction and different movement type can stack
+                u.fraction === movingUnit.fraction && u.movementType !== movingUnit.movementType
             );
         };
 
@@ -211,11 +212,11 @@ export class MovementCalculator {
             // Skip flying units
             if (u.movementType === 'flying') return false;
             
-            // Determine opposing factions based on unit's faction
-            if (unit.faction === 'enemy') {
-                return u.faction === 'player' || u.faction === 'ally';
-            } else if (unit.faction === 'player' || unit.faction === 'ally') {
-                return u.faction === 'enemy';
+            // Determine opposing fractions based on unit's fraction
+            if (unit.fraction === 'enemy') {
+                return u.fraction === 'player' || u.fraction === 'ally';
+            } else if (unit.fraction === 'player' || unit.fraction === 'ally') {
+                return u.fraction === 'enemy';
             }
             return false;
         });

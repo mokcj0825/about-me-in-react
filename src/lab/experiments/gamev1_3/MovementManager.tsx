@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { eventBus } from "./EventBus";
 import { UnitSelectedEvent, UnitHoveredEvent } from "./types/EventTypes";
-import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl } from "./types/HexCoordinate";
+import { createHexCoordinate, getZoneOfControl } from "./types/HexCoordinate";
 import { UnitData, initialUnits } from "./types/UnitData";
-import { hasCharacteristic } from "./types/Characteristics";
+import { HexCoordinate } from "../game-versioning/types/HexCoordinate";
 
 /**
  * MovementManager Component
@@ -47,10 +47,10 @@ export const MovementManager = () => {
     // Calculate opposing units' Zone of Control
     const opposingZOC = units
       .filter(u => {
-        if (movingUnit.faction === 'enemy') {
-          return u.faction === 'player' || u.faction === 'ally';
-        } else if (movingUnit.faction === 'player' || movingUnit.faction === 'ally') {
-          return u.faction === 'enemy';
+        if (movingUnit.fraction === 'enemy') {
+          return u.fraction === 'player' || u.fraction === 'ally';
+        } else if (movingUnit.fraction === 'player' || movingUnit.fraction === 'ally') {
+          return u.fraction === 'enemy';
         }
         return false;
       })

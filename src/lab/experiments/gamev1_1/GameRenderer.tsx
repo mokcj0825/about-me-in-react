@@ -1,11 +1,12 @@
 import React, { useRef, useState, useEffect } from "react";
-import { HexCoordinate, createHexCoordinate, getNeighbors, getZoneOfControl } from "./types/HexCoordinate";
+import { createHexCoordinate, getZoneOfControl } from "./types/HexCoordinate";
 import { UnitData, initialUnits } from "./types/UnitData";
 import { HexCell } from "./components/HexCell";
-import { hasCharacteristic } from './types/Characteristics';
 import { MovementCalculator } from "./movement/MovementCalculator";
 import { GroundMovement } from "./movement/rules/GroundMovement";
 import { StandardZOC } from "./zoc/rules/StandardZOC";
+import { HexCoordinate } from "../game-versioning/types/HexCoordinate";
+import { GRID } from "../game-versioning/components/HexCell";
 
 
 // Types
@@ -13,12 +14,6 @@ interface GameRendererProps {
   width: number;
   height: number;
 }
-
-// Grid constants
-const GRID = {
-  WIDTH: 100,
-  ROW_OFFSET: 50
-};
 
 // Main Renderer Component
 export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => {
@@ -128,11 +123,11 @@ export const GameRenderer: React.FC<GameRendererProps> = ({ width, height }) => 
 
   // Helper functions
   const isHostileUnit = (movingUnit: UnitData, targetUnit: UnitData): boolean => {
-    if (movingUnit.faction === 'enemy') {
-      return targetUnit.faction === 'player' || targetUnit.faction === 'ally';
+    if (movingUnit.fraction === 'enemy') {
+      return targetUnit.fraction === 'player' || targetUnit.fraction === 'ally';
     }
-    if (movingUnit.faction === 'player' || movingUnit.faction === 'ally') {
-      return targetUnit.faction === 'enemy';
+    if (movingUnit.fraction === 'player' || movingUnit.fraction === 'ally') {
+      return targetUnit.fraction === 'enemy';
     }
     return false;
   };

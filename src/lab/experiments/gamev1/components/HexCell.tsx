@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { HexCoordinate, getDistance } from "../types/HexCoordinate";
-import { UnitData, Faction } from "../types/UnitData";
+import { UnitData } from "../types/UnitData";
 import { eventBus } from "../EventBus";
 import { HexCellOverlay } from "./HexCellOverlay";
 import { HexCellContent } from "./HexCellContent";
 import { HexCellHighlight } from "./HexCellHighlight";
+import { getDistance, HexCoordinate } from "../../game-versioning/types/HexCoordinate";
+import {GRID} from "../../game-versioning/components/HexCell";
+import {UnitFraction} from "../../game-versioning/types/UnitData";
 
 interface HexCellProps {
   coordinate: HexCoordinate;
@@ -16,12 +18,8 @@ interface HexCellProps {
   findUnitAtPosition: (coord: HexCoordinate) => UnitData | undefined;
 }
 
-const GRID = {
-  WIDTH: 100
-};
-
-const getUnitColor = (faction: Faction) => {
-  switch (faction) {
+const getUnitColor = (fraction: UnitFraction) => {
+  switch (fraction) {
     case 'player':
       return '#ffeb3b';  // Yellow for player
     case 'ally':
@@ -33,8 +31,8 @@ const getUnitColor = (faction: Faction) => {
   }
 };
 
-const getMoveableColor = (faction: Faction) => {
-  switch (faction) {
+const getMoveableColor = (fraction: UnitFraction) => {
+  switch (fraction) {
     case 'player':
       return '#90caf9';  // Light blue for player movement
     case 'ally':
@@ -89,44 +87,45 @@ export const HexCell: React.FC<HexCellProps> = ({
     return undefined;
   };
 
-  const getHighlightFaction = () => {
+  const getHighlightfraction = () => {
     if (isMoveable && unitPosition) {
       const sourceUnit = findUnitAtPosition(unitPosition);
-      return sourceUnit?.faction;
+      return sourceUnit?.fraction;
     }
     return undefined;
   };
 
   const getBackgroundColor = () => {
-    if (unit) return getUnitColor(unit.faction);
+    if (unit) return getUnitColor(unit.fraction);
     if (isMoveable && unitPosition) {
       const sourceUnit = findUnitAtPosition(unitPosition);
-      if (sourceUnit) return getMoveableColor(sourceUnit.faction);
+      if (sourceUnit) return getMoveableColor(sourceUnit.fraction);
     }
-    if (isInZOC) return 'rgba(255, 0, 0, 0.1)';  // Light red for enemy ZOC
-    if (isHovered && !unit) return '#4a90e2';
-    return '#f0f0f0';
+    if (isInZOC) return "rgba(255, 0, 0, 0.1)"; // Light red for enemy ZOC
+    if (isHovered && !unit) return "#4a90e2";
+    return "#f0f0f0";
   };
 
   return (
-    <div 
+    <div
       style={{
-        width: `${GRID.WIDTH}px`,
+        alignItems: "center",
+        boxSizing: "border-box",
+        clipPath:
+          "polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)",
+        cursor: "default",
+        display: "flex",
+        flexGrow: 0,
+        flexShrink: 0,
+        fontSize: "12px",
         height: `${GRID.WIDTH}px`,
-        clipPath: 'polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'default',
-        userSelect: 'none',
-        fontSize: '12px',
+        justifyContent: "center",
         margin: 0,
         padding: 0,
-        boxSizing: 'border-box',
-        flexShrink: 0,
-        flexGrow: 0,
-        position: 'relative',
-        transition: 'background-color 0.2s ease',
+        position: "relative",
+        transition: "background-color 0.2s ease",
+        userSelect: "none",
+        width: `${GRID.WIDTH}px`,
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -134,9 +133,9 @@ export const HexCell: React.FC<HexCellProps> = ({
       onContextMenu={handleClick}
     >
       <HexCellOverlay />
-      <HexCellHighlight 
-        type={getHighlightType()} 
-        faction={getHighlightFaction()} 
+      <HexCellHighlight
+        type={getHighlightType()}
+        fraction={getHighlightfraction()}
       />
       <HexCellContent coordinate={coordinate} unit={unit} />
     </div>

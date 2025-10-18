@@ -1,5 +1,6 @@
 import React from "react";
 import {TerrainType} from "../../types/TerrainType";
+import { GRID } from "../../../experiments/game-versioning/components/HexCell";
 
 
 interface Props {
@@ -7,10 +8,6 @@ interface Props {
 	isHovered: boolean;
 	children: React.ReactNode;
 }
-
-const GRID = {
-	WIDTH: 100
-};
 
 export const Container: React.FC<Props> = ({
 	terrain,

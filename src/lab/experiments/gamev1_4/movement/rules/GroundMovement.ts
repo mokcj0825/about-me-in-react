@@ -1,4 +1,4 @@
-import { HexCoordinate } from "../../types/HexCoordinate";
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 import { UnitData } from "../../types/UnitData";
 import { MovementRule } from "../types";
 import type { TerrainType } from '../types'
@@ -50,8 +50,8 @@ export class GroundMovement implements MovementRule {
 
         // Check for hostile units - cannot move through them
         const hasHostileUnit = unitsAtTarget.some(u => 
-            (movingUnit.faction === 'enemy' && u.faction !== 'enemy') ||
-            (movingUnit.faction !== 'enemy' && u.faction === 'enemy')
+            (movingUnit.fraction === 'enemy' && u.fraction !== 'enemy') ||
+            (movingUnit.fraction !== 'enemy' && u.fraction === 'enemy')
         );
         if (hasHostileUnit) return false;
 

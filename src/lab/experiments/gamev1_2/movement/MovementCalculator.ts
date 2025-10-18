@@ -1,10 +1,11 @@
-import { HexCoordinate, createHexCoordinate, getNeighbors } from "../types/HexCoordinate";
+import { createHexCoordinate, getNeighbors } from "../types/HexCoordinate";
 import { UnitData, MovementType } from "../types/UnitData";
 import { MovementRule } from "./types";
 import { ZoneOfControl } from "../zoc/types";
 import { isHostileUnit } from "../utils/FactionUtils";
 import { hasCharacteristic } from "../types/Characteristics";
 import { DEFAULT_MOVEMENT_COSTS } from "./constants";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 
 /**
  * Defines movement costs for different terrain types and movement types

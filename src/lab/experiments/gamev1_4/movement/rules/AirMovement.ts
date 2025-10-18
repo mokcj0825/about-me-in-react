@@ -1,8 +1,8 @@
-import { HexCoordinate } from "../../types/HexCoordinate";
 import { UnitData } from "../../types/UnitData";
 import { MovementRule } from "../types";
 import type { TerrainType } from '../types'
 import mapData from '../../data/map-data.json'
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 
 export class AirMovement implements MovementRule {
     canMoveThrough(
@@ -26,11 +26,11 @@ export class AirMovement implements MovementRule {
         if (unitsAtTarget.length === 0) return true;
 
         // Check for hostile units
-        if (unitsAtTarget.some(u => u.faction !== movingUnit.faction)) return false;
+        if (unitsAtTarget.some(u => u.fraction !== movingUnit.fraction)) return false;
 
         // Check for friendly air unit (can't stack with another air)
         const hasFriendlyAir = unitsAtTarget.some(u => 
-            u.faction === movingUnit.faction && 
+            u.fraction === movingUnit.fraction &&
             u.movementType === 'flying'
         );
         

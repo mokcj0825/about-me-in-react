@@ -1,4 +1,4 @@
-import { HexCoordinate } from "../types/HexCoordinate";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 import { ShapeConfig } from "./ShapeCalculator";
 import { RoundSelection } from "./selection/RoundSelection";
 import { LineSelection } from "./selection/LineSelection";

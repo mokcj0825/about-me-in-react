@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { HexCoordinate } from "./types/HexCoordinate";
+import { HexCoordinate } from "../game-versioning/types/HexCoordinate";
 import { UnitData } from "./types/UnitData";
 import { getMoveableGrids } from "./movement/MovementCalculator";
 import mapData from './data/map-data.json'
@@ -21,7 +21,6 @@ import { DEBUGGING_MODE } from "./config";
 import { WeaponSelectionPanel } from './components/DisplayPanel/WeaponSelectionPanel';
 import { GameActionState } from './types/GameState';
 import { generateGrid } from "./rendererUtils/GenerateGrid";
-import { GridLayout } from "./constants/GridLayout";
 import { ScrollConfig } from "./constants/ScrollConfig";
 import { GridRenderer } from './components/Renderer/GridRenderer';
 import { useUnitState } from './hooks/useUnitState';
@@ -29,6 +28,7 @@ import { useMapInteraction } from './hooks/useMapInteraction';
 import { useCombatState } from './hooks/useCombatState';
 import { useTurnSystem } from './hooks/useTurnSystem';
 import { useUIState } from './hooks/useUIState';
+import { GRID } from "../game-versioning/components/HexCell";
 
 /**
  * Main game board renderer component
@@ -362,7 +362,7 @@ export const GameRenderer: React.FC = () => {
               units: unitsAtPosition,
               position: mousePosition,
               onSelect: (unit: UnitData) => {
-                if (unit.hasMoved || (unit.faction !== 'player' && unit.faction !== 'ally')) return;
+                if (unit.hasMoved || (unit.fraction !== 'player' && unit.fraction !== 'ally')) return;
                 // Select the unit and show its movement range
                 setSelectedUnit(unit);
                 setSelectedUnitPosition(unit.position);
@@ -377,7 +377,7 @@ export const GameRenderer: React.FC = () => {
 
         // If single unit, check if it's selectable
         const unit = unitsAtPosition[0];
-        if (unit.hasMoved || (unit.faction !== 'player' && unit.faction !== 'ally')) return;
+        if (unit.hasMoved || (unit.fraction !== 'player' && unit.fraction !== 'ally')) return;
 
         handleUnitSelection(coord);
         setActionState('unitSelected');
@@ -548,8 +548,8 @@ export const GameRenderer: React.FC = () => {
       
       <div style={{
         padding: `${ScrollConfig.PADDING}px`,
-        minWidth: `${width * GridLayout.WIDTH + GridLayout.ROW_OFFSET + (ScrollConfig.PADDING * 2)}px`,
-        minHeight: `${height * GridLayout.WIDTH * 0.75 + (ScrollConfig.PADDING * 2)}px`,
+        minWidth: `${width * GRID.WIDTH + GRID.ROW_OFFSET + (ScrollConfig.PADDING * 2)}px`,
+        minHeight: `${height * GRID.WIDTH * 0.75 + (ScrollConfig.PADDING * 2)}px`,
         margin: 0,
         boxSizing: 'border-box',
         position: 'relative',
@@ -563,7 +563,7 @@ export const GameRenderer: React.FC = () => {
             lineHeight: 0,
             fontSize: 0,
             whiteSpace: 'nowrap',
-            marginLeft: (height - 1 - index) % 2 === 0 ? `${GridLayout.ROW_OFFSET}px` : '0',
+            marginLeft: (height - 1 - index) % 2 === 0 ? `${GRID.ROW_OFFSET}px` : '0',
             marginTop: index === 0 ? '0' : '-25px',
           }}>
             {row.map((coord) => renderHex(coord))}
@@ -593,8 +593,8 @@ export const GameRenderer: React.FC = () => {
           }}
           style={{
             position: 'absolute',
-            top: `${selectedUnit.position.y * GridLayout.WIDTH * 0.75 + ScrollConfig.PADDING}px`,
-            left: `${selectedUnit.position.x * GridLayout.WIDTH + (selectedUnit.position.y % 2 === 0 ? GridLayout.ROW_OFFSET : 0) + ScrollConfig.PADDING}px`
+            top: `${selectedUnit.position.y * GRID.WIDTH * 0.75 + ScrollConfig.PADDING}px`,
+            left: `${selectedUnit.position.x * GRID.WIDTH + (selectedUnit.position.y % 2 === 0 ? GRID.ROW_OFFSET : 0) + ScrollConfig.PADDING}px`
           }}
         />
       )}

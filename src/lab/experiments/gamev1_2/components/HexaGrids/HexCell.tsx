@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { HexCoordinate } from "../../types/HexCoordinate";
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 import { UnitData } from "../../types/UnitData";
 import { HexCellOverlay } from "./HexCellOverlay";
 import { HexCellContent } from "./HexCellContent";
@@ -146,7 +146,7 @@ export const HexCell: React.FC<Props> = ({
 
   const renderUnit = (unit: UnitData) => {
     return (
-      <div className={`unit ${unit.faction}`}>
+      <div className={`unit ${unit.fraction}`}>
         {unit.name}
       </div>
     );
@@ -165,7 +165,7 @@ export const HexCell: React.FC<Props> = ({
         <HexCellOverlay style={{ zIndex: 1 }} />
         <HexCellHighlight 
           type={isMoveable ? 'moveable' : isInZOC ? 'zoc' : undefined} 
-          faction={isMoveable && unitPosition ? findUnitAtPosition(unitPosition)?.faction : undefined} 
+          fraction={isMoveable && unitPosition ? findUnitAtPosition(unitPosition)?.fraction : undefined}
           style={{ zIndex: 2 }}
         />
         <HexCellContent 

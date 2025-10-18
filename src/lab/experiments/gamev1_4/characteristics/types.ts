@@ -1,5 +1,5 @@
 import { UnitData } from "../types/UnitData";
-import { HexCoordinate } from "../types/HexCoordinate";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 
 export interface CharacteristicEffect {
   id: string;

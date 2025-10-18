@@ -1,5 +1,5 @@
 import { UnitData } from '../types/UnitData';
-import { HexCoordinate } from '../types/HexCoordinate';
+import { HexCoordinate } from '../../game-versioning/types/HexCoordinate';
 import { buffRegistry } from '../buffs/registry/BuffRegistry';
 
 export class UnitActionHandler {

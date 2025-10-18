@@ -60,9 +60,9 @@ export const UnitInfoDisplay: React.FC<Props> = ({ unit, units, mousePosition, i
         </div>
         <div style={statRowStyle}>
           <span>职业: {unit?.class || 'Unknown'}</span>
-          <span>阵营: {unit?.faction || 'Neutral'}</span>
+          <span>阵营: {unit?.fraction || 'Neutral'}</span>
         </div>
-        <StateRow label={`职业：${unit?.class || 'Unknown'}`} value={`阵营：${unit?.faction || 'Neutral'}`} />
+        <StateRow label={`职业：${unit?.class || 'Unknown'}`} value={`阵营：${unit?.fraction || 'Neutral'}`} />
       </div>
 
       {/* Combat Stats Section */}

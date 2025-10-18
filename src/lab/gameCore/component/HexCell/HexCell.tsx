@@ -1,8 +1,9 @@
-import {HexCoordinate} from "../../types/HexCoordinate";
 import React, {useState} from "react";
 import {Container} from "./Container";
 import {TerrainType} from "../../types/TerrainType";
 import {HighlightType} from "../../types/HighlightType";
+import { HexCoordinate } from "../../../experiments/game-versioning/types/HexCoordinate";
+import { OverlaySvg } from "../../../experiments/game-versioning/components/HexCellOverlay";
 
 interface Props {
 	terrain: TerrainType,
@@ -54,27 +55,7 @@ const Overlay: React.FC = () => (
 				zIndex: 1,
 			}}
 		/>
-		<svg
-			style={{
-				position: 'absolute',
-				top: 0,
-				left: 0,
-				width: '100%',
-				height: '100%',
-				pointerEvents: 'none',
-				zIndex: 2,
-			}}
-			viewBox="0 0 100 100"
-			preserveAspectRatio="none"
-		>
-			<path
-				d="M0 25 L0 75 L50 100 L100 75 L100 25 L50 0 Z"
-				fill="none"
-				stroke="#8B4513"
-				strokeWidth="2"
-				vectorEffect="non-scaling-stroke"
-			/>
-		</svg>
+    <OverlaySvg />
 	</>
 );
 

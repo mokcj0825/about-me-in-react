@@ -1,6 +1,6 @@
-import type { UnitData, UnitFaction } from '../types/UnitData';
-import { hasCharacteristic } from '../types/Characteristics';
+import type { UnitData } from '../types/UnitData';
 import { buffRegistry } from '../buffs/registry/BuffRegistry';
+import { UnitFraction } from "../../game-versioning/types/UnitData";
 
 export type TurnPhase = 'player' | 'ally' | 'enemy';
 export type DayNightCycle = 'day' | 'night';
@@ -54,16 +54,16 @@ export function advanceTurn(currentTurn: TurnState): TurnState {
 }
 
 // Handle unit movements per faction
-export function handleFactionTurn(units: UnitData[], faction: UnitFaction): UnitData[] {
+export function handleFactionTurn(units: UnitData[], faction: UnitFraction): UnitData[] {
   return units.map(unit => ({
     ...unit,
     // Reset movement only for units of the current faction
-    hasMoved: unit.faction === faction ? false : unit.hasMoved
+    hasMoved: unit.fraction === faction ? false : unit.hasMoved
   }));
 }
 
 // TODO: Implement AI movement for ally and enemy units
-export function handleAITurn(units: UnitData[], faction: UnitFaction): UnitData[] {
+export function handleAITurn(units: UnitData[], faction: UnitFraction): UnitData[] {
   // First, reset movement for units of the current faction
   const resetUnits = handleFactionTurn(units, faction);
   
