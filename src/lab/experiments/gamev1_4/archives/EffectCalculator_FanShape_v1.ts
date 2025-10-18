@@ -1,8 +1,9 @@
-import { HexCoordinate, createHexCoordinate, getNextCoordinate, getDistance } from "../types/HexCoordinate";
+import { createHexCoordinate, getNextCoordinate } from "../types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
 import { DirectionData } from "../types/DirectionData";
 import { ShapeCalculator, ShapeConfig } from "../weapon/ShapeCalculator";
 import mapData from '../data/map-data.json';
+import { getDistance, HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 
 /**
  * Archive of EffectCalculator with a triangle fan shape that extends outward along the main direction

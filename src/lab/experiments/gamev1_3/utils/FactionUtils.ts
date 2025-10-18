@@ -1,13 +1,13 @@
-import { UnitData, UnitFaction } from '../types/UnitData';
+import { UnitData } from '../types/UnitData';
 
 export function isHostileUnit(unit: UnitData, target: UnitData): boolean {
-    if (unit.faction === target.faction) return false;
+    if (unit.fraction === target.fraction) return false;
     
-    if (unit.faction === 'player' || unit.faction === 'ally') {
-        return target.faction === 'enemy';
+    if (unit.fraction === 'player' || unit.fraction === 'ally') {
+        return target.fraction === 'enemy';
     }
     
-    return target.faction === 'player' || target.faction === 'ally';
+    return target.fraction === 'player' || target.fraction === 'ally';
 }
 
 export function isFriendlyUnit(unit: UnitData, target: UnitData): boolean {

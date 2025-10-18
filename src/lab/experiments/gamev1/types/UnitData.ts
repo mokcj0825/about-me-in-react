@@ -1,13 +1,9 @@
 import { CharacteristicId, Buff } from "./Characteristics";
-import { HexCoordinate, createHexCoordinate } from "./HexCoordinate";
+import { createHexCoordinate } from "../../game-versioning/types/HexCoordinate";
+import { VersioningUnitData } from "../../game-versioning/types/UnitData";
 
-export type Faction = 'player' | 'ally' | 'enemy';
 
-export interface UnitData {
-  id: string;
-  position: HexCoordinate;
-  movement: number;
-  faction: Faction;
+export interface UnitData extends VersioningUnitData {
   characteristics: CharacteristicId[];
   buffs: Buff[];
 }
@@ -17,7 +13,7 @@ export const initialUnits: UnitData[] = [
     id: '1', 
     position: createHexCoordinate(4, 5),
     movement: 5,
-    faction: 'player',
+    fraction: 'player',
     characteristics: [],
     buffs: []
   },
@@ -25,7 +21,7 @@ export const initialUnits: UnitData[] = [
     id: '2',
     position: createHexCoordinate(4, 4),
     movement: 5,
-    faction: 'enemy',
+    fraction: 'enemy',
     characteristics: [],
     buffs: []
   }, 
@@ -33,7 +29,7 @@ export const initialUnits: UnitData[] = [
     id: '3',
     position: createHexCoordinate(3, 5),
     movement: 5,
-    faction: 'enemy',
+    fraction: 'enemy',
     characteristics: [],
     buffs: []
   },
@@ -41,7 +37,7 @@ export const initialUnits: UnitData[] = [
     id: '4', 
     position: createHexCoordinate(3, 3),
     movement: 5,
-    faction: 'ally',
+    fraction: 'ally',
     characteristics: ['00001'],
     buffs: []
   },
@@ -49,7 +45,7 @@ export const initialUnits: UnitData[] = [
     id: '5', 
     position: createHexCoordinate(4, 6),
     movement: 5,
-    faction: 'player',
+    fraction: 'player',
     characteristics: [],
     buffs: []
   }, 
@@ -57,7 +53,7 @@ export const initialUnits: UnitData[] = [
     id: '5', 
     position: createHexCoordinate(2, 6),
     movement: 5,
-    faction: 'enemy',
+    fraction: 'enemy',
     characteristics: [],
     buffs: []
   }

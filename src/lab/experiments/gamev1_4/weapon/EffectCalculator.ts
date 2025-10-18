@@ -1,4 +1,4 @@
-import { HexCoordinate } from "../types/HexCoordinate";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 import { ShapeCalculator, ShapeConfig } from "./ShapeCalculator";
 import { RoundEffect } from "./effect/RoundEffect";
 import { LineEffect } from "./effect/LineEffect";

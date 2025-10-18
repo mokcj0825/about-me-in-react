@@ -1,6 +1,7 @@
-import { HexCoordinate, createHexCoordinate, getNextCoordinate, getDistance } from "../../types/HexCoordinate";
+import { createHexCoordinate, getNextCoordinate } from "../../types/HexCoordinate";
 import { DirectionData } from "../../types/DirectionData";
 import { BaseEffect } from "./IEffect";
+import { getDistance, HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 
 /**
  * Implementation of fan-shaped area effect

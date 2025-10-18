@@ -1,12 +1,12 @@
 import React from 'react';
-import type { UnitFaction } from '../../types/UnitData';
+import { UnitFraction } from "../../../game-versioning/types/UnitData";
 
 interface Props {
   /** Type of highlight to display */
   type?: 'hover' | 'zoc' | 'moveable';
   
   /** Faction of the unit related to this highlight (if any) */
-  faction?: UnitFaction;
+  fraction?: UnitFraction;
   
   /** Optional CSS styles to apply to the highlight */
   style?: React.CSSProperties;
@@ -24,7 +24,7 @@ interface Props {
  */
 export const HexCellHighlight: React.FC<Props> = ({ 
   type,
-  faction,
+  fraction,
   style
 }) => {
   if (!type) return null;

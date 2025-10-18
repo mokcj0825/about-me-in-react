@@ -1,12 +1,13 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { TerrainType } from '../types/TerrainType';
 import { GridRenderer } from './GridRenderer';
-import { createHexCoordinate, HexCoordinate } from '../types/HexCoordinate';
+import { createHexCoordinate } from '../types/HexCoordinate';
 import { ScrollConfig } from '../system-config/ScrollConfig';
 import { GridLayout } from '../system-config/GridLayout';
 import { MapBorder } from '../component/MapBorder';
 import { calculateNewPosition, Position, ScrollDirection } from "./map-utils";
 import { BackgroundRenderer } from './BackgroundRenderer';
+import { HexCoordinate } from "../../experiments/game-versioning/types/HexCoordinate";
 
 /**
  * Represents the map data structure loaded from JSON files.

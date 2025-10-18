@@ -1,4 +1,4 @@
-import { HexCoordinate } from "../types/HexCoordinate";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
 import { UIModalState } from "../types/UIState";
 import { MovementCalculator } from "../movement/MovementCalculator";
@@ -37,7 +37,7 @@ export const onUnitSelected = (
     // Filter for player units only
     let playerUnits;
     if(DEBUGGING_MODE) playerUnits = unitsAtPosition;
-    else playerUnits = unitsAtPosition.filter(unit => unit.faction === 'player');
+    else playerUnits = unitsAtPosition.filter(unit => unit.fraction === 'player');
     
     if (playerUnits.length > 1) {
       // Multiple player units - show selection modal

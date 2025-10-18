@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HexCoordinate } from '../types/HexCoordinate';
+import { HexCoordinate } from '../../game-versioning/types/HexCoordinate';
 import { UnitData } from '../types/UnitData';
 import { ShapeConfig } from '../weapon/ShapeCalculator';
 import { EffectCalculator } from '../weapon/EffectCalculator';
@@ -121,7 +121,7 @@ export const useCombatState = ({
       if (affectedUnits.length > 0) {
         console.log('Units affected by attack:', affectedUnits.map(unit => ({
           id: unit.id,
-          faction: unit.faction,
+          faction: unit.fraction,
           position: unit.position
         })));
         

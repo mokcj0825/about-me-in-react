@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { HexCoordinate } from '../types/HexCoordinate';
+import { HexCoordinate } from '../../game-versioning/types/HexCoordinate';
 import { UnitData, initialUnits } from '../types/UnitData';
-import { getMoveableGrids, MovementCalculator } from '../movement/MovementCalculator';
+import { MovementCalculator } from '../movement/MovementCalculator';
 import { GroundMovement } from '../movement/rules/GroundMovement';
 import { AirMovement } from '../movement/rules/AirMovement';
 import { StandardZOC } from '../zoc/rules/StandardZOC';
-import { hasCharacteristic } from '../types/Characteristics';
 
 interface UseUnitStateProps {
   onUnitMoved?: (unit: UnitData, newPosition: HexCoordinate) => void;
@@ -106,9 +105,9 @@ export const useUnitState = ({ onUnitMoved, onStandby }: UseUnitStateProps = {})
       const unitsAtPosition = findUnitsAtPosition(coord).filter(u => u.id !== unit.id);
       return unitsAtPosition.length === 0 || unitsAtPosition.every(u => 
         // First check if they're allies
-        ((u.faction === 'player' && unit.faction === 'player') ||
-         (u.faction === 'ally' && (unit.faction === 'player' || unit.faction === 'ally')) ||
-         (u.faction === 'player' && unit.faction === 'ally')) &&
+        ((u.fraction === 'player' && unit.fraction === 'player') ||
+         (u.fraction === 'ally' && (unit.fraction === 'player' || unit.fraction === 'ally')) ||
+         (u.fraction === 'player' && unit.fraction === 'ally')) &&
         // Then check movement type compatibility
         ((unit.movementType === 'flying' && u.movementType !== 'flying') || 
          (unit.movementType !== 'flying' && u.movementType === 'flying'))
@@ -125,11 +124,11 @@ export const useUnitState = ({ onUnitMoved, onStandby }: UseUnitStateProps = {})
 
     if (unitsAtTarget.length === 0) return true;
 
-    // Check faction compatibility first
+    // Check fraction compatibility first
     const areAlliesAtTarget = unitsAtTarget.every(u =>
-      (u.faction === 'player' && unit.faction === 'player') ||
-      (u.faction === 'ally' && (unit.faction === 'player' || unit.faction === 'ally')) ||
-      (u.faction === 'player' && unit.faction === 'ally')
+      (u.fraction === 'player' && unit.fraction === 'player') ||
+      (u.fraction === 'ally' && (unit.fraction === 'player' || unit.fraction === 'ally')) ||
+      (u.fraction === 'player' && unit.fraction === 'ally')
     );
 
     if (!areAlliesAtTarget) return false;
@@ -160,7 +159,7 @@ export const useUnitState = ({ onUnitMoved, onStandby }: UseUnitStateProps = {})
     if (!unit) return;
 
     // Only proceed with selection if it's a player/ally unit that hasn't moved
-    if (unit.hasMoved || (unit.faction !== 'player' && unit.faction !== 'ally')) return;
+    if (unit.hasMoved || (unit.fraction !== 'player' && unit.fraction !== 'ally')) return;
 
     setSelectedUnit(unit);
     setSelectedUnitPosition(position);

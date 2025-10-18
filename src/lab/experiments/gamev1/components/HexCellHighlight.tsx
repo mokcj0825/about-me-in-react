@@ -2,12 +2,12 @@ import React from 'react';
 
 interface HexCellHighlightProps {
   type?: 'hover' | 'zoc' | 'moveable';
-  faction?: 'player' | 'ally' | 'enemy';
+  fraction?: 'player' | 'ally' | 'enemy';
 }
 
 export const HexCellHighlight: React.FC<HexCellHighlightProps> = ({ 
   type,
-  faction
+  fraction
 }) => {
   const getHighlightColor = () => {
     if (!type) return 'transparent';
@@ -18,7 +18,7 @@ export const HexCellHighlight: React.FC<HexCellHighlightProps> = ({
       case 'zoc':
         return 'rgba(255, 0, 0, 0.1)';
       case 'moveable':
-        switch (faction) {
+        switch (fraction) {
           case 'player': return '#90caf9';
           case 'ally': return '#98fb98';
           case 'enemy': return '#ffcdd2';

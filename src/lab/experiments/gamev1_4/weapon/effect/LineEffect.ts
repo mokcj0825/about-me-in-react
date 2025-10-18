@@ -1,5 +1,6 @@
-import { HexCoordinate, getNextCoordinate } from "../../types/HexCoordinate";
+import { getNextCoordinate } from "../../types/HexCoordinate";
 import { BaseEffect } from "./IEffect";
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 
 /**
  * Implementation of line area effect

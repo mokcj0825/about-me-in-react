@@ -1,4 +1,4 @@
-import { HexCoordinate } from '../types/HexCoordinate';
+import { HexCoordinate } from '../../game-versioning/types/HexCoordinate';
 
 /**
  * Configuration for shape calculations

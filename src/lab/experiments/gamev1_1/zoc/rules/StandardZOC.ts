@@ -1,7 +1,8 @@
-import { HexCoordinate, getNeighbors } from "../../types/HexCoordinate";
+import { getNeighbors } from "../../types/HexCoordinate";
 import { UnitData } from "../../types/UnitData";
 import { ZoneOfControl } from "../types";
 import { hasCharacteristic } from "../../types/Characteristics";
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 
 export class StandardZOC implements ZoneOfControl {
     getControlledArea(position: HexCoordinate): HexCoordinate[] {

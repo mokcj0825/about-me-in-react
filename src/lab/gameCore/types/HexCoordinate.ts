@@ -1,10 +1,5 @@
 import {DirectionData} from "./DirectionData";
-
-export interface HexCoordinate {
-	x: number;
-	y: number;
-	z: number;
-}
+import { getRawNeighbors, HexCoordinate } from "../../experiments/game-versioning/types/HexCoordinate";
 
 export const createHexCoordinate = (x: number, y: number): HexCoordinate => ({
 	x,
@@ -13,24 +8,7 @@ export const createHexCoordinate = (x: number, y: number): HexCoordinate => ({
 });
 
 export const getNeighbors = (hex: HexCoordinate, width: number, height: number): HexCoordinate[] => {
-	const isYEven = hex.y % 2 === 0;
-	const neighbors = isYEven
-		? [
-			createHexCoordinate(hex.x + 1, hex.y),  // right
-			createHexCoordinate(hex.x - 1, hex.y),  // left
-			createHexCoordinate(hex.x, hex.y + 1),  // top left
-			createHexCoordinate(hex.x + 1, hex.y + 1),  // top right
-			createHexCoordinate(hex.x, hex.y - 1),  // bottom left
-			createHexCoordinate(hex.x + 1, hex.y - 1),  // bottom right
-		]
-		: [
-			createHexCoordinate(hex.x + 1, hex.y),  // right
-			createHexCoordinate(hex.x - 1, hex.y),  // left
-			createHexCoordinate(hex.x - 1, hex.y + 1),  // top left
-			createHexCoordinate(hex.x, hex.y + 1),  // top right
-			createHexCoordinate(hex.x - 1, hex.y - 1),  // bottom left
-			createHexCoordinate(hex.x, hex.y - 1),  // bottom right
-		];
+	const neighbors = getRawNeighbors(hex);
 
 	return neighbors.filter(coord =>
 		coord.x >= 0 && coord.x < width &&
@@ -38,13 +16,6 @@ export const getNeighbors = (hex: HexCoordinate, width: number, height: number):
 	);
 };
 
-export const getDistance = (a: HexCoordinate, b: HexCoordinate): number => {
-	return Math.max(
-		Math.abs(a.x - b.x),
-		Math.abs(a.y - b.y),
-		Math.abs(a.z - b.z)
-	);
-};
 
 export const getNextCoordinate = (current: HexCoordinate, direction: DirectionData): HexCoordinate => {
   const isYEven = current.y % 2 === 0;

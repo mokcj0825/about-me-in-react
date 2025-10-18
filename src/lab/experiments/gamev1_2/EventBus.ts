@@ -1,6 +1,6 @@
 import mitt from 'mitt';
 import { UnitSelectedEvent, UnitHoveredEvent } from './types/EventTypes';
-import { HexCoordinate } from './types/HexCoordinate';
+import { HexCoordinate } from "../game-versioning/types/HexCoordinate";
 
 type Events = {
   'unit-selected': UnitSelectedEvent;

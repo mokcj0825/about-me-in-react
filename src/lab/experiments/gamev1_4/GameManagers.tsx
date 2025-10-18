@@ -4,12 +4,9 @@ import { HoverManager } from "./HoverManager";
 import { SelectionManager } from "./SelectionManager";
 import { TerrainManager } from "./TerrainManager";
 import { TurnManager } from "./TurnManager";
+import GameManagerProps from "../game-versioning/GameManagerProp";
 
-interface GameManagersProps {
-  children: React.ReactNode;
-}
-
-export const GameManagers: React.FC<GameManagersProps> = ({ children }) => (
+export const GameManagers: React.FC<GameManagerProps> = ({ children }) => (
   <>
     <UnitManager />
     <HoverManager />

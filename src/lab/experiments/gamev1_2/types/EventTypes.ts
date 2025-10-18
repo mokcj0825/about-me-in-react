@@ -1,4 +1,4 @@
-import { HexCoordinate } from "./HexCoordinate";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 
 /**
  * Event fired when a unit is selected

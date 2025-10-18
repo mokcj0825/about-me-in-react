@@ -1,9 +1,10 @@
-import { HexCoordinate, createHexCoordinate, getNeighbors } from "../types/HexCoordinate";
+import { getNeighbors } from "../types/HexCoordinate";
 import { UnitData, MovementType } from "../types/UnitData";
 import { MovementRule } from "./types";
 import { ZoneOfControl } from "../zoc/types";
 import { movementCostRegistry } from './registry/MovementCostRegistry';
-import { buffRegistry } from '../buffs/registry/BuffRegistry';
+import { buffRegistry } from "../buffs/registry/BuffRegistry";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 
 /**
  * Defines movement costs for different terrain types and movement types
@@ -187,11 +188,11 @@ export class MovementCalculator {
             // Skip flying units
             if (u.movementType === 'flying') return false;
             
-            // Determine opposing factions based on unit's faction
-            if (unit.faction === 'enemy') {
-                return u.faction === 'player' || u.faction === 'ally';
-            } else if (unit.faction === 'player' || unit.faction === 'ally') {
-                return u.faction === 'enemy';
+            // Determine opposing fractions based on unit's fraction
+            if (unit.fraction === 'enemy') {
+                return u.fraction === 'player' || u.fraction === 'ally';
+            } else if (unit.fraction === 'player' || unit.fraction === 'ally') {
+                return u.fraction === 'enemy';
             }
             return false;
         });

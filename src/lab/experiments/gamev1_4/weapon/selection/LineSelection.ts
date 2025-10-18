@@ -1,6 +1,7 @@
-import { HexCoordinate, getNextCoordinate } from "../../types/HexCoordinate";
+import { getNextCoordinate } from "../../types/HexCoordinate";
 import { DirectionData } from "../../types/DirectionData";
 import { ISelection } from "./ISelection";
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 
 /**
  * Implementation of line area selection

@@ -62,7 +62,7 @@ export const HexCellContent: React.FC<HexCellContentProps> = ({
         */}
         
         {/* Temporary text representation - remove when sprites are implemented */}
-        {unit.faction === 'player' ? 'P' : unit.faction === 'ally' ? 'A' : 'E'}
+        {unit.fraction === 'player' ? 'P' : unit.fraction === 'ally' ? 'A' : 'E'}
         
         {/* Keep direction indicator or update it to work with sprites */}
         <DirectionIndicator 

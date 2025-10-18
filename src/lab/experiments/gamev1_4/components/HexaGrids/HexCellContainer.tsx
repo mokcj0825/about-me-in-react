@@ -1,6 +1,7 @@
 import React from 'react';
 import { getTerrainSvgPath } from '../../utils/terrainLoader';
 import type { TerrainType } from '../../movement/types';
+import { GRID } from "../../../game-versioning/components/HexCell";
 
 /**
  * Props interface for the HexCellContainer component
@@ -28,10 +29,6 @@ interface Props {
   /** Child elements to be rendered inside the hex cell */
   children: React.ReactNode;
 }
-
-const GRID = {
-    WIDTH: 100
-  };
 
 /**
  * Gets the background style object for the terrain
@@ -80,33 +77,34 @@ export const HexCellContainer: React.FC<Props> = ({
   onMouseEnter,
   onMouseLeave,
   onClick,
-  children
+  children,
 }) => {
   return (
-    <div 
+    <div
       style={{
-        width: `${GRID.WIDTH}px`,
-        height: `${GRID.WIDTH}px`,
-        clipPath: 'polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'default',
-        userSelect: 'none',
-        fontSize: '12px',
-        margin: 0,
-        padding: 0,
-        boxSizing: 'border-box',
-        flexShrink: 0,
+        alignItems: "center",
+        boxSizing: "border-box",
+        clipPath:
+          "polygon(0% 25%, 0% 75%, 50% 100%, 100% 75%, 100% 25%, 50% 0%)",
+        cursor: "default",
+        display: "flex",
         flexGrow: 0,
-        position: 'relative',
-        transition: 'background-color 0.2s ease',
-        ...getBackgroundStyle(terrain),
-        outline: isSelected 
-          ? '2px solid yellow' 
-          : isHovered 
-            ? '2px solid rgba(255, 255, 255, 0.5)' 
+        flexShrink: 0,
+        fontSize: "12px",
+        height: `${GRID.WIDTH}px`,
+        justifyContent: "center",
+        margin: 0,
+        outline: isSelected
+          ? "2px solid yellow"
+          : isHovered
+            ? "2px solid rgba(255, 255, 255, 0.5)"
             : undefined,
+        padding: 0,
+        position: "relative",
+        transition: "background-color 0.2s ease",
+        userSelect: "none",
+        ...getBackgroundStyle(terrain),
+        width: `${GRID.WIDTH}px`,
         zIndex: isHovered ? 3 : 1,
       }}
       onMouseEnter={onMouseEnter}

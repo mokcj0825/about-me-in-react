@@ -1,28 +1,22 @@
 import { CharacteristicId, Buff } from "./Characteristics";
-import { HexCoordinate, createHexCoordinate } from "./HexCoordinate";
+import { createHexCoordinate } from "./HexCoordinate";
 
-export type UnitFaction = 'player' | 'ally' | 'enemy';
 export type DamageType = 'physical' | 'magical' | 'true';
 export type UnitRole = 'tank' | 'dps' | 'support' | 'control';
 export type UnitClass = 'warrior' | 'mage' | 'rogue' | 'priest' | 'archer' | 'knight';
 export type UnitDirection = 'top-left' | 'top-right' | 'right' | 'bottom-right' | 'bottom-left' | 'left';
 export type MovementType = 'foot' | 'ooze' | 'float' | 'flying';
 
-export interface UnitData {
-  // Basic Info
-  id: string;
+export interface UnitData extends VersioningUnitData {
   name: string;
   class: UnitClass;
   description: string;
-  faction: UnitFaction;
-  position: HexCoordinate;
   
   // Core Combat Stats
   attack: number;
   defense: number;
   hitpoint: number;
   agility: number;
-  movement: number;
   
   // Critical System
   critRate: number;      // Percentage (0-100)
@@ -67,6 +61,8 @@ export interface UnitData {
 
 // Import demo data and convert positions to HexCoordinate
 import demoData from '../data/unit-stage-demo.json';
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
+import { VersioningUnitData } from "../../game-versioning/types/UnitData";
 
 export const initialUnits: UnitData[] = (demoData.initialUnits as any[]).map(unit => ({
   ...unit,

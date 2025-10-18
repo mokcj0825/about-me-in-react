@@ -1,12 +1,12 @@
 import React from 'react';
-import type { UnitFaction } from '../../types/UnitData';
+import { UnitFraction } from "../../../game-versioning/types/UnitData";
 
 interface Props {
   /** Type of highlight to display */
   type?: 'moveable' | 'zoc' | 'selection' | 'effect';
   
   /** Faction of the unit related to this highlight (if any) */
-  faction?: string;
+  fraction?: UnitFraction;
   
   /** Optional CSS styles to apply to the highlight */
   style?: React.CSSProperties;
@@ -24,7 +24,7 @@ interface Props {
  */
 export const HexCellHighlight: React.FC<Props> = ({ 
   type,
-  faction,
+  fraction,
   style
 }) => {
   if (!type) return null;
@@ -43,8 +43,8 @@ export const HexCellHighlight: React.FC<Props> = ({
         };
       case 'moveable':
         return {
-          backgroundColor: faction === 'enemy' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 255, 0, 0.2)',
-          border: `2px solid ${faction === 'enemy' ? 'rgba(255, 0, 0, 0.4)' : 'rgba(0, 255, 0, 0.4)'}`
+          backgroundColor: fraction === 'enemy' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 255, 0, 0.2)',
+          border: `2px solid ${fraction === 'enemy' ? 'rgba(255, 0, 0, 0.4)' : 'rgba(0, 255, 0, 0.4)'}`
         };
       case 'zoc':
         return {

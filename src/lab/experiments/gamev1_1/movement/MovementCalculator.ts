@@ -1,8 +1,9 @@
-import { HexCoordinate, createHexCoordinate, getNeighbors } from "../types/HexCoordinate";
+import { createHexCoordinate, getNeighbors } from "../types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
 import { MovementRule } from "./types";
 import { ZoneOfControl } from "../zoc/types";
 import { isHostileUnit } from "../utils/FactionUtils";
+import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 
 export class MovementCalculator {
     constructor(

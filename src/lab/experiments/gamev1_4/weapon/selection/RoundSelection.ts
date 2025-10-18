@@ -1,6 +1,7 @@
-import { HexCoordinate, createHexCoordinate, getNextCoordinate } from "../../types/HexCoordinate";
+import { createHexCoordinate, getNextCoordinate } from "../../types/HexCoordinate";
 import { ALL_DIRECTIONS } from "../../types/DirectionData";
 import { ISelection } from "./ISelection";
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 
 /**
  * Implementation of circular/round area selection

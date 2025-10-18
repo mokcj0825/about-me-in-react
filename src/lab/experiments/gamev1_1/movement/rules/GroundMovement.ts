@@ -1,4 +1,4 @@
-import { HexCoordinate } from "../../types/HexCoordinate";
+import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 import { UnitData } from "../../types/UnitData";
 import { MovementRule } from "../types";
 import { isHostileUnit } from "../../utils/FactionUtils";
