@@ -8,7 +8,7 @@ interface ExperimentSection {
     id: string;
     name: string;
     description: string;
-    status: 'completed' | 'planned';
+    status: 'completed' | 'planned' | 'in-progress';
     url: string;
   }>;
 }
@@ -21,6 +21,7 @@ const Lab: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed': return '#4CAF50';
+      case 'in-progress': return '#FF9800';
       case 'planned': return '#9E9E9E';
       default: return '#9E9E9E';
     }

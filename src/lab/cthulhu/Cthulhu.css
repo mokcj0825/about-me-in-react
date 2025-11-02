@@ -1,0 +1,103 @@
+.cthulhu-container {
+  height: 100vh;
+  overflow: hidden;
+  background: #1e1e1e;
+}
+
+.loading-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #858585;
+  font-size: 16px;
+}
+
+.cthulhu-layout {
+  display: flex;
+  height: 100%;
+}
+
+/* Left sidebar - Chapter list */
+.cthulhu-sidebar {
+  width: 280px;
+  background: #252526;
+  border-right: 1px solid #3e3e42;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  color: #cccccc;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chapter-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.chapter-item {
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.chapter-item:hover {
+  background: #2a2d2e;
+}
+
+.chapter-item.active {
+  background: #094771;
+  color: #ffffff;
+}
+
+/* Main content area */
+.cthulhu-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+}
+
+.content-header {
+  padding: 2rem;
+  border-bottom: 1px solid #3e3e42;
+}
+
+.content-header h2 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.content-body {
+  flex: 1;
+  padding: 3rem;
+  overflow-y: auto;
+}
+
+.content-text {
+  max-width: 800px;
+  margin: 0 auto;
+  color: #cccccc;
+  font-size: 16px;
+  line-height: 1.8;
+  font-family: 'Georgia', 'Microsoft YaHei', '微软雅黑', serif;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+

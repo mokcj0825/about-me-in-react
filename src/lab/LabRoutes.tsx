@@ -15,6 +15,7 @@ import {ChatCore} from "./experiments/chat/ChatCore";
 import StringTest from "./strings/StringTest";
 import NpmLab from "./experiments/npmTest/NpmLab";
 import Race from "./race/Race";
+import Cthulhu from "./cthulhu/Cthulhu";
 
 // Constants for configuration
 const DEFAULT_ROUTE_CONFIG = {
@@ -49,6 +50,7 @@ const LabRoutes = () => {
       <Route path="/strings" element={<StringTest />} />
       <Route path="/npmLab" element={<NpmLab />} />
       <Route path="/race" element={<Race />} />
+      <Route path="/cthulhu" element={<Cthulhu />} />
     </Routes>
   );
 };
