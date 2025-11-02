@@ -16,6 +16,13 @@
           "description": "Testing implement of Stereo",
           "status": "completed",
           "url": "/labs/three-stereo"
+        },
+        {
+          "id": "exp-3",
+          "name": "Cthulhu Writing Lab",
+          "description": "Novel writing interface with chapter management, and AI writing assistance",
+          "status": "in-progress",
+          "url": "/labs/cthulhu"
         }
       ]
     },
