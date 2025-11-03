@@ -109,7 +109,7 @@ const DullRedirection: React.FC<Props> = ({ darkMode }) => {
           </div>
           <div
             style={styles.linkCard}
-            onClick={() => window.location.href = 'https://cj-react-core.web.app/'}
+            onClick={() => window.location.href = 'https://core.cjmok.com/'}
           >
             <h3 style={styles.linkText}>Core</h3>
             <p style={styles.description}>Core here.</p>

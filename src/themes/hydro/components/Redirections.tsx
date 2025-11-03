@@ -249,7 +249,7 @@ const HydroRedirections: React.FC<Props> = ({darkMode}: Props) => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
-              onClick={() => window.location.href = 'https://cj-react-core.web.app/'}
+              onClick={() => window.location.href = 'https://core.cjmok.com/'}
               onMouseEnter={() => setDisplayText('Here is my core')}
               onMouseLeave={() => setDisplayText('Other places')}
             >

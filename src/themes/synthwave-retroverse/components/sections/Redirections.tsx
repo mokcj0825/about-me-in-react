@@ -266,7 +266,7 @@ const Redirections: React.FC<SectionProps> = ({ darkMode }) => {
         <RedirectButton 
           darkMode={darkMode}
           isHovered={hoveredButton === 'core'}
-          onClick={() => window.location.href = 'https://cj-react-core.web.app/'}
+          onClick={() => window.location.href = 'https://core.cjmok.com/'}
           onMouseEnter={() => {
             setHoveredButton('core');
             setDisplayText('Here is my core');
