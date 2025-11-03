@@ -13,6 +13,16 @@
     "id": "3",
     "title": "临床日志 - 2001年3月29日",
     "file": "chapter-3.json"
+  },
+  {
+    "id": "4",
+    "title": "临床日志 - 2001年4月5日",
+    "file": "chapter-4.json"
+  },
+  {
+    "id": "5",
+    "title": "临床日志 - 2001年4月12日",
+    "file": "chapter-5.json"
   }
 ]
 
