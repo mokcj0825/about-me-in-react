@@ -19,7 +19,7 @@ Contains initial unit configurations for the demo stage:
   - `name`: Display name
   - `class`: Unit class type (knight, mage, archer, etc.)
   - `description`: Unit description
-  - `faction`: Team alignment (player, enemy, ally)
+  - `fraction`: Team alignment (player, enemy, ally)
 
 - **Position & Movement**
   - `position`: {x, y} coordinates

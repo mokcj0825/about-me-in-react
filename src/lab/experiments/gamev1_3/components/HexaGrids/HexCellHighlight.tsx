@@ -5,7 +5,7 @@ interface Props {
   /** Type of highlight to display */
   type?: 'hover' | 'zoc' | 'moveable';
   
-  /** Faction of the unit related to this highlight (if any) */
+  /** Fraction of the unit related to this highlight (if any) */
   fraction?: UnitFraction;
   
   /** Optional CSS styles to apply to the highlight */

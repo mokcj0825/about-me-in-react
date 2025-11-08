@@ -8,8 +8,8 @@ interface HexCellContentProps {
   unit?: UnitData;
 }
 
-const getUnitColor = (faction: string) => {
-  switch (faction) {
+const getUnitColor = (fraction: string) => {
+  switch (fraction) {
     case 'player':
       return '#ffeb3b';  // Yellow for player
     case 'ally':

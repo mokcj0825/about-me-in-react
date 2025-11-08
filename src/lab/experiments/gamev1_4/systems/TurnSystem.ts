@@ -53,19 +53,19 @@ export function advanceTurn(currentTurn: TurnState): TurnState {
   }
 }
 
-// Handle unit movements per faction
-export function handleFactionTurn(units: UnitData[], faction: UnitFraction): UnitData[] {
+// Handle unit movements per fraction
+export function handleFactionTurn(units: UnitData[], fraction: UnitFraction): UnitData[] {
   return units.map(unit => ({
     ...unit,
-    // Reset movement only for units of the current faction
-    hasMoved: unit.fraction === faction ? false : unit.hasMoved
+    // Reset movement only for units of the current fraction
+    hasMoved: unit.fraction === fraction ? false : unit.hasMoved
   }));
 }
 
 // TODO: Implement AI movement for ally and enemy units
-export function handleAITurn(units: UnitData[], faction: UnitFraction): UnitData[] {
-  // First, reset movement for units of the current faction
-  const resetUnits = handleFactionTurn(units, faction);
+export function handleAITurn(units: UnitData[], fraction: UnitFraction): UnitData[] {
+  // First, reset movement for units of the current fraction
+  const resetUnits = handleFactionTurn(units, fraction);
   
   // TODO: Add AI logic for unit movement
   // - Path finding

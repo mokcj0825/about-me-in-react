@@ -80,7 +80,7 @@ export const useTurnSystem = ({
       
       // Simulate AI turn - this will be replaced with actual AI logic
       setTimeout(() => {
-        // Reset movement for AI faction
+        // Reset movement for AI fraction
         onUnitsUpdate(units => handleFactionTurn(units, turnState.phase));
         
         console.log(`${turnState.phase === 'ally' ? 'Allies' : 'Enemy'} finished their turn`);

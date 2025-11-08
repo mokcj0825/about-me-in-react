@@ -48,7 +48,7 @@ export const UnitInfoDisplay: React.FC<UnitInfoDisplayProps> = ({ unit, mousePos
         Description: {unit.description || 'NO DESCRIPTION'}
       </div>
       <div style={textStyle}>
-        Faction: {unit.fraction || 'NO FACTION'}
+        Fraction: {unit.fraction || 'NO FRACTION'}
       </div>
       <div style={textStyle}>
         Position: x:{unit.position.x || '?'}, y:{unit.position.y || '?'}

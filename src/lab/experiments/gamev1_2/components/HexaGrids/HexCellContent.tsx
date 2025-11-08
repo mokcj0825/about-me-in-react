@@ -54,8 +54,8 @@ export const HexCellContent: React.FC<HexCellContentProps> = ({
         {/*
         <div className="unit-sprite-container">
           <img 
-            src={`/assets/units/${unit.faction}/${unit.type}.png`}
-            alt={`${unit.faction} ${unit.type}`}
+            src={`/assets/units/${unit.fraction}/${unit.type}.png`}
+            alt={`${unit.fraction} ${unit.type}`}
             className="unit-sprite"
           />
         </div>
