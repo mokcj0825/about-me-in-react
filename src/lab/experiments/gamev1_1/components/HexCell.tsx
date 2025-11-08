@@ -21,8 +21,8 @@ interface HexCellProps {
 
 const DEBUG_MODE = false;
 
-const getUnitColor = (faction: UnitFraction) => {
-  switch (faction) {
+const getUnitColor = (fraction: UnitFraction) => {
+  switch (fraction) {
     case 'player':
       return '#ffeb3b';  // Yellow for player
     case 'ally':
@@ -34,8 +34,8 @@ const getUnitColor = (faction: UnitFraction) => {
   }
 };
 
-const getMoveableColor = (faction: UnitFraction) => {
-  switch (faction) {
+const getMoveableColor = (fraction: UnitFraction) => {
+  switch (fraction) {
     case 'player':
       return '#90caf9';  // Light blue for player movement
     case 'ally':
@@ -148,7 +148,7 @@ export const HexCell: React.FC<HexCellProps> = ({
         <HexCellOverlay />
         <HexCellHighlight
           type={getHighlightType()}
-          faction={getHighlightFraction()}
+          fraction={getHighlightFraction()}
         />
         <HexCellContent coordinate={coordinate} unit={unit} />
       </div>

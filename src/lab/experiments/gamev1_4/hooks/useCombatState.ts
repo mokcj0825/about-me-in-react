@@ -121,7 +121,7 @@ export const useCombatState = ({
       if (affectedUnits.length > 0) {
         console.log('Units affected by attack:', affectedUnits.map(unit => ({
           id: unit.id,
-          faction: unit.fraction,
+          fraction: unit.fraction,
           position: unit.position
         })));
         

@@ -25,13 +25,13 @@
             
             "Enhanced Visual System:",
             "- Transparent base layer for map background visibility",
-            "- Faction-based color coding (#ffeb3b for player, #4CAF50 for ally, #ff4444 for enemy)",
-            "- Highlight effects for different states (hover: #4a90e2, moveable: faction-based, zoc: rgba(255,0,0,0.1))",
+            "- Fraction-based color coding (#ffeb3b for player, #4CAF50 for ally, #ff4444 for enemy)",
+            "- Highlight effects for different states (hover: #4a90e2, moveable: fraction-based, zoc: rgba(255,0,0,0.1))",
             
             "Movement and Control Systems:",
             "- Implemented Zone of Control (ZOC) visualization",
-            "- Added faction-aware movement rules",
-            "- Created utility functions for faction relationship checks",
+            "- Added fraction-aware movement rules",
+            "- Created utility functions for fraction relationship checks",
             
             "Technical Architecture:",
             "- Separated concerns into distinct components",
@@ -42,7 +42,7 @@
             "Component Interaction:",
             "- Event-based communication between components",
             "- Centralized movement calculation system",
-            "- Unified faction management through FactionUtils",
+            "- Unified fraction management through FactionUtils",
             
             "Visual Customization:",
             "- Support for custom background maps",
@@ -119,7 +119,7 @@
             "Unit Information Panel:",
             "- Dynamic positioning based on mouse location",
             "- Fixed dimensions (300x500px)",
-            "- Displays unit name, class, description, faction, and position",
+            "- Displays unit name, class, description, fraction, and position",
             "- Clear text formatting and visibility",
             "- Auto-switching sides based on cursor position",
             "- Appears when hovering over units",

@@ -292,7 +292,6 @@ export const GameRenderer: React.FC = () => {
   const handleCellClick = (coord: HexCoordinate, isRightClick: boolean = false) => {
     // Block all actions during AI turns
     if (actionState === 'aiTurn' && !DEBUGGING_MODE) return;
-
     // If any modal is shown, only handle closing actions
     if (uiModal.type) {
       if (isRightClick) {
@@ -300,7 +299,6 @@ export const GameRenderer: React.FC = () => {
       }
       return;
     }
-
     // Handle right-click based on current state
     if (isRightClick) {
       switch (actionState) {
@@ -346,7 +344,6 @@ export const GameRenderer: React.FC = () => {
       }
       return;
     }
-
     // Handle left-click based on current state
     switch (actionState) {
       case 'idle': {

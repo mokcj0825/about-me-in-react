@@ -15,7 +15,7 @@ A floating panel component that shows detailed unit information when hovering ov
   - Unit name
   - Class
   - Description
-  - Faction
+  - Fraction
   - Movement details
   - Position coordinates
 

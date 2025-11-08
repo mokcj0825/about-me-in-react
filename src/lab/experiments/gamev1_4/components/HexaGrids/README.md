@@ -98,7 +98,7 @@ The components use a combination of:
 1. **Sprite Implementation**:
    - Replace text-based unit representation with sprites
    - Add unit animations
-   - Implement faction-specific visuals
+   - Implement fraction-specific visuals
 
 2. **Performance Optimizations**:
    - Memoization of expensive renders
