@@ -43,6 +43,16 @@
     "id": "9",
     "title": "临床日志 - 2001年8月9日",
     "file": "chapter-9.json"
+  },
+  {
+    "id": "10",
+    "title": "临床日志 - 2001年8月10日",
+    "file": "chapter-10.json"
+  },
+  {
+    "id": "11",
+    "title": "临床日志补述 - 督导回信（2001年8月11日）",
+    "file": "chapter-11.json"
   }
 ]
 
