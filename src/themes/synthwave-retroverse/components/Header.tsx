@@ -2,7 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { SYNTHWAVE_RETROVERSE_THEMES } from '../colors';
 import { SYNTHWAVE_RETROVERSE_FONTS } from '../fonts';
-import headerData from '../../../data/header.json';
+import { useProfile } from '../../../services/ProfileContext';
 
 interface HeaderProps {
   darkMode: boolean;
@@ -128,7 +128,6 @@ const About = styled.p<StyledProps>`
   color: ${({ darkMode }) => darkMode 
     ? SYNTHWAVE_RETROVERSE_THEMES.DARK.text 
     : SYNTHWAVE_RETROVERSE_THEMES.LIGHT.text};
-  margin: 0;
   max-width: 600px;
   margin: 0 auto;
   position: relative;
@@ -138,12 +137,32 @@ const About = styled.p<StyledProps>`
 `;
 
 const Header: React.FC<HeaderProps> = ({ darkMode }) => {
+  const { profile, loading, error } = useProfile();
+
+  if (loading) {
+    return (
+      <HeaderContainer darkMode={darkMode}>
+        <Grid darkMode={darkMode} />
+        <About darkMode={darkMode}>Loading...</About>
+      </HeaderContainer>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <HeaderContainer darkMode={darkMode}>
+        <Grid darkMode={darkMode} />
+        <About darkMode={darkMode}>Failed to load profile</About>
+      </HeaderContainer>
+    );
+  }
+
   return (
     <HeaderContainer darkMode={darkMode}>
       <Grid darkMode={darkMode} />
-      <Name darkMode={darkMode}>{headerData.name}</Name>
-      <Title darkMode={darkMode}>{headerData.title}</Title>
-      <About darkMode={darkMode}>{headerData.about}</About>
+      <Name darkMode={darkMode}>{profile.name}</Name>
+      <Title darkMode={darkMode}>{profile.title}</Title>
+      <About darkMode={darkMode}>{profile.bio}</About>
     </HeaderContainer>
   );
 };

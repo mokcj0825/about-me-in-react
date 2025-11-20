@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import headerData from '../../../data/header.json';
+import { useProfile } from '../../../services/ProfileContext';
 
 const BACKGROUNDS = {
   light: [
@@ -86,6 +86,7 @@ const aboutStyles = {
 const Header: React.FC<HeaderProps> = ({ darkMode }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { profile, loading, error } = useProfile();
 
   // Preload images
   useEffect(() => {
@@ -111,6 +112,26 @@ const Header: React.FC<HeaderProps> = ({ darkMode }) => {
     return () => clearInterval(interval);
   }, []);
 
+  if (loading) {
+    return (
+      <div style={containerStyles}>
+        <div style={contentContainerStyles}>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div style={containerStyles}>
+        <div style={contentContainerStyles}>
+          <p>Failed to load profile</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={containerStyles}>
       <div style={backgroundContainerStyles}>
@@ -126,13 +147,13 @@ const Header: React.FC<HeaderProps> = ({ darkMode }) => {
       </div>
       <div style={contentContainerStyles}>
         <h1 style={titleStyles}>
-          {headerData.name}
+          {profile.name}
         </h1>
         <h2 style={subtitleStyles}>
-          {headerData.title}
+          {profile.title}
         </h2>
         <p style={aboutStyles}>
-          {headerData.about}
+          {profile.bio}
         </p>
       </div>
     </div>

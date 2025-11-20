@@ -1,8 +1,7 @@
 import React from 'react';
 import { DULL_THEMES } from '../colors';
 import { DULL_FONTS } from '../fonts';
-import { HeaderType } from '../../../data/header.type';
-import headerData from '../../../data/header.json';
+import { useProfile } from '../../../services/ProfileContext';
 
 interface DullHeaderProps {
   darkMode: boolean;
@@ -10,7 +9,7 @@ interface DullHeaderProps {
 
 const DullHeader: React.FC<DullHeaderProps> = ({ darkMode }) => {
   const currentTheme = darkMode ? DULL_THEMES.DARK : DULL_THEMES.LIGHT;
-  const header: HeaderType = headerData;
+  const { profile, loading, error } = useProfile();
 
   const styles = {
     header: {
@@ -45,11 +44,31 @@ const DullHeader: React.FC<DullHeaderProps> = ({ darkMode }) => {
     }
   };
 
+  if (loading) {
+    return (
+      <header style={styles.header}>
+        <p>Loading...</p>
+      </header>
+    );
+  }
+
+  if (error) {
+    return (
+      <header style={styles.header}>
+        <p>Failed to load profile</p>
+      </header>
+    );
+  }
+
+  if (!profile) {
+    return null;
+  }
+
   return (
     <header style={styles.header}>
-      <h1 style={styles.name}>{header.name}</h1>
-      <h2 style={styles.title}>{header.title}</h2>
-      <p style={styles.about}>{header.about}</p>
+      <h1 style={styles.name}>{profile.name}</h1>
+      <h2 style={styles.title}>{profile.title}</h2>
+      <p style={styles.about}>{profile.bio}</p>
     </header>
   );
 };
