@@ -1,17 +1,10 @@
 import mapData from '../data/map-data.json';
-import { DirectionData } from './DirectionData';
-import { getDistance, getRawNeighbors, HexCoordinate } from "../../game-versioning/types/HexCoordinate";
-
-/**
- * Creates a new hex coordinate with calculated z value
- * @param {number} x - X coordinate
- * @param {number} y - Y coordinate
- * @returns {HexCoordinate} New hex coordinate with calculated z
- */
-export const createHexCoordinate = (x: number, y: number): HexCoordinate => {
-  const z = -x - y;  // This ensures the coordinate sum is always 0
-  return { x, y, z };
-};
+import {
+  createHexCoordinate,
+  getRawNeighbors,
+  HexCoordinate
+} from "../../game-versioning/types/HexCoordinate";
+import { UnitDirection } from "../../game-versioning/types/UnitDirection";
 
 /**
  * Gets all neighboring hex coordinates
@@ -28,17 +21,7 @@ export const getNeighbors = (hex: HexCoordinate): HexCoordinate[] => {
   );
 };
 
-/**
- * Gets all hexes in a unit's zone of control
- * Currently returns immediate neighbors
- * @param {HexCoordinate} unitPosition - Unit's position
- * @returns {HexCoordinate[]} Array of controlled hex coordinates
- */
-export const getZoneOfControl = (unitPosition: HexCoordinate): HexCoordinate[] => {
-  return getNeighbors(unitPosition);
-}; 
-
-export const getNextCoordinate = (current: HexCoordinate, direction: DirectionData): HexCoordinate => {
+export const getNextCoordinate = (current: HexCoordinate, direction: UnitDirection): HexCoordinate => {
   const isYEven = current.y % 2 === 0;
   switch (direction) {
     case 'right':
@@ -57,6 +40,3 @@ export const getNextCoordinate = (current: HexCoordinate, direction: DirectionDa
       return current;
   }
 };
-
-export const DIRECTIONS = ['right', 'left', 'topLeft', 'topRight', 'bottomLeft', 'bottomRight'] as const;
-export type Direction = typeof DIRECTIONS[number];

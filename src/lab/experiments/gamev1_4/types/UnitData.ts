@@ -1,5 +1,4 @@
-import { createHexCoordinate } from "./HexCoordinate";
-
+import { UnitDirection } from "../../game-versioning/types/UnitDirection";
 
 export interface Buff {
   id: string;
@@ -61,7 +60,7 @@ export interface UnitData extends VersioningUnitData {
   role: UnitRole;
   
   // Direction System
-  direction: DirectionData;
+  direction: UnitDirection;
   
   // Characteristics and Buffs
   characteristics: string[];
@@ -77,8 +76,7 @@ export interface UnitData extends VersioningUnitData {
 
 // Import demo data and convert positions to HexCoordinate
 import demoData from '../data/unit-stage-demo.json';
-import {DirectionData} from "./DirectionData";
-import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
+import { createHexCoordinate } from "../../game-versioning/types/HexCoordinate";
 import { VersioningUnitData } from "../../game-versioning/types/UnitData";
 
 export const initialUnits: UnitData[] = (demoData.initialUnits as any[]).map(unit => ({

@@ -1,6 +1,6 @@
 import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
 import mapData from '../../data/map-data.json';
-import {DirectionData} from "../../types/DirectionData";
+import { UnitDirection } from "../../../game-versioning/types/UnitDirection";
 
 /**
  * Base class for weapon effect calculations
@@ -21,7 +21,7 @@ export abstract class BaseEffect {
     dx: number,
     dy: number,
     isUnitYEven: boolean
-  ): DirectionData {
+  ): UnitDirection {
     if (dy === 0) {
       return dx > 0 ? 'right' : 'left';
     } else if (dy > 0) {

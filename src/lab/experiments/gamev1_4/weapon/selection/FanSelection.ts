@@ -1,7 +1,7 @@
-import { createHexCoordinate, getNextCoordinate } from "../../types/HexCoordinate";
-import { DirectionData } from "../../types/DirectionData";
+import { getNextCoordinate } from "../../types/HexCoordinate";
 import { ISelection } from "./ISelection";
-import { getDistance, HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
+import { createHexCoordinate, getDistance, HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
+import { UnitDirection } from "../../../game-versioning/types/UnitDirection";
 
 /**
  * Implementation of fan-shaped area selection
@@ -16,7 +16,7 @@ export class FanSelection extends ISelection {
     const result: Set<string> = new Set(); // Use Set to handle duplicates
     
     // For each main direction
-    const DIRECTIONS: DirectionData[] = [
+    const DIRECTIONS: UnitDirection[] = [
       'right',
       'bottom-right',
       'bottom-left',
@@ -38,7 +38,7 @@ export class FanSelection extends ISelection {
       };
 
       // Helper function to get next hex in a direction
-      const getNextHex = (pos: HexCoordinate, dir: DirectionData): HexCoordinate => {
+      const getNextHex = (pos: HexCoordinate, dir: UnitDirection): HexCoordinate => {
         return getNextCoordinate(pos, dir);
       };
 

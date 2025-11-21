@@ -1,9 +1,0 @@
-export const Z_INDEX = {
-  TERRAIN_INFO: 99,
-  UNIT_INFO: 99,
-  BASE_MODAL: 100,
-  ACTION_MENU: 101,
-  CONTROL_HINTS: 102,
-
-  DIRECTION_INDICATOR: 5,
-} as const; 

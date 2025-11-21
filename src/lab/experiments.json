@@ -31,31 +31,31 @@
       "experiments": [
         {
           "id": "gamedev-1",
-          "name": "Game Dev - Add characteristic system",
+          "name": "Game Dev - Add characteristic system (Removed)",
           "description": "Add characteristic system on unit",
           "status": "completed",
-          "url": "/labs/game-theater-v1"
+          "url": "/labs"
         },
         {
           "id": "gamedev-2",
-          "name": "Game V1.1 - Enhanced Unit Stats System",
+          "name": "Game V1.1 - Enhanced Unit Stats System (Removed)",
           "description": "Implementing comprehensive unit statistics system including combat stats, critical system, effect system, healing, energy, and damage modifiers",
-          "status": "in-progress",
-          "url": "/labs/game-theater-v1_1"
+          "status": "completed",
+          "url": "/labs"
         },
         {
           "id": "gamedev-3",
-          "name": "Game V1.2 - Implement terrain and movement cost System",
+          "name": "Game V1.2 - Implement terrain and movement cost System (Removed)",
           "description": "Adding terrain types with different movement costs, affecting unit mobility and tactical positioning. Includes basic terrains (plains, forest, mountains) and their impact on movement points.",
           "status": "completed",
-          "url": "/labs/game-theater-v1_2"
+          "url": "/labs"
         },
         {
           "id": "gamedev-4",
-          "name": "Game V1.3 - Implement turn system",
+          "name": "Game V1.3 - Implement turn system (Removed)",
           "description": "Add turn mechanism.",
           "status": "completed",
-          "url": "/labs/game-theater-v1_3"
+          "url": "/labs"
         },
         {
           "id": "gamedev-5",

@@ -1,7 +1,7 @@
 import { getNextCoordinate } from "../../types/HexCoordinate";
-import { DirectionData } from "../../types/DirectionData";
 import { ISelection } from "./ISelection";
 import { HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
+import { UnitDirection } from "../../../game-versioning/types/UnitDirection";
 
 /**
  * Implementation of line area selection
@@ -14,7 +14,7 @@ export class LineSelection extends ISelection {
     dx: number,
     dy: number,
     isUnitYEven: boolean
-  ): DirectionData {
+  ): UnitDirection {
     if (dy === 0) {
       return dx > 0 ? 'right' : 'left';
     } else if (dy > 0) {
@@ -37,7 +37,7 @@ export class LineSelection extends ISelection {
    */
   private static getLineInDirection(
     origin: HexCoordinate,
-    direction: DirectionData,
+    direction: UnitDirection,
     minRange: number,
     maxRange: number
   ): HexCoordinate[] {
