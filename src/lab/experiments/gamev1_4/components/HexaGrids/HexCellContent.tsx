@@ -1,6 +1,6 @@
 import React from 'react';
 import { UnitData } from '../../types/UnitData';
-import { DirectionIndicator } from './DirectionIndicator';
+import { DirectionIndicator } from "../../../game-versioning/components/DirectionIndicator";
 
 /**
  * Props interface for the HexCellContent component

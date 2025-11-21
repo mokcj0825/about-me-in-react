@@ -1,5 +1,5 @@
-import {DirectionData} from "./DirectionData";
 import { getRawNeighbors, HexCoordinate } from "../../experiments/game-versioning/types/HexCoordinate";
+import { UnitDirection } from "../../experiments/game-versioning/types/UnitDirection";
 
 export const createHexCoordinate = (x: number, y: number): HexCoordinate => ({
 	x,
@@ -17,7 +17,7 @@ export const getNeighbors = (hex: HexCoordinate, width: number, height: number):
 };
 
 
-export const getNextCoordinate = (current: HexCoordinate, direction: DirectionData): HexCoordinate => {
+export const getNextCoordinate = (current: HexCoordinate, direction: UnitDirection): HexCoordinate => {
   const isYEven = current.y % 2 === 0;
   switch (direction) {
     case 'right':

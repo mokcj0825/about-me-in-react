@@ -1,7 +1,7 @@
-import { createHexCoordinate, getNextCoordinate } from "../../types/HexCoordinate";
-import { DirectionData } from "../../types/DirectionData";
+import { getNextCoordinate } from "../../types/HexCoordinate";
 import { BaseEffect } from "./IEffect";
-import { getDistance, HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
+import { createHexCoordinate, getDistance, HexCoordinate } from "../../../game-versioning/types/HexCoordinate";
+import { UnitDirection } from "../../../game-versioning/types/UnitDirection";
 
 /**
  * Implementation of fan-shaped area effect
@@ -22,7 +22,7 @@ export class FanEffect extends BaseEffect {
     const isUnitYEven = unitPosition.y % 2 === 0;
     
     // Define directions in clockwise order
-    const DIRECTIONS: DirectionData[] = [
+    const DIRECTIONS: UnitDirection[] = [
       'right',
       'bottom-right',
       'bottom-left',
@@ -49,7 +49,7 @@ export class FanEffect extends BaseEffect {
     };
 
     // Helper function to get next hex in a direction
-    const getNextHex = (pos: HexCoordinate, dir: DirectionData): HexCoordinate => {
+    const getNextHex = (pos: HexCoordinate, dir: UnitDirection): HexCoordinate => {
       return getNextCoordinate(pos, dir);
     };
 

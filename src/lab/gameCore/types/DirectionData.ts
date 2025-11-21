@@ -1,3 +1,3 @@
-export type DirectionData = 'top-left' | 'top-right' | 'right' | 'bottom-right' | 'bottom-left' | 'left';
+import { UnitDirection } from "../../experiments/game-versioning/types/UnitDirection";
 
-export const ALL_DIRECTIONS: DirectionData[] = ['top-left', 'top-right', 'right', 'bottom-right', 'bottom-left', 'left'];
+export const ALL_DIRECTIONS: UnitDirection[] = ['top-left', 'top-right', 'right', 'bottom-right', 'bottom-left', 'left'];

@@ -1,5 +1,4 @@
-import {createHexCoordinate} from "../types/HexCoordinate";
-import { HexCoordinate } from "../../game-versioning/types/HexCoordinate";
+import { createHexCoordinate, HexCoordinate } from "../../game-versioning/types/HexCoordinate";
 
 export const generateGrid = (width: number, height: number) => {
 	const grid: HexCoordinate[][] = [];

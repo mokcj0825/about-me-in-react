@@ -1,9 +1,9 @@
-import { createHexCoordinate, getNextCoordinate } from "../types/HexCoordinate";
+import { getNextCoordinate } from "../types/HexCoordinate";
 import { UnitData } from "../types/UnitData";
-import { DirectionData } from "../types/DirectionData";
 import { ShapeCalculator, ShapeConfig } from "../weapon/ShapeCalculator";
 import mapData from '../data/map-data.json';
-import { getDistance, HexCoordinate } from "../../game-versioning/types/HexCoordinate";
+import { createHexCoordinate, getDistance, HexCoordinate } from "../../game-versioning/types/HexCoordinate";
+import { UnitDirection } from "../../game-versioning/types/UnitDirection";
 
 /**
  * Archive of EffectCalculator with a triangle fan shape that extends outward along the main direction
@@ -66,7 +66,7 @@ export class EffectCalculator extends ShapeCalculator {
     const isUnitYEven = unitPosition.y % 2 === 0;
     
     // Determine main direction based on how target relates to unit
-    let mainDirection: DirectionData;
+    let mainDirection: UnitDirection;
     
     if (dy === 0) {
       // Horizontal movement: x+1 for right, x-1 for left
@@ -93,7 +93,7 @@ export class EffectCalculator extends ShapeCalculator {
     }
     
     // Get the side directions based on the main direction
-    let sideDirections: DirectionData[] = [];
+    let sideDirections: UnitDirection[] = [];
     switch (mainDirection) {
       case 'right':
         sideDirections = ['top-right', 'bottom-right'];
@@ -155,7 +155,7 @@ export class EffectCalculator extends ShapeCalculator {
     const isUnitYEven = unitPosition.y % 2 === 0;
     
     // Determine direction based on how target relates to unit
-    let direction: DirectionData;
+    let direction: UnitDirection;
     
     if (dy === 0) {
       direction = dx > 0 ? 'right' : 'left';
